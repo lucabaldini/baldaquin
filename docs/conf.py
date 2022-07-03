@@ -36,8 +36,7 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.imgmath',
-    'sphinx.ext.extlinks',
-    'sphinxcontrib.programoutput'
+    'sphinx.ext.extlinks'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
