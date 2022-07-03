@@ -3,8 +3,12 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to baldaquin's documentation!
-=====================================
+baldaquin: BALanced DAQ User INterface
+======================================
+
+.. figure:: _static/baldaquin_logo.png
+   :width: 35%
+
 
 .. toctree::
    :maxdepth: 2
