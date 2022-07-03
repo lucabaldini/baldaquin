@@ -1,1 +1,2 @@
 loguru
+pydata-sphinx-theme
