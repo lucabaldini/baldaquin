@@ -1,0 +1,48 @@
+
+QWidget {
+  background-color: #ffffff
+}
+
+QPushButton, QFrame {
+  border: 1px solid lightgray;
+}
+
+
+QPushButton {
+  border-radius: 20px;
+}
+
+
+QPushButton:hover {
+  background-color: lightgray;
+}
+
+
+QPushButton:disabled {
+
+}
+
+
+QFrame {
+  border-radius: 7px;
+}
+
+
+QLabel {
+  border: none;
+}
+
+
+QLabel#card_item_title {
+  color: gray;
+  font-size: 12px;
+}
+
+
+QLabel#card_item_value {
+  font-size: 18px;
+}
+
+QTextEdit {
+  border: none;
+}
