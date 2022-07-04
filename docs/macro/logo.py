@@ -16,9 +16,13 @@
 """The glorious baldaquin logo :-)
 """
 
+import os
+
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
+
+from baldaquin import BALDAQUIN_DOCS_STATIC
 
 FIG_SIDE = 6
 COLOR_1 = 'lightgray'
@@ -56,10 +60,10 @@ def plot_baldaquin(w = 0.425, h = 0.40, line_color=COLOR_1, fill_color=COLOR_2,
         y = -1.25 * h + 0.25 * h * np.cos(30 * x) * np.exp(-3. * x)
         plt.plot(x, y, color=line_color, lw=LINE_WIDTH)
 
-def figure(x1=-1.1, x2=1.1, y1=-1.1, y2=1.1, background_color='white'):
+def figure(x1=-1.1, x2=1.1, y1=-1.1, y2=1.1):
     """
     """
-    plt.figure(figsize=(FIG_SIDE, FIG_SIDE), facecolor=background_color)
+    plt.figure(figsize=(FIG_SIDE, FIG_SIDE))
     plt.gca().set_aspect('equal')
     plt.gca().axis((x1, x2, y1, y2))
     plt.subplots_adjust(left=0., right=1., bottom=0., top=1.)
@@ -83,9 +87,11 @@ for i, letter in enumerate(text):
 
 figure(-0.54, 0.54, -0.36, 0.72)
 plot_baldaquin(line_color='gray', lw=7., wave=False)
+plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, 'baldaquin_logo_small_light.png'), transparent=True)
 
-figure(-0.54, 0.54, -0.36, 0.72, background_color='black')
+figure(-0.54, 0.54, -0.36, 0.72)
 plot_baldaquin(line_color='white', lw=7., wave=False)
+plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, 'baldaquin_logo_small_dark.png'), transparent=True)
 
 
 plt.show()
