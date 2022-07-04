@@ -22,11 +22,11 @@ from baldaquin import BALDAQUIN_DATA
 from baldaquin.config import ConfigurationParameter, ConfigurationBase
 
 
-class MockupConfiguration(ConfigurationBase):
+class SillyConfiguration(ConfigurationBase):
 
-    TITLE = 'Silly test configuration'
+    TITLE = 'Just a test configuration'
     PARAMETER_SPECS = (
-        ('enabled', 'bool', True, 'Enable some feature', {}),
+        ('enabled', 'bool', True, 'Enable connection', {}),
         ('ip_address', 'str', '127.0.0.1', 'IP address', {}),
         ('port', 'int', 20004, 'UDP port', dict(min=1024, max=65535)),
         ('timeout', 'float', 10., 'Connection timeout [s]', dict(min=0.))
@@ -87,7 +87,7 @@ def test_parameter_str():
 def test_configuration():
     """Test an actual, fully-fledged configuration.
     """
-    config = MockupConfiguration()
+    config = SillyConfiguration()
     print(config)
     file_path = os.path.join(BALDAQUIN_DATA, 'test_config.json')
     config.write(file_path)
@@ -97,6 +97,6 @@ def test_configuration():
     assert config.value('port') == 20004
     config.update_value('port', 20003)
     config.write(file_path)
-    config = MockupConfiguration()
+    config = SillyConfiguration()
     config.read(file_path)
     assert config.value('port') == 20003

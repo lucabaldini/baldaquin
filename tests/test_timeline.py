@@ -27,23 +27,23 @@ def test_default_timeline():
     different times.
     """
     timeline = Timeline()
-    tstamp = timeline.timestamp()
+    tstamp = timeline.latch()
     delta = tstamp.seconds - time.time()
     assert abs(delta) < 0.001
 
-def test_offset_timeline(offset='1971-01-01'):
+def test_offset_timeline(origin='1971-01-01'):
     """Test a timeline with a 1-year offset with respect to the POSIX time.
     """
-    timeline = Timeline(offset)
-    tstamp = timeline.timestamp()
+    timeline = Timeline(origin)
+    tstamp = timeline.latch()
     delta = tstamp.seconds - time.time()
     assert abs(delta + 3600. * 24 * 365) < 0.001
 
-def test_offset_timeline_leap(offset='1973-01-01'):
+def test_offset_timeline_leap(origin='1973-01-01'):
     """Test a timeline with a 3-year offset with respect to the POSIX time,
     including one leap year.
     """
-    timeline = Timeline(offset)
-    tstamp = timeline.timestamp()
+    timeline = Timeline(origin)
+    tstamp = timeline.latch()
     delta = tstamp.seconds - time.time()
     assert abs(delta + 3600. * 24 * (3 * 365 + 1)) < 0.001

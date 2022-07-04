@@ -18,9 +18,8 @@
 
 import enum
 import json
-import math
 import os
-import sys
+from typing import Any
 
 from loguru import logger
 
@@ -79,7 +78,8 @@ class ConfigurationParameter:
         'str': ('choices',)
     }
 
-    def __init__(self, name, type_name, value, intent : str = None, **constraints) -> None:
+    def __init__(self, name : str, type_name : str, value : Any, intent : str = None,
+        **constraints) -> None:
         """Constructor.
         """
         self.name = name
@@ -88,7 +88,7 @@ class ConfigurationParameter:
         self.intent = intent
         for key in tuple(constraints):
             if key not in self.VALID_CONSTRAINTS.get(self.type_name, ()):
-                logger.warning(f'Removing invalid spec ({key}) for {self.name} ({self.type_name})...')
+                logger.warning(f'Invalid spec ({key}) for {self.name} ({self.type_name})...')
                 constraints.pop(key)
         self.constraints = constraints
         self.set_value(value)
@@ -96,16 +96,17 @@ class ConfigurationParameter:
     def not_set(self) -> bool:
         """Return true if the parameter value is not set.
         """
-        return self.value == None
+        return self.value is None
 
-    def _validation_error(self, value, error_code=ParameterValidationError.GENERIC_ERROR) -> ParameterValidationError:
+    def _validation_error(self, value : Any, error_code : ParameterValidationError) \
+        -> ParameterValidationError:
         """Utility function to log a parameter error (and forward the error code).
         """
-        logger.error(f'Invalid setting ({value}) for {self.name} {self.constraints}: {error_code.name}')
+        logger.error(f'Value {value} invalid for {self.name} {self.constraints}: {error_code.name}')
         logger.error('Parameter value will not be set')
         return error_code
 
-    def _check_range(self, value):
+    def _check_range(self, value : Any) -> ParameterValidationError:
         """Generic function to check that a given value is within a specified range.
 
         This is used for validating int and float parameters.
@@ -116,7 +117,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.NUMBER_TOO_LARGE)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_choice(self, value):
+    def _check_choice(self, value : Any) -> ParameterValidationError:
         """Generic function to check that a parameter value is within the
         allowed choices.
         """
@@ -124,7 +125,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.INVALID_CHOICE)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_step(self, value):
+    def _check_step(self, value : int) -> ParameterValidationError:
         """Generic function to check the step size for an integer.
         """
         delta = value - self.constraints.get('min', 0)
@@ -132,7 +133,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.INVALID_STEP)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_int(self, value):
+    def _check_int(self, value : int) -> ParameterValidationError:
         """Validate an integer parameter value.
 
         Note we check the choice specification first, and all the others after that
@@ -145,17 +146,17 @@ class ConfigurationParameter:
                 return error_code
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_float(self, value):
+    def _check_float(self, value : float) -> ParameterValidationError:
         """Validate a floating-point parameter value.
         """
         return self._check_range(value)
 
-    def _check_str(self, value):
+    def _check_str(self, value : str) -> ParameterValidationError:
         """Validate a string parameter value.
         """
         return self._check_choice(value)
 
-    def set_value(self, value):
+    def set_value(self, value : Any) -> ParameterValidationError:
         """Set the paramater value.
         """
         # Make sure that type(value) matches the expectations.
@@ -183,18 +184,9 @@ class ConfigurationBase(dict):
     """Base class for configuration data structures.
 
     The basic idea, here, is that specific configuration classes simply override
-    the TITLE and PARAMETER_SPECS class members. PARAMETER_SPECS, particulalry,
+    the ``TITLE`` and ``PARAMETER_SPECS`` class members. ``PARAMETER_SPECS``, particulalry,
     encodes the name, types and default values for all the configuration parameters,
     as well optional help strings and parameter constraints.
-
-    A typical implementation of a concrete configuration might look like
-
-    >>>    PARAMETER_SPECS = (
-    >>>        ('enable', 'bool', True, '', {}),
-    >>>        ('ip_address', 'str', '127.0.0.1', '', {}),
-    >>>        ('port', 'int', 20004, '', dict(min=1024, max=65535)),
-    >>>        ('timeout', 'float', 10., '', dict(min=0.))
-    >>>    )
 
     Configuration objects provide file I/O through the JSON protocol. One
     important notion, here, is that configuration objects are always created
@@ -220,7 +212,7 @@ class ConfigurationBase(dict):
         parameter = ConfigurationParameter(*args, **kwargs)
         self[parameter.name] = parameter
 
-    def value(self, key) -> None:
+    def value(self, key) -> Any:
         """Return the value for a given parameter.
         """
         return self[key].value
@@ -253,7 +245,7 @@ class ConfigurationBase(dict):
             output_file.write(self.to_json())
 
     @staticmethod
-    def terminal_line(character='-', default_length=50):
+    def terminal_line(character : str = '-', default_length : int = 50) -> str:
         """Concatenate a series of characters as long as the terminal line.
 
         Note that we need the try/except block to get this thing working into
@@ -262,16 +254,16 @@ class ConfigurationBase(dict):
         try:
             return character * os.get_terminal_size().columns
         except OSError:
-            return default_length
+            return character * default_length
 
     @staticmethod
-    def title(text):
+    def title(text : str) -> str:
         """Pretty-print title.
         """
         line = ConfigurationBase.terminal_line()
         return f'{line}\n{text}\n{line}'
 
-    def __str__(self):
+    def __str__(self) -> str:
         """String formatting.
         """
         title = self.title(self.TITLE)

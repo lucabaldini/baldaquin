@@ -16,6 +16,8 @@
 """Time-related facilities.
 """
 
+from __future__ import annotations
+
 import calendar
 from dataclasses import dataclass
 import datetime
@@ -24,6 +26,8 @@ import time
 
 
 class tzoffset(datetime.tzinfo):
+
+    #pylint: disable=invalid-name
 
     """Minimal tzinfo class factory to create time-aware datetime objects.
 
@@ -39,16 +43,29 @@ class tzoffset(datetime.tzinfo):
         The UTC offset in seconds.
     """
 
-    def __init__(self, name : str, offset : float):
+    def __init__(self, name : str, offset : float) -> None:
         """Constructor.
         """
         self.name = name
         self.offset = datetime.timedelta(seconds=offset)
 
-    def utcoffset(self, dt):
-        """Return the UTC offset.
+    def utcoffset(self, dt : datetime.datetime) -> float:
+        """Overloaded method.
         """
         return self.offset
+
+    def dst(self, dt : datetime.datetime) -> float:
+        """Overloaded method.
+
+        According to the documentation, this Return the daylight saving time (DST)
+        adjustment, as a timedelta object or None if DST information isn’t known.
+        """
+        return None
+
+    def tzname(self, dt : datetime.datetime) -> str:
+        """Overloaded method.
+        """
+        return self.name
 
 
 
@@ -62,60 +79,98 @@ class Timestamp:
     * a datetime object in the UTC time zone;
     * a datetime object in the local time zone;
     * a timestamp in seconds, relative to the origin of the parent timeline.
+
+    Timestamp objects support subtraction aritmethics as a handy shortcut
+    to calculate time differences.
+
+    Arguments
+    ---------
+    utc_datetime : datetime.datetime
+        The (timezone-aware) UTC datetime object corresponding to the timestamp.
+
+    local_datetime : datetime.datetime
+        The (timezone-aware) local datetime object corresponding to the timestamp.
+
+    seconds : float
+        The seconds elapsed since the origin of the parent timeline.
     """
 
     utc_datetime: datetime.datetime
     local_datetime: datetime.datetime
     seconds: float
 
-    @staticmethod
-    def _dt_to_str(dt):
-        """Utility function to convert a datetime object into a string.
+    def __sub__(self, other : Timestamp) -> float:
+        """Overloaded operator to support timestamp subtraction.
         """
-        return dt.isoformat(timespec='microseconds')
+        return self.seconds - other.seconds
 
-    def utc_datetime_string(self):
-        """Return a string representation of the UTC datetime.
+    def __str__(self) -> str:
+        """String formatting.
         """
-        return self._dt_to_str(self.utc_datetime)
-
-    def local_datetime_string(self):
-        """Return a string representation of the UTC datetime.
-        """
-        return self._dt_to_str(self.local_datetime)
+        return f'{self.local_datetime} ({self.seconds} s)'
 
 
 
 class Timeline:
 
-    """Class representing a continuos timeline.
+    #pylint: disable=too-few-public-methods
+
+    """Class representing a continuos timeline referred to a fixed origin.
+
+    Note that, by deafult, the origin of the Timeline is January 1, 1970 00:00:00 UTC,
+    and the seconds field in the Timestamp objects that the Timeline returns
+    when latched correspond to the standard POSIX time. Setting the origin to a
+    different value allow, e.g., to emulate the mission elapsed time (MET)
+    concept that is common in space missions.
+
+    Arguments
+    ---------
+    origin : str
+        A string representation (in ISO 8601 format) of the date and time
+        corresponding to the origin of the timeline in UTC (without the
+        traling +00:00).
+
+        More specifically, according to the datetime documentation, we support
+        strings in the format:
+
+        .. code-block::
+
+           YYYY-MM-DD[*HH[:MM[:SS[.fff[fff]]]]
+
+        where * can match any single character.
     """
 
-    POSIX_ORIGIN = datetime.datetime(1970, 1, 1)
+    _POSIX_ORIGIN = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
-    def __init__(self, origin='1970-01-01 00:00:00'):
+    def __init__(self, origin : str = '1970-01-01') -> None:
         """Constructor.
         """
-        self.origin = datetime.datetime.fromisoformat(origin)
-        self._timestamp_offset = (self.origin - self.POSIX_ORIGIN).total_seconds()
+        self.origin = datetime.datetime.fromisoformat(f'{origin}')
+        self.origin = self.origin.replace(tzinfo=datetime.timezone.utc)
+        self._timestamp_offset = (self.origin - self._POSIX_ORIGIN).total_seconds()
 
     @staticmethod
-    def utc_offset():
-        """Return the local UTC offset in s, considering the DST.
+    def _utc_offset() -> int:
+        """Return the local UTC offset in s, considering the DST---note this has
+        to be calculated every time the timeline is latched, as one doesn't know
+        if a DST change has happened between two successive calls.
 
         See https://stackoverflow.com/questions/3168096 for more details on why
         this is a sensible way to calculate this.
         """
         return calendar.timegm(time.localtime()) - calendar.timegm(time.gmtime())
 
-    def timestamp(self):
+    def latch(self) -> Timestamp:
         """This is the workhorse function for keeping track of the time.
+
+        This function latches the system time and creates a frozen Timestamp
+        object that can be reused at later time.
         """
         # Retrieve the UTC date and time---this is preferred over datetime.utcnow(),
         # as the latter returns a naive datetime object, with tzinfo set to None.
         utc_datetime = datetime.datetime.now(datetime.timezone.utc)
         # Calculate the UTC offset.
-        offset = self.utc_offset()
+        offset = self._utc_offset()
         # Add the offset to the UTC datetime and setup the tzinfo so that
         # the offset is included by default in the string representation.
         local_datetime = utc_datetime + datetime.timedelta(seconds=offset)

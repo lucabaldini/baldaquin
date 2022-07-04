@@ -22,6 +22,8 @@ from datetime import datetime
 
 from loguru import logger
 
+from baldaquin.timeline import Timeline
+
 
 class RunControlStatus(Enum):
 
@@ -47,9 +49,8 @@ class RunControl:
         self._machine_id = self._read_machine_id()
         self._run_id = self._read_run_id()
         self._status = RunControlStatus.RESET
-        self.start_datetime = None
+        self.timeline = Timeline()
         self.start_timestamp = None
-        self.stop_datetime = None
         self.stop_timestamp = None
 
     def _read_machine_id(self):
@@ -110,9 +111,8 @@ class RunControl:
             self.setup()
         elif self.is_running():
             self.stop()
-            self.stop_datetime = datetime.now()
-            self.stop_timestamp = self.stop_datetime.timestamp()
-            logger.info(f'{self.NAME} run control stopped on {self.stop_datetime} ({self.stop_timestamp} s)')
+            self.stop_timestamp = self.timeline.latch()
+            logger.info(f'{self.NAME} run control stopped on {self.stop_timestamp}')
         else:
             self._raise_invalid_transition(target)
         self._status = target
@@ -122,9 +122,8 @@ class RunControl:
         """
         target = RunControlStatus.RUNNING
         if self.is_stopped():
-            self.start_datetime = datetime.now()
-            self.start_timestamp = self.start_datetime.timestamp()
-            logger.info(f'{self.NAME} run control started on {self.start_datetime} ({self.start_timestamp} s)')
+            self.start_timestamp = self.timeline.latch()
+            logger.info(f'{self.NAME} run control started on {self.start_timestamp}')
             self._run_id += 1
             self._write_run_id()
             self._create_output_folder()
@@ -139,7 +138,7 @@ class RunControl:
         if self.start_timestamp is None:
             return None
         if self.stop_timestamp is None:
-            return datetime.now().timestamp() - self.start_timestamp
+            return self.timeline.latch() - self.start_timestamp
         return self.stop_timestamp - self.start_timestamp
 
     def setup(self):
