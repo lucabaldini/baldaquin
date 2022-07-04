@@ -84,7 +84,7 @@ def create_logo(mode, lw=3.5, circle_radius=1.):
     plt.gca().add_patch(circle)
     plt.text(0., 0., 'bal  daq  uin', ha='center', va='center', size=60, color=FILL_COLOR)
     plot_baldaquin(line_color, lw)
-    text = 'BALanced DAQ User INterface'
+    text = 'BALd DAQ User INterface'
     max_angle = np.radians(55.)
     num_letters = len(text)
     radius = 0.925 * circle_radius
