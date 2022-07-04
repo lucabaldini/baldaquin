@@ -3,6 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+======================================
 baldaquin: BALanced DAQ User INterface
 ======================================
 
@@ -15,13 +16,14 @@ baldaquin: BALanced DAQ User INterface
    :class: only-dark
 
 
+
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    install
-   api
 
+   api
 
 
 Indices and tables

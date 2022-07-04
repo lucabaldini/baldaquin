@@ -11,14 +11,7 @@ Top-level indices
 * :ref:`search`
 
 
-Core Modules
-------------
+.. toctree::
+   :maxdepth: 2
 
-.. automodule:: baldaquin.core.config
-   :members:
-
-.. automodule:: baldaquin.core.control
-   :members:
-
-.. automodule:: baldaquin.core.timeline
-   :members:
+   config

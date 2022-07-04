@@ -66,5 +66,5 @@ html_theme_options = {
         "image_dark": "baldaquin_logo_small_dark.png",
         "text": "baldaquin",
     },
-    "show_nav_level": 0
+    "show_nav_level": 2
 }

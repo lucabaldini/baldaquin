@@ -98,7 +98,7 @@ class ConfigurationParameter:
         """
         return self.value == None
 
-    def _validation_error(self, value, error_code=ParameterValidationError.GENERIC_ERROR):
+    def _validation_error(self, value, error_code=ParameterValidationError.GENERIC_ERROR) -> ParameterValidationError:
         """Utility function to log a parameter error (and forward the error code).
         """
         logger.error(f'Invalid setting ({value}) for {self.name} {self.constraints}: {error_code.name}')
@@ -189,12 +189,12 @@ class ConfigurationBase(dict):
 
     A typical implementation of a concrete configuration might look like
 
-        PARAMETER_SPECS = (
-            ('enable', 'bool', True, '', {}),
-            ('ip_address', 'str', '127.0.0.1', '', {}),
-            ('port', 'int', 20004, '', dict(min=1024, max=65535)),
-            ('timeout', 'float', 10., '', dict(min=0.))
-        )
+    >>>    PARAMETER_SPECS = (
+    >>>        ('enable', 'bool', True, '', {}),
+    >>>        ('ip_address', 'str', '127.0.0.1', '', {}),
+    >>>        ('port', 'int', 20004, '', dict(min=1024, max=65535)),
+    >>>        ('timeout', 'float', 10., '', dict(min=0.))
+    >>>    )
 
     Configuration objects provide file I/O through the JSON protocol. One
     important notion, here, is that configuration objects are always created
@@ -207,30 +207,30 @@ class ConfigurationBase(dict):
     TITLE = 'Configuration'
     PARAMETER_SPECS = []
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor.
         """
         super().__init__()
         for *args, constraints in self.PARAMETER_SPECS:
             self.add_parameter(*args, **constraints)
 
-    def add_parameter(self, *args, **kwargs):
+    def add_parameter(self, *args, **kwargs) -> None:
         """Add a new parameter to the configuration.
         """
         parameter = ConfigurationParameter(*args, **kwargs)
         self[parameter.name] = parameter
 
-    def value(self, key):
+    def value(self, key) -> None:
         """Return the value for a given parameter.
         """
         return self[key].value
 
-    def update_value(self, key, value):
+    def update_value(self, key, value) -> None:
         """Update the value of a configuration parameter.
         """
         self[key].set_value(value)
 
-    def read(self, file_path):
+    def read(self, file_path : str) -> None:
         """Update the configuration parameters from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
