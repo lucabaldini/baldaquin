@@ -6,8 +6,13 @@
 baldaquin: BALanced DAQ User INterface
 ======================================
 
-.. figure:: _static/baldaquin_logo.png
+.. figure:: _static/baldaquin_logo_light.png
    :width: 35%
+   :class: only-light
+
+.. figure:: _static/baldaquin_logo_dark.png
+   :width: 35%
+   :class: only-dark
 
 
 .. toctree::

@@ -25,43 +25,33 @@ from scipy import interpolate
 from baldaquin import BALDAQUIN_DOCS_STATIC
 
 FIG_SIDE = 6
-COLOR_1 = 'lightgray'
-COLOR_2 = 'skyblue'
-LINE_WIDTH = 3.5
-CIRCLE_RADIUS = 1.
+MODES = ('light', 'dark')
+FILL_COLOR = 'skyblue'
 
 
-def plot_spline(*nodes, color=COLOR_1, lw=LINE_WIDTH, control_points=False):
+def _line_color(mode):
+    """Get the line color for the theme.
+    """
+    assert mode in MODES
+    if mode == 'light':
+        return 'lightgray'
+    if mode == 'dark':
+        return 'white'
+
+def plot_spline(*nodes, control_points=False, **kwargs):
     """Generic function to plot a spline.
     """
-    x = np.array(nodes)[:,0]
-    y = np.array(nodes)[:,1]
-    tck, u = interpolate.splprep( [x,y] ,s = 0 )
-    xnew, ynew = interpolate.splev( np.linspace( 0, 1, 100 ), tck,der = 0)
-    plt.plot(xnew, ynew, color=color, lw=lw)
+    xp = np.array(nodes)[:,0]
+    yp = np.array(nodes)[:,1]
+    tck, u = interpolate.splprep([xp, yp], s=0)
+    x, y = interpolate.splev(np.linspace(0., 1., 100), tck, der=0)
+    plt.plot(x, y, **kwargs)
     if control_points:
-        plt.plot(x, y, 'o')
-    return xnew, ynew
-
-def plot_baldaquin(w = 0.425, h = 0.40, line_color=COLOR_1, fill_color=COLOR_2,
-    lw=LINE_WIDTH, wave=True):
-    """
-    """
-    kwargs = dict(color=line_color, lw=lw)
-    plt.plot((-w, -w, w, w), (-h, h, h, -h), **kwargs)
-    x, y = plot_spline((0., 0.99 * h), (-0.05 * w, 0.8 * h), (-0.4 * w, 0.5 * h), (-w, 0.), **kwargs)
-    plt.fill_between(x, y, np.full(x.shape, h), color=fill_color)
-    x, y = plot_spline((0., 0.99 * h), (0.05 * w, 0.8 * h), (0.4 * w, 0.5 * h), (w, 0.), **kwargs)
-    plt.fill_between(x, y, np.full(x.shape, h), color=fill_color)
-    plot_spline((-1.25 * w, 0.9 * h), (-w, h), (-0.5 * w, 1.25 * h), (0., 1.75 * h), **kwargs)
-    plot_spline((1.25 * w, 0.9 * h), (w, h), (0.5 * w, 1.25 * h), (0., 1.75 * h), **kwargs)
-    if wave:
-        x = np.linspace(-0.8 * w, 0.8 * w, 100)
-        y = -1.25 * h + 0.25 * h * np.cos(30 * x) * np.exp(-3. * x)
-        plt.plot(x, y, color=line_color, lw=LINE_WIDTH)
+        plt.plot(xp, yp, 'o')
+    return x, y
 
 def figure(x1=-1.1, x2=1.1, y1=-1.1, y2=1.1):
-    """
+    """Crete the logo figure.
     """
     plt.figure(figsize=(FIG_SIDE, FIG_SIDE))
     plt.gca().set_aspect('equal')
@@ -69,29 +59,55 @@ def figure(x1=-1.1, x2=1.1, y1=-1.1, y2=1.1):
     plt.subplots_adjust(left=0., right=1., bottom=0., top=1.)
     plt.axis('off')
 
+def plot_baldaquin(line_color, lw, w=0.425, h=0.40, wave=True):
+    """Plot the glorious baldaquin.
+    """
+    kwargs = dict(color=line_color, lw=lw)
+    plt.plot((-w, -w, w, w), (-h, h, h, -h), **kwargs)
+    x, y = plot_spline((0., 0.99 * h), (-0.05 * w, 0.8 * h), (-0.4 * w, 0.5 * h), (-w, 0.), **kwargs)
+    plt.fill_between(x, y, np.full(x.shape, h), color=FILL_COLOR)
+    x, y = plot_spline((0., 0.99 * h), (0.05 * w, 0.8 * h), (0.4 * w, 0.5 * h), (w, 0.), **kwargs)
+    plt.fill_between(x, y, np.full(x.shape, h), color=FILL_COLOR)
+    plot_spline((-1.25 * w, 0.9 * h), (-w, h), (-0.5 * w, 1.25 * h), (0., 1.75 * h), **kwargs)
+    plot_spline((1.25 * w, 0.9 * h), (w, h), (0.5 * w, 1.25 * h), (0., 1.75 * h), **kwargs)
+    if wave:
+        x = np.linspace(-0.8 * w, 0.8 * w, 100)
+        y = -1.25 * h + 0.25 * h * np.cos(30 * x) * np.exp(-3. * x)
+        plt.plot(x, y, color=line_color, lw=lw)
 
-figure()
-circle = plt.Circle((0, 0), CIRCLE_RADIUS, color=COLOR_1, lw=LINE_WIDTH, fill=False)
-plt.gca().add_patch(circle)
-plt.text(0., 0., 'bal  daq  uin', ha='center', va='center', size=60, color=COLOR_2)
-plot_baldaquin()
-text = 'BALanced DAQ User INterface'
-max_angle = np.radians(55.)
-num_letters = len(text)
-radius = 0.925 * CIRCLE_RADIUS
-for i, letter in enumerate(text):
-    angle = -max_angle + 2. * max_angle * (i / (num_letters - 1)) - 0.5 * np.pi
-    x, y = radius * np.cos(angle), radius * np.sin(angle)
-    plt.text(x, y, letter, size=20., rotation=np.degrees(angle) + 90., ha='center',
-        va='center', color=COLOR_2)
+def create_logo(mode, lw=3.5, circle_radius=1.):
+    """Create the big logo.
+    """
+    line_color = _line_color(mode)
+    figure()
+    circle = plt.Circle((0, 0), circle_radius, color=line_color, lw=3.5, fill=False)
+    plt.gca().add_patch(circle)
+    plt.text(0., 0., 'bal  daq  uin', ha='center', va='center', size=60, color=FILL_COLOR)
+    plot_baldaquin(line_color, lw)
+    text = 'BALanced DAQ User INterface'
+    max_angle = np.radians(55.)
+    num_letters = len(text)
+    radius = 0.925 * circle_radius
+    for i, letter in enumerate(text):
+        angle = -max_angle + 2. * max_angle * (i / (num_letters - 1)) - 0.5 * np.pi
+        x, y = radius * np.cos(angle), radius * np.sin(angle)
+        plt.text(x, y, letter, size=20., rotation=np.degrees(angle) + 90., ha='center',
+            va='center', color=FILL_COLOR)
+    file_name = f'baldaquin_logo_{mode}.png'
+    plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, file_name), transparent=True)
 
-figure(-0.54, 0.54, -0.36, 0.72)
-plot_baldaquin(line_color='gray', lw=7., wave=False)
-plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, 'baldaquin_logo_small_light.png'), transparent=True)
+def create_small_logo(mode, lw=15.):
+    """Create the small logo.
+    """
+    line_color = _line_color(mode)
+    figure(-0.54, 0.54, -0.36, 0.72)
+    plot_baldaquin(line_color=line_color, lw=lw, wave=False)
+    file_name = f'baldaquin_logo_small_{mode}.png'
+    plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, file_name), transparent=True)
 
-figure(-0.54, 0.54, -0.36, 0.72)
-plot_baldaquin(line_color='white', lw=7., wave=False)
-plt.savefig(os.path.join(BALDAQUIN_DOCS_STATIC, 'baldaquin_logo_small_dark.png'), transparent=True)
+for mode in MODES:
+    create_logo(mode)
+    create_small_logo(mode)
 
 
 plt.show()
