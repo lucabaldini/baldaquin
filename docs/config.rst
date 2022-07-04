@@ -138,6 +138,13 @@ configuration objects, with
 allowing to update an existing configuration from a JSON file with the proper
 format.
 
+.. note::
+
+   Keep in mind that configurations are never `read` from file---they come
+   to life with all the parameters set to their default values, and then they
+   can be `updated` from a JSON file. This makes it much easier to ensure that
+   configuration objects remain internally valid at all times.
+
 
 Module documentation
 --------------------
