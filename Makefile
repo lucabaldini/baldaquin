@@ -5,3 +5,6 @@ test:
 
 html:
 	cd docs; make html
+
+clean:
+	rm -rf baldaquin/__pycache__ tests/__pycache__ .pytest_cache
