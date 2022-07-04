@@ -1,3 +1,5 @@
+.. _timeline:
+
 :mod:`baldaquin.timeline` --- Time keeping
 ==========================================
 

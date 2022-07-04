@@ -1,3 +1,5 @@
+.. _config:
+
 :mod:`baldaquin.config` --- Configuration facilities
 ====================================================
 

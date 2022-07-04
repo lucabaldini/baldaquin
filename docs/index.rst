@@ -9,14 +9,16 @@ baldaquin: BALd DAQ User INterface
 ==================================
 
 .. figure:: _static/baldaquin_logo_light.png
-   :width: 200pt
+   :width: 180pt
    :class: only-light
-   :align: left
+   :align: right
 
 .. figure:: _static/baldaquin_logo_dark.png
-   :width: 200pt
+   :width: 180pt
    :class: only-dark
-   :align: left
+   :align: right
+
+|
 
 baldaquin (or the BALd DAQ User INterface) is an attempt at a general-purpose,
 modular and reusable data acquisition framework based on modern technologies.
@@ -24,6 +26,14 @@ modular and reusable data acquisition framework based on modern technologies.
 that it might never actually turn into something useful.)
 
 By the way: :ref:`why baldaquin? <about>`
+
+baldaquin strives at providing, in a simple fashion, the typical components
+of an event-driven data acquisition system: a :ref:`run control <run>`,
+a logbook, extensive logging, :ref:`configuration <config>`,
+:ref:`time-keeping <timeline>` and data-archival
+capabilities, as well as a slick graphical user interface, with the idea that
+the user can then combine these capabilities and tailor them to their
+application.
 
 
 .. toctree::

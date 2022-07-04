@@ -1,3 +1,5 @@
+.. _run:
+
 :mod:`baldaquin.run` --- Run control
 ====================================
 
