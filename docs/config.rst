@@ -1,5 +1,5 @@
-:mod:`baldaquin.core.config` --- Configuration facilities
-=========================================================
+:mod:`baldaquin.config` --- Configuration facilities
+====================================================
 
-.. automodule:: baldaquin.core.config
+.. automodule:: baldaquin.config
    :members:

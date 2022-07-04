@@ -19,7 +19,7 @@
 import os
 
 from baldaquin import BALDAQUIN_DATA
-from baldaquin.core.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.config import ConfigurationParameter, ConfigurationBase
 
 
 class MockupConfiguration(ConfigurationBase):

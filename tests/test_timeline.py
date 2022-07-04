@@ -18,7 +18,7 @@
 
 import time
 
-from baldaquin.core.timeline import Timeline
+from baldaquin.timeline import Timeline
 
 
 def test_default_timeline():
