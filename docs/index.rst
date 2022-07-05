@@ -28,9 +28,9 @@ that it might never actually turn into something useful.)
 By the way: :ref:`why baldaquin? <about>`
 
 baldaquin strives at providing, in a simple fashion, the typical components
-of an event-driven data acquisition system: a :ref:`run control <run>`,
+of an event-driven data acquisition system: a :ref:`run control <runctrl>`,
 a logbook, extensive logging, :ref:`configuration <config>`,
-:ref:`time-keeping <timeline>` and data-archival
+:ref:`time-keeping <timeline>`, data-archival and test report
 capabilities, as well as a slick graphical user interface, with the idea that
 the user can then combine these capabilities and tailor them to their
 application.

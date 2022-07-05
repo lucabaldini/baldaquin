@@ -22,12 +22,13 @@ from datetime import datetime
 
 from loguru import logger
 
+from baldaquin.app import UserApplicationBase
 from baldaquin.timeline import Timeline
 
 
 class RunControlStatus(Enum):
 
-    """
+    """Enum for the run control finite state machine possible states.
     """
 
     RESET = auto()
@@ -38,10 +39,10 @@ class RunControlStatus(Enum):
 
 class RunControl:
 
-    """
+    """Run control class.
     """
 
-    NAME = None
+    NAME = 'Default run control'
 
     def __init__(self):
         """Constructor.
@@ -52,6 +53,14 @@ class RunControl:
         self.timeline = Timeline()
         self.start_timestamp = None
         self.stop_timestamp = None
+        self._user_application = None
+
+    def set_user_application(self, app):
+        """
+        """
+        if not isinstance(app, UserApplicationBase):
+            raise RuntimeError('Invalid user application')
+        self._user_application = app
 
     def _read_machine_id(self):
         """
@@ -62,6 +71,11 @@ class RunControl:
         """
         """
         return 0
+
+    def _increment_run_id(self):
+        """
+        """
+        pass
 
     def _write_run_id(self):
         """
@@ -88,51 +102,62 @@ class RunControl:
         """
         return self._status == RunControlStatus.RUNNING
 
-    def _raise_invalid_transition(self, target):
+    def _raise_invalid_transition(self, target : RunControlStatus) -> None:
         """
         """
         raise RuntimeError(f'Invalid state transition {self._status.name} -> {target.name}')
 
-    def set_reset(self):
+    def _raise_user_application_not_loaded(self) -> None:
         """
         """
+        raise RuntimeError('User application not loaded...')
+
+    def set_reset(self) -> None:
+        """
+        """
+        if self._user_application is None:
+            self._raise_user_application_not_loaded()
         target = RunControlStatus.RESET
         if self.is_stopped():
-            self.teardown()
+            self._user_application.teardown()
         else:
             self._raise_invalid_transition(target)
         self._status = target
 
-    def set_stopped(self):
+    def set_stopped(self) -> None:
         """
         """
+        if self._user_application is None:
+            self._raise_user_application_not_loaded()
         target = RunControlStatus.STOPPED
         if self.is_reset():
-            self.setup()
+            self._user_application.setup()
         elif self.is_running():
-            self.stop()
+            self._user_application.stop()
             self.stop_timestamp = self.timeline.latch()
-            logger.info(f'{self.NAME} run control stopped on {self.stop_timestamp}')
+            logger.info(f'{self.NAME} stopped on {self.stop_timestamp}')
         else:
             self._raise_invalid_transition(target)
         self._status = target
 
-    def set_running(self):
+    def set_running(self) -> None:
         """
         """
+        if self._user_application is None:
+            self._raise_user_application_not_loaded()
         target = RunControlStatus.RUNNING
         if self.is_stopped():
             self.start_timestamp = self.timeline.latch()
-            logger.info(f'{self.NAME} run control started on {self.start_timestamp}')
+            logger.info(f'{self.NAME} started on {self.start_timestamp}')
             self._run_id += 1
             self._write_run_id()
             self._create_output_folder()
-            self.start()
+            self._user_application.start()
         else:
             self._raise_invalid_transition(target)
         self._status = target
 
-    def elapsed_time(self):
+    def elapsed_time(self) -> float:
         """
         """
         if self.start_timestamp is None:
@@ -140,66 +165,3 @@ class RunControl:
         if self.stop_timestamp is None:
             return self.timeline.latch() - self.start_timestamp
         return self.stop_timestamp - self.start_timestamp
-
-    def setup(self):
-        """
-        """
-        raise NotImplementedError
-
-    def teardown(self):
-        """
-        """
-        raise NotImplementedError
-
-    def start(self):
-        """
-        """
-        raise NotImplementedError
-
-    def stop(self):
-        """
-        """
-        raise NotImplementedError
-
-
-
-class RunControlNoOp(RunControl):
-
-    """
-    """
-
-    NAME = 'NoOp'
-
-    def setup(self):
-        """
-        """
-        logger.info('Executing no-op setup()...')
-
-    def teardown(self):
-        """
-        """
-        logger.info('Executing no-op teardown()...')
-
-    def start(self):
-        """
-        """
-        logger.info('Executing no-op start()...')
-
-    def stop(self):
-        """
-        """
-        logger.info('Executing no-op stop()...')
-
-
-
-if __name__ == '__main__':
-    rc = RunControlNoOp()
-    print(rc.is_reset())
-    print(rc.elapsed_time())
-    rc.set_stopped()
-    rc.set_running()
-    print(rc.elapsed_time())
-    rc.set_stopped()
-    print(rc.elapsed_time())
-    print(rc.elapsed_time())
-    rc.set_reset()

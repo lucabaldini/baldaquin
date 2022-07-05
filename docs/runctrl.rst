@@ -1,11 +1,11 @@
-.. _run:
+.. _runctrl:
 
-:mod:`baldaquin.run` --- Run control
-====================================
+:mod:`baldaquin.runctrl` --- Run control
+========================================
 
 
 Module documentation
 --------------------
 
-.. automodule:: baldaquin.run
+.. automodule:: baldaquin.runctrl
    :members:

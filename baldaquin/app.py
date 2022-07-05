@@ -14,13 +14,63 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
+"""User application framework.
 """
-"""
+
+from loguru import logger
 
 
-class UserApplication:
 
+class UserApplicationBase:
+
+    """Base class for user applications.
     """
+
+    def setup(self) -> None:
+        """Function called when the run control transitions from RESET to STOPPED.
+        """
+        logger.info('Nothing to do at setup()...')
+
+    def teardown(self) -> None:
+        """Function called when the run control transitions from STOPPED to RESET.
+        """
+        logger.info('Nothing to do at teardown()...')
+
+    def start(self) -> None:
+        """Function called when the run control transitions from STOPPED to RUNNING.
+        """
+        raise NotImplementedError('start() not implemented')
+
+    def stop(self) -> None:
+        """Function called when the run control transitions from RUNNING to STOPPED.
+        """
+        raise NotImplementedError('stop() not implemented')
+
+
+
+class UserAppNoOp(UserApplicationBase):
+
+    """Simple do-nothing application for test purposes.
     """
 
-    pass
+    NAME = 'NoOp user application'
+
+    def setup(self) -> None:
+        """Overloaded do-nothing method.
+        """
+        logger.info('Executing no-op setup()...')
+
+    def teardown(self) -> None:
+        """Overloaded do-nothing method.
+        """
+        logger.info('Executing no-op teardown()...')
+
+    def start(self) -> None:
+        """Overloaded do-nothing method.
+        """
+        logger.info('Executing no-op start()...')
+
+    def stop(self) -> None:
+        """Overloaded do-nothing method.
+        """
+        logger.info('Executing no-op stop()...')
