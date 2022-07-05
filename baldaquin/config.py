@@ -64,11 +64,18 @@ class ConfigurationParameter:
     value : anything
         The parameter value.
 
-    intent : str (optional)
+    intent : str
         The intent of the parameter, acting as a comment in the corresponding
         configuration file.
 
-    constraints : dict (optional)
+    units : str, optional
+        The units for the configuration parameter.
+
+    fmt : str, optional
+        An optional format string to be used to render the parameter value
+        within a GUI element.
+
+    constraints : dict, optional
         A dictionary containing optional specifications on the parameter value.
     """
 
@@ -78,14 +85,16 @@ class ConfigurationParameter:
         'str': ('choices',)
     }
 
-    def __init__(self, name : str, type_name : str, value : Any, intent : str = None,
-        **constraints) -> None:
+    def __init__(self, name : str, type_name : str, value : Any, intent : str,
+                 units : str = None, fmt : str = None, **constraints) -> None:
         """Constructor.
         """
         self.name = name
         self.type_name = type_name
         self.value = None
         self.intent = intent
+        self.units = units
+        self.fmt = fmt
         for key in tuple(constraints):
             if key not in self.VALID_CONSTRAINTS.get(self.type_name, ()):
                 logger.warning(f'Invalid spec ({key}) for {self.name} ({self.type_name})...')
@@ -270,3 +279,15 @@ class ConfigurationBase(dict):
         data = ''.join(f'{param}\n' for param in self.values())
         line = self.terminal_line()
         return f'{title}\n{data}{line}'
+
+
+
+class TestConfiguration(ConfigurationBase):
+
+    TITLE = 'A simple test configuration'
+    PARAMETER_SPECS = (
+        ('enabled', 'bool', True, 'Enable connection', None, None, {}),
+        ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
+        ('port', 'int', 20004, 'UDP port', None, None, dict(min=1024, max=65535)),
+        ('timeout', 'float', 10., 'Connection timeout', 's', None, dict(min=0.))
+    )

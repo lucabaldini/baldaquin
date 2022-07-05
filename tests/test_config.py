@@ -37,13 +37,13 @@ class SillyConfiguration(ConfigurationBase):
 def _test_base_match(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    p = ConfigurationParameter('parameter', type_name, value, **constraints)
+    p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value == value
 
 def _test_base_mismatch(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    p = ConfigurationParameter('parameter', type_name, value, **constraints)
+    p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value == None
 
 def test_parameter_bool():

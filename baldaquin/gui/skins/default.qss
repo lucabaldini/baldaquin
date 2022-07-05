@@ -1,6 +1,6 @@
 
 QWidget {
-  background-color: #ffffff
+  background-color: #ffffff;
 }
 
 QPushButton, QFrame {
@@ -33,16 +33,23 @@ QLabel {
 }
 
 
-QLabel#card_item_title {
+QLabel#data_widget_title {
   color: gray;
   font-size: 12px;
 }
 
 
-QLabel#card_item_value {
+QLabel#date_widget_value {
   font-size: 18px;
 }
 
 QTextEdit {
   border: none;
+}
+
+QLineEdit#data_widget_value {
+  border: 1px solid lightgray;
+  min-height: 28px;
+  max-height: 28px;
+  border-radius: 4px; 
 }

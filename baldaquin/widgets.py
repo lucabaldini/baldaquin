@@ -129,44 +129,17 @@ class ControlBar(QtWidgets.QFrame):
 
 
 
+class DataWidgetBase(QtWidgets.QWidget):
 
-class CardItem(QtWidgets.QWidget):
-
-    """Small class containing a (read-only) card item.
-
-    In our implementation, a card item is the datum of two QLabel objects
-    containing text: a title and a value. They are arranged into a vertical
-    layout, one on top of the other.
-
-    Note that the title and value QLabel objects have specific objects names
-    attached to them to make it possible to style them via stylesheets
-    downstream.
-
-    Arguments
-    ---------
-    name : str
-        The name of the card---mind this is the key for addressing items within
-        a Card object.
-
-    title : str
-        The title of the item.
-
-    value
-        The value hold by the card item.
-
-    units : str
-        The units attach to the card item value.
-
-    fmt : str
-        The format string to be used to render the card item value.
+    """Base class for a widget displaying some data.
     """
 
-    TITLE_OBJECT_NAME = 'card_item_title'
-    VALUE_OBJECT_NAME = 'card_item_value'
-    MISSING_VALUE = '-'
+    TITLE_WIDGET_NAME = 'data_widget_title'
+    VALUE_WIDGET_NAME = 'data_widget_value'
+    MISSING_VALUE_LABEL = '-'
 
-    def __init__(self, name : str, title : str, value=None, units : str = None,
-        fmt : str = None) -> None:
+    def __init__(self, value_cls, name : str, title : str, value=None,
+                 units : str = None, fmt : str = None) -> None:
         """Constructor
         """
         self.name = name
@@ -175,29 +148,91 @@ class CardItem(QtWidgets.QWidget):
         super().__init__()
         layout = QtWidgets.QVBoxLayout()
         self.setLayout(layout)
-        self.title_label = QtWidgets.QLabel()
-        self.title_label.setObjectName(self.TITLE_OBJECT_NAME)
-        self.value_label = QtWidgets.QLabel()
-        self.value_label.setObjectName(self.VALUE_OBJECT_NAME)
-        layout.addWidget(self.title_label)
-        layout.addWidget(self.value_label)
+        self.title_widget = QtWidgets.QLabel()
+        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
+        self.value_widget = value_cls()
+        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
+        layout.addWidget(self.title_widget)
+        layout.addWidget(self.value_widget)
         self.set_title(title)
         if value is not None:
             self.set_value(value)
         else:
-            self.set_value(self.MISSING_VALUE)
+            self.set_value(self.MISSING_VALUE_LABEL)
 
     def set_title(self, title : str) -> None:
-        """Set the title for the card item.
+        """Set the widget title.
         """
-        self.title_label.setText(title)
+        self.title_widget.setText(title)
+
+    def set_value(self, value) -> None:
+        """Set the widget value.
+        """
+        if isinstance(self.value_widget, QtWidgets.QCheckBox):
+            self.value_widget.setChecked(value)
+        elif isinstance(self.value_widget, QtWidgets.QLineEdit):
+            self.value_widget.setText(value)
+        elif isinstance(self.value_widget, QtWidgets.QSpinBox):
+            self.value_widget.setValue(value)
+        elif isinstance(self.value_widget, QtWidgets.QDoubleSpinBox):
+            self.value_widget.setValue(value)
+        else:
+            raise RuntimeError(f'No handler for widget {self.value_widget.__class__.__name__}')
+
+
+
+class ConfigurationInput(QtWidgets.QFrame):
+
+    """
+    """
+
+    __WIDGET_DICT = {
+        'bool': QtWidgets.QCheckBox,
+        'int' : QtWidgets.QSpinBox,
+        'float': QtWidgets.QDoubleSpinBox,
+        'str': QtWidgets.QLineEdit
+    }
+
+    def __init__(self, configuration):
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.configuration = configuration
+        self._item_dict = {}
+        for param in configuration.values():
+            cls = self.__WIDGET_DICT[param.type_name]
+            text = f'{param.intent}'
+            item = DataWidgetBase(cls, param.name, text, param.value)
+            self._item_dict[item.name] = item
+            self.layout().addWidget(item)
+        self.layout().addStretch()
+
+    def set_value(self, name, value):
+        """Set the value for a specific card item (addressed by name).
+
+        This will raise a KeyError if the card item does not exist.
+        """
+        self._item_dict[name].set_value(value)
+
+
+
+class CardItem(DataWidgetBase):
+
+    """
+    """
+
+    def __init__(self, name : str, title : str, value=None, units : str = None,
+        fmt : str = None) -> None:
+        """Constructor
+        """
+        super().__init__(QtWidgets.QLabel, name, title, value, units, fmt)
 
     def set_value(self, value) -> None:
         """Set the value for the card item.
         """
         text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_label.setText(text)
-
+        self.value_widget.setText(text)
 
 
 class Card(QtWidgets.QFrame):
@@ -327,13 +362,18 @@ if __name__ == '__main__':
     tab.addTab(log_display, '')
     tab.setTabIcon(0, QtGui.QIcon(_icon_file_path('chat')))
 
-    tab_card = Card()
-    tab_card.add_item('ip', 'IP address', '127.0.0.1')
-    tab_card.add_item('port', 'Port', '12')
-    tab_card.layout().addStretch()
-    tab.addTab(tab_card, '')
-    tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
+    #tab_card = Card()
+    #tab_card.add_item('ip', 'IP address', '127.0.0.1')
+    #tab_card.add_item('port', 'Port', '12')
+    #tab_card.layout().addStretch()
+    #tab.addTab(tab_card, '')
+    #tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
 
+    from baldaquin.config import TestConfiguration
+    config = TestConfiguration()
+    tab_config = ConfigurationInput(config)
+    tab.addTab(tab_config, '')
+    tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
 
     rc_card.set_user_application('my_application.py')
     rc_card.set_uptime(12.34)
