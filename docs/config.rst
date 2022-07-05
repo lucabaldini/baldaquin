@@ -90,9 +90,11 @@ port................: 20004 {'min': 1024, 'max': 65535}
 timeout.............: 10.0 {'min': 0.0}
 --------------------------------------------------------------------------------
 
-The :meth:`ConfigurationBase.write() <baldaquin.config.ConfigurationBase.write()>`
-class method allows to encode the content of the configuration into a JSON
-file looking like
+Programmatically, you can retrieve the value of a specific parameter through the
+:meth:`value() <baldaquin.config.ConfigurationBase.value()>` class method, and update
+the value with :meth:`update_value() <baldaquin.config.ConfigurationBase.update_value()>`.
+The :meth:`save() <baldaquin.config.ConfigurationBase.save()>` method allows to
+dump the (JSON-encoded) content of the configuration into file looking like
 
 .. code-block:: json
 
@@ -133,17 +135,20 @@ file looking like
   }
 
 and this is the basic mechanism through which applications will interact with
-configuration objects, with
-:meth:`ConfigurationBase.read() <baldaquin.config.ConfigurationBase.read()>`
-allowing to update an existing configuration from a JSON file with the proper
-format.
+configuration objects, with :meth:`update() <baldaquin.config.ConfigurationBase.update()>`
+allowing to update an existing configuration from a JSON file with the proper format.
 
 .. note::
 
    Keep in mind that configurations are never `read` from file---they come
    to life with all the parameters set to their default values, and then they
-   can be `updated` from a JSON file. This makes it much easier to ensure that
-   configuration objects remain internally valid at all times.
+   can be `updated` from a JSON file.
+
+   When you think about, this makes extending and/or modifying existing
+   configurations much easier as, once the concrete class is changed, all
+   existing configuration files are automatically updated transparantly, and
+   in case one edits a file by hand, any mistake will be promptly signaled
+   (and corrected) without compromising the validity of the configuration object.
 
 
 Module documentation

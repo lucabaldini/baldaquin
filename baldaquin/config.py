@@ -217,12 +217,12 @@ class ConfigurationBase(dict):
         """
         return self[key].value
 
-    def update_value(self, key, value) -> None:
+    def update_value(self, key, value) -> ParameterValidationError:
         """Update the value of a configuration parameter.
         """
-        self[key].set_value(value)
+        return self[key].set_value(value)
 
-    def read(self, file_path : str) -> None:
+    def update(self, file_path : str) -> None:
         """Update the configuration parameters from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
@@ -231,13 +231,13 @@ class ConfigurationBase(dict):
         for key, param_dict in data.items():
             self.update_value(key, param_dict['value'])
 
-    def to_json(self):
+    def to_json(self) -> str:
         """Encode the configuration into JSON to be written to file.
         """
         data = {key: value.__dict__ for key, value in self.items()}
         return json.dumps(data, indent=4)
 
-    def write(self, file_path):
+    def save(self, file_path) -> None:
         """Dump the configuration to a JSON file.
         """
         logger.info(f'Writing configuration to {file_path}...')

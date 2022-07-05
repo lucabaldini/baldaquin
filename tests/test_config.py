@@ -90,13 +90,13 @@ def test_configuration():
     config = SillyConfiguration()
     print(config)
     file_path = os.path.join(BALDAQUIN_DATA, 'test_config.json')
-    config.write(file_path)
-    config.read(file_path)
+    config.save(file_path)
+    config.update(file_path)
     assert config.value('port') == 20004
     config.update_value('port', 3)
     assert config.value('port') == 20004
     config.update_value('port', 20003)
-    config.write(file_path)
+    config.save(file_path)
     config = SillyConfiguration()
-    config.read(file_path)
+    config.update(file_path)
     assert config.value('port') == 20003
