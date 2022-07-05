@@ -72,8 +72,7 @@ class ConfigurationParameter:
         The units for the configuration parameter.
 
     fmt : str, optional
-        An optional format string to be used to render the parameter value
-        within a GUI element.
+        An optional format string for the preferred rendering the parameter value.
 
     constraints : dict, optional
         A dictionary containing optional specifications on the parameter value.
@@ -86,7 +85,7 @@ class ConfigurationParameter:
     }
 
     def __init__(self, name : str, type_name : str, value : Any, intent : str,
-                 units : str = None, fmt : str = None, **constraints) -> None:
+                 units : str = None, fmt : None = None, **constraints) -> None:
         """Constructor.
         """
         self.name = name
@@ -184,7 +183,12 @@ class ConfigurationParameter:
     def __str__(self):
         """String formatting.
         """
-        return f'{self.name:.<20}: {self.value} {self.constraints if len(self.constraints) else ""}'
+        text = f'{self.name:.<20}: {self.value:{self.fmt if self.fmt else ""}}'
+        if self.units is not None:
+            text = f'{text} {self.units}'
+        if len(self.constraints):
+            text = f'{text} {self.constraints}'
+        return text
 
 
 
@@ -282,12 +286,12 @@ class ConfigurationBase(dict):
 
 
 
-class TestConfiguration(ConfigurationBase):
+class SampleConfiguration(ConfigurationBase):
 
     TITLE = 'A simple test configuration'
     PARAMETER_SPECS = (
         ('enabled', 'bool', True, 'Enable connection', None, None, {}),
         ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
         ('port', 'int', 20004, 'UDP port', None, None, dict(min=1024, max=65535)),
-        ('timeout', 'float', 10., 'Connection timeout', 's', None, dict(min=0.))
+        ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))
     )

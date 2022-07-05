@@ -19,19 +19,7 @@
 import os
 
 from baldaquin import BALDAQUIN_DATA
-from baldaquin.config import ConfigurationParameter, ConfigurationBase
-
-
-class SillyConfiguration(ConfigurationBase):
-
-    TITLE = 'Just a test configuration'
-    PARAMETER_SPECS = (
-        ('enabled', 'bool', True, 'Enable connection', {}),
-        ('ip_address', 'str', '127.0.0.1', 'IP address', {}),
-        ('port', 'int', 20004, 'UDP port', dict(min=1024, max=65535)),
-        ('timeout', 'float', 10., 'Connection timeout [s]', dict(min=0.))
-    )
-
+from baldaquin.config import ConfigurationParameter, ConfigurationBase, SampleConfiguration
 
 
 def _test_base_match(type_name, value, **constraints):
@@ -45,6 +33,14 @@ def _test_base_mismatch(type_name, value, **constraints):
     """
     p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value == None
+
+def test_print_parameters():
+    """Print some parameters.
+    """
+    print(ConfigurationParameter('timeout', 'float', 10., 'timeout'))
+    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's'))
+    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f'))
+    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f', min=0.))
 
 def test_parameter_bool():
     """Test possible setting for int parameters.
@@ -87,7 +83,7 @@ def test_parameter_str():
 def test_configuration():
     """Test an actual, fully-fledged configuration.
     """
-    config = SillyConfiguration()
+    config = SampleConfiguration()
     print(config)
     file_path = os.path.join(BALDAQUIN_DATA, 'test_config.json')
     config.save(file_path)
@@ -97,6 +93,6 @@ def test_configuration():
     assert config.value('port') == 20004
     config.update_value('port', 20003)
     config.save(file_path)
-    config = SillyConfiguration()
+    config = SampleConfiguration()
     config.update(file_path)
     assert config.value('port') == 20003
