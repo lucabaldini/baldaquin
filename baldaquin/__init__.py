@@ -35,9 +35,9 @@ def __join(*args, base_folder : str = BALDAQUIN_ROOT) -> str:
 
 # Basic package structure.
 BALDAQUIN_CORE = __join('core')
-BALDAQUIN_GUI = __join('gui')
-BALDAQUIN_ICONS = __join('icons', base_folder=BALDAQUIN_GUI)
-BALDAQUIN_SKINS = __join('skins', base_folder=BALDAQUIN_GUI)
+BALDAQUIN_GRAPHICS = __join('graphics')
+BALDAQUIN_ICONS = __join('icons', base_folder=BALDAQUIN_GRAPHICS)
+BALDAQUIN_SKINS = __join('skins', base_folder=BALDAQUIN_GRAPHICS)
 BALDAQUIN_DOCS = __join('docs', base_folder=BALDAQUIN_BASE)
 BALDAQUIN_DOCS_STATIC = __join('_static', base_folder=BALDAQUIN_DOCS)
 BALDAQUIN_TESTS = __join('test', base_folder=BALDAQUIN_BASE)

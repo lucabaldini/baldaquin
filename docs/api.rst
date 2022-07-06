@@ -28,4 +28,5 @@ List of modules
    :maxdepth: 2
    :caption: GUI
 
+   gui
    widgets

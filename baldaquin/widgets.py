@@ -17,6 +17,8 @@
 """Custom widgets for the user interface.
 """
 
+
+
 import os
 import sys
 from typing import Any
@@ -25,191 +27,15 @@ from loguru import logger
 from PySide2 import QtCore, QtGui, QtWidgets
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-
-
-_DEFAULT_ICON_CATALOG = 'material3'
-_DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
-
-
-def _icon_file_path(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
-    style : str = _DEFAULT_ICON_STYLE):
-    """Return the path to a given icon file.
-    """
-    file_name = f'{name}_{style}.{fmt}'
-    file_path = os.path.join(BALDAQUIN_ICONS, catalog, file_name)
-    return file_path
-
-
-def _stylesheet_file_path(name : str = 'default'):
-    """Return the path to a given stylesheet file.
-    """
-    file_name = f'{name}.qss'
-    file_path = os.path.join(BALDAQUIN_SKINS, file_name)
-    return file_path
-
-
-
-class Button(QtWidgets.QPushButton):
-
-    """Small wrapper aroung the QtWidgets.QPushButton class.
-    """
-
-    def __init__(self, icon_name : str, size : int = 40, icon_size : int = 25) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.setFixedSize(size, size)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.set_icon(icon_name)
-
-    def set_icon(self, icon_name : str, icon_size : int = 25) -> None:
-        """Set the button icon.
-        """
-        self.setIcon(QtGui.QIcon(_icon_file_path(icon_name)))
-        self.setIconSize(QtCore.QSize(icon_size, icon_size))
-
-
-
-class DataWidgetBase(QtWidgets.QWidget):
-
-    """Base class for a widget displaying some data.
-
-    This is nothing more than a pair of widget---a QLabel holding a title and
-    a generic widget holding some data---arranged in a vertical layout.
-    This is an abstract class, and specialized subclasses are provided below
-    to show or edit data in different fashions, representing the basic building
-    block to construct complex user interfaces.
-
-    Note that derived classes must override, at the very minimum, the
-    ``VALUE_WIDGET_CLASS`` class member and the ``set_value`` class method.
-
-    Note that the constructor of this base class calls the ``setObjectName()``
-    method for both widgets (with different argunents) to make it easier to
-    stylesheet the application downstream.
-    """
-
-    VALUE_WIDGET_CLASS = None
-    TITLE_WIDGET_NAME = 'data_widget_title'
-    VALUE_WIDGET_NAME = 'data_widget_value'
-    MISSING_VALUE_LABEL = '-'
-
-    def __init__(self, name : str, title : str, value=None, units : str = None,
-                 fmt : str = None) -> None:
-        """Constructor
-        """
-        self.name = name
-        self._units = units
-        self._fmt = fmt
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.title_widget = QtWidgets.QLabel()
-        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
-        self.value_widget = self.VALUE_WIDGET_CLASS()
-        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
-        self.layout().addWidget(self.title_widget)
-        self.layout().addWidget(self.value_widget)
-        self.set_title(title)
-        if value is not None:
-            self.set_value(value)
-        else:
-            self.set_value(self.MISSING_VALUE_LABEL)
-        self.setup()
-
-    def setup(self):
-        """Do nothing post-construction hook that can be overloaded in derived
-        classes.
-        """
-        pass
-
-    def set_title(self, title : str) -> None:
-        """Set the widget title.
-        """
-        self.title_widget.setText(title)
-
-    def set_value(self, value : Any) -> None:
-        """Set hook to be reimplemented by derived classes.
-        """
-        raise NotImplementedError
-
-
-
-class DisplayDataWidget(DataWidgetBase):
-
-    """Simple widget to display a single piece of information in a read-only fashion.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLabel
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_widget.setText(text)
-
-
-
-class CheckBoxDataWidget(DataWidgetBase):
-
-    """Check box data widget.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setChecked(value)
-
-
-
-class LineEditDataWidget(DataWidgetBase):
-
-    """Line edit data widget.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLineEdit
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setText(value)
-
-
-
-class SpinBoxDataWidget(DataWidgetBase):
-
-    """Spin box data widget.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setValue(value)
-
-
-
-class DoubleSpinBoxDataWidget(DataWidgetBase):
-
-    """Double spin box data widget.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QDoubleSpinBox
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setValue(value)
-
+from baldaquin.gui import CheckBoxDataWidget, SpinBoxDataWidget, DoubleSpinBoxDataWidget,\
+    LineEditDataWidget, DataWidgetBase
 
 
 class CardWidget(QtWidgets.QFrame):
 
-    """
+    """Simple card widget to display information in read-only mode.
     """
 
-    pass
 
 
 
@@ -247,12 +73,6 @@ class ConfigurationWidget(QtWidgets.QFrame):
         This will raise a KeyError if the card item does not exist.
         """
         self._item_dict[name].set_value(value)
-
-
-
-
-
-
 
 
 
