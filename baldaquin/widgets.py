@@ -27,15 +27,59 @@ from loguru import logger
 from PySide2 import QtCore, QtGui, QtWidgets
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-from baldaquin.gui import CheckBoxDataWidget, SpinBoxDataWidget, DoubleSpinBoxDataWidget,\
-    LineEditDataWidget, DataWidgetBase
+from baldaquin.config import ConfigurationParameter
+import baldaquin.gui
+
 
 
 class CardWidget(QtWidgets.QFrame):
 
-    """Simple card widget to display information in read-only mode.
+    """Small class implementing a (read-only) card.
+
+    According to the material design guidelines
+    https://material.io/components/cards
+    cards are surfaces that display content and actions on a single topic.
+    For our purposes, cards are basically QFrame objects holding a vertical layout
+    to which we attach :class:`DisplayWidget <baldaquin.gui.DisplayWidget>`
+    instances.
     """
 
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self._widget_dict = {}
+
+    def add_bottom_stretch(self) -> None:
+        """Add a vertical stretch at the bottom of the layout.
+
+        This is to ensure that the card item are "floating" in the card container
+        without being expanded, and the net effect is that the items appear
+        aligned to the top in the card. There might be a clever way to achieve
+        this automatically in the loop filling the card, but I could not make it
+        work, of not manually.
+        """
+        self.layout().addStretch()
+
+    def add(self, *args, **kwargs) -> None:
+        """Add an item to the card.
+
+        Note the signature, here, is designed to match exactly that of the
+        :class:`DisplayWidget <baldaquin.gui.DisplayWidget>` constructor.
+        """
+        widget = baldaquin.gui.DisplayWidget(*args, **kwargs)
+        if widget.name in self._widget_dict:
+            raise RuntimeError(f'Duplicated card item name "{widget.name}"')
+        self._widget_dict[widget.name] = widget
+        self.layout().addWidget(widget)
+
+    def set_value(self, name : str, value : Any):
+        """Set the value for a specific card item (addressed by name).
+
+        This will raise a KeyError if the card item does not exist.
+        """
+        self._widget_dict[name].set_value(value)
 
 
 
@@ -45,34 +89,45 @@ class ConfigurationWidget(QtWidgets.QFrame):
     :class:`baldaquin.config.ConfigurationBase` subclass.
     """
 
-    __WIDGET_DICT = {
-        'bool': CheckBoxDataWidget,
-        'int' : SpinBoxDataWidget,
-        'float': DoubleSpinBoxDataWidget,
-        'str': LineEditDataWidget
-    }
-
-    def __init__(self, configuration):
+    def __init__(self, configuration) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
         self.configuration = configuration
-        self._item_dict = {}
+        self._widget_dict = {}
         for param in configuration.values():
-            cls = self.__WIDGET_DICT[param.type_name]
-            text = f'{param.intent}'
-            item = DataWidgetBase(cls, param.name, text, param.value)
-            self._item_dict[item.name] = item
-            self.layout().addWidget(item)
+            widget = self.__param_widget(param)
+            self._widget_dict[widget.name] = widget
+            self.layout().addWidget(widget)
         self.layout().addStretch()
 
-    def set_value(self, name, value):
-        """Set the value for a specific card item (addressed by name).
-
-        This will raise a KeyError if the card item does not exist.
+    @staticmethod
+    def __param_widget(param : ConfigurationParameter) -> baldaquin.gui.DataWidgetBase:
+        """Turn a configuration parameter into the corresponding widget.
         """
-        self._item_dict[name].set_value(value)
+        args = param.name, param.intent, param.value, param.units, param.fmt
+        kwargs = param.constraints
+        type_ = param.type_name
+        if type_ == 'bool':
+            return baldaquin.gui.ParameterCheckBox(*args, **kwargs)
+        if type_ == 'int':
+            return baldaquin.gui.ParameterSpinBox(*args, **kwargs)
+        if type_ == 'float':
+            return baldaquin.gui.ParameterDoubleSpinBox(*args, **kwargs)
+        if type_ == 'str':
+            if len(kwargs):
+                return baldaquin.gui.ParameterLineEdit(*args, **kwargs)
+            else:
+                return baldaquin.gui.ParameterComboBox(*args, **kwargs)
+        raise RuntimeError(f'Unknown parameter type {type_}')
+
+    def set_value(self, name : str, value : Any) -> None:
+        """Set the value for a specific parameter (addressed by name).
+
+        Mind this will raise a KeyError if the widget does not exist.
+        """
+        self._widget_dict[name].set_value(value)
 
 
 
@@ -140,77 +195,7 @@ class ControlBar(QtWidgets.QFrame):
 
 
 
-
-class CardItem(DataWidgetBase):
-
-    """
-    """
-
-    def __init__(self, name : str, title : str, value=None, units : str = None,
-        fmt : str = None) -> None:
-        """Constructor
-        """
-        super().__init__(QtWidgets.QLabel, name, title, value, units, fmt)
-
-    def set_value(self, value) -> None:
-        """Set the value for the card item.
-        """
-        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_widget.setText(text)
-
-
-class Card(QtWidgets.QFrame):
-
-    """Small class implementing a (read-only) card.
-
-    According to the material design guidelines
-    https://material.io/components/cards
-    cards are surfaces that display content and actions on a single topic.
-
-    For our purposes, cards are basically QFrame object holding a vertical layout
-    to which we attach CardItem objects.
-    """
-
-    def __init__(self):
-        """Constructor.
-        """
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self._item_dict = {}
-
-    def add_bottom_stretch(self):
-        """Add a vertical stretch at the bottom of the layout.
-
-        This is to ensure that the card item are "floating" in the card container
-        without being expanded, and the net effect is that the items appear
-        aligned to the top in the card. There might be a clever way to achieve
-        this automatically in the loop filling the card, but I could not make it
-        work, of not manually.
-        """
-        self.layout().addStretch()
-
-    def add_item(self, *args, **kwargs) -> None:
-        """Add an item to the card.
-
-        Note the signature, here, is designed to match exactly that of the
-        CardItem constructor.
-        """
-        item = CardItem(*args, **kwargs)
-        if item.name in self._item_dict:
-            raise RuntimeError(f'Duplicated card item name "{item.name}"')
-        self._item_dict[item.name] = item
-        self.layout().addWidget(item)
-
-    def set_value(self, name, value):
-        """Set the value for a specific card item (addressed by name).
-
-        This will raise a KeyError if the card item does not exist.
-        """
-        self._item_dict[name].set_value(value)
-
-
-
-class RunControlCard(Card):
+class RunControlCard(CardWidget):
 
     """Specialized card to display the run control information.
     """
@@ -219,10 +204,10 @@ class RunControlCard(Card):
         """Constructor.
         """
         super().__init__()
-        self.add_item('ctrl', 'Run control', run_contro_name)
-        self.add_item('backend', 'Back-end', backend_name)
-        self.add_item('userapp', 'User application')
-        self.add_item('uptime', 'Uptime', 0., units='s', fmt='.3f')
+        self.add('ctrl', 'Run control', run_contro_name)
+        self.add('backend', 'Back-end', backend_name)
+        self.add('userapp', 'User application')
+        self.add('uptime', 'Uptime', 0., units='s', fmt='.3f')
         self.add_bottom_stretch()
 
     def set_user_application(self, value : str):
