@@ -119,7 +119,7 @@ class DataWidgetBase(QtWidgets.QWidget):
         else:
             self.set_value(self.MISSING_VALUE_LABEL)
 
-    def setup(self):
+    def setup(self, **kwargs):
         """Do nothing post-construction hook that can be overloaded in derived classes.
         """
 
@@ -171,20 +171,11 @@ class ParameterSpinBox(DataWidgetBase):
 
     VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
 
-    def setup(self) -> None:
-        """Overloaded method---here we set the suffix of the spin box.
-        """
-        if self._units is not None:
-            self.value_widget.setSuffix(f' {self._units}')
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setValue(value)
-
     def setup(self, **kwargs) -> None:
         """Overloaded method.
         """
+        if self._units is not None:
+            self.value_widget.setSuffix(f' {self._units}')
         for key, value in kwargs.items():
             if key == 'min':
                 self.value_widget.setMinimum(value)
@@ -192,6 +183,11 @@ class ParameterSpinBox(DataWidgetBase):
                 self.value_widget.setMaximum(value)
             elif key == 'step':
                 self.value_widget.setSingleStep(value)
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setValue(value)
 
 
 
@@ -236,7 +232,3 @@ class ParameterComboBox(DataWidgetBase):
         """Overloaded method.
         """
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
-
-
-
-

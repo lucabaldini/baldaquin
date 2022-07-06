@@ -36,6 +36,9 @@ QLabel {
 QLabel#data_widget_title {
   color: gray;
   font-size: 12px;
+  min-height: 24px;
+  max-height: 24px;
+  min-width: 150px;
 }
 
 
@@ -47,9 +50,9 @@ QTextEdit {
   border: none;
 }
 
-QLineEdit#data_widget_value {
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox#data_widget_value {
   border: 1px solid lightgray;
-  min-height: 28px;
-  max-height: 28px;
-  border-radius: 4px; 
+  border-radius: 4px;
+  min-height: 24px;
+  max-height: 24px;
 }
