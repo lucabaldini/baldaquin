@@ -19,6 +19,7 @@
 
 import os
 import sys
+from typing import Any
 
 from loguru import logger
 from PySide2 import QtCore, QtGui, QtWidgets
@@ -50,10 +51,10 @@ def _stylesheet_file_path(name : str = 'default'):
 
 class Button(QtWidgets.QPushButton):
 
-    """Default round button.
+    """Small wrapper aroung the QtWidgets.QPushButton class.
     """
 
-    def __init__(self, icon_name, size : int = 40, icon_size : int = 25):
+    def __init__(self, icon_name : str, size : int = 40, icon_size : int = 25) -> None:
         """Constructor.
         """
         super().__init__()
@@ -61,11 +62,197 @@ class Button(QtWidgets.QPushButton):
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.set_icon(icon_name)
 
-    def set_icon(self, icon_name : str, icon_size : int = 25):
-        """
+    def set_icon(self, icon_name : str, icon_size : int = 25) -> None:
+        """Set the button icon.
         """
         self.setIcon(QtGui.QIcon(_icon_file_path(icon_name)))
         self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+
+
+class DataWidgetBase(QtWidgets.QWidget):
+
+    """Base class for a widget displaying some data.
+
+    This is nothing more than a pair of widget---a QLabel holding a title and
+    a generic widget holding some data---arranged in a vertical layout.
+    This is an abstract class, and specialized subclasses are provided below
+    to show or edit data in different fashions, representing the basic building
+    block to construct complex user interfaces.
+
+    Note that derived classes must override, at the very minimum, the
+    ``VALUE_WIDGET_CLASS`` class member and the ``set_value`` class method.
+
+    Note that the constructor of this base class calls the ``setObjectName()``
+    method for both widgets (with different argunents) to make it easier to
+    stylesheet the application downstream.
+    """
+
+    VALUE_WIDGET_CLASS = None
+    TITLE_WIDGET_NAME = 'data_widget_title'
+    VALUE_WIDGET_NAME = 'data_widget_value'
+    MISSING_VALUE_LABEL = '-'
+
+    def __init__(self, name : str, title : str, value=None, units : str = None,
+                 fmt : str = None) -> None:
+        """Constructor
+        """
+        self.name = name
+        self._units = units
+        self._fmt = fmt
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.title_widget = QtWidgets.QLabel()
+        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
+        self.value_widget = self.VALUE_WIDGET_CLASS()
+        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
+        self.layout().addWidget(self.title_widget)
+        self.layout().addWidget(self.value_widget)
+        self.set_title(title)
+        if value is not None:
+            self.set_value(value)
+        else:
+            self.set_value(self.MISSING_VALUE_LABEL)
+        self.setup()
+
+    def setup(self):
+        """Do nothing post-construction hook that can be overloaded in derived
+        classes.
+        """
+        pass
+
+    def set_title(self, title : str) -> None:
+        """Set the widget title.
+        """
+        self.title_widget.setText(title)
+
+    def set_value(self, value : Any) -> None:
+        """Set hook to be reimplemented by derived classes.
+        """
+        raise NotImplementedError
+
+
+
+class DisplayDataWidget(DataWidgetBase):
+
+    """Simple widget to display a single piece of information in a read-only fashion.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLabel
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
+        self.value_widget.setText(text)
+
+
+
+class CheckBoxDataWidget(DataWidgetBase):
+
+    """Check box data widget.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setChecked(value)
+
+
+
+class LineEditDataWidget(DataWidgetBase):
+
+    """Line edit data widget.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLineEdit
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setText(value)
+
+
+
+class SpinBoxDataWidget(DataWidgetBase):
+
+    """Spin box data widget.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setValue(value)
+
+
+
+class DoubleSpinBoxDataWidget(DataWidgetBase):
+
+    """Double spin box data widget.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QDoubleSpinBox
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setValue(value)
+
+
+
+class CardWidget(QtWidgets.QFrame):
+
+    """
+    """
+
+    pass
+
+
+
+class ConfigurationWidget(QtWidgets.QFrame):
+
+    """Basic widget to display and edit an instance of a
+    :class:`baldaquin.config.ConfigurationBase` subclass.
+    """
+
+    __WIDGET_DICT = {
+        'bool': CheckBoxDataWidget,
+        'int' : SpinBoxDataWidget,
+        'float': DoubleSpinBoxDataWidget,
+        'str': LineEditDataWidget
+    }
+
+    def __init__(self, configuration):
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.configuration = configuration
+        self._item_dict = {}
+        for param in configuration.values():
+            cls = self.__WIDGET_DICT[param.type_name]
+            text = f'{param.intent}'
+            item = DataWidgetBase(cls, param.name, text, param.value)
+            self._item_dict[item.name] = item
+            self.layout().addWidget(item)
+        self.layout().addStretch()
+
+    def set_value(self, name, value):
+        """Set the value for a specific card item (addressed by name).
+
+        This will raise a KeyError if the card item does not exist.
+        """
+        self._item_dict[name].set_value(value)
+
+
+
+
+
+
 
 
 
@@ -129,91 +316,8 @@ class ControlBar(QtWidgets.QFrame):
 
 
 
-class DataWidgetBase(QtWidgets.QWidget):
-
-    """Base class for a widget displaying some data.
-    """
-
-    TITLE_WIDGET_NAME = 'data_widget_title'
-    VALUE_WIDGET_NAME = 'data_widget_value'
-    MISSING_VALUE_LABEL = '-'
-
-    def __init__(self, value_cls, name : str, title : str, value=None,
-                 units : str = None, fmt : str = None) -> None:
-        """Constructor
-        """
-        self.name = name
-        self._units = units
-        self._fmt = fmt
-        super().__init__()
-        layout = QtWidgets.QVBoxLayout()
-        self.setLayout(layout)
-        self.title_widget = QtWidgets.QLabel()
-        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
-        self.value_widget = value_cls()
-        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
-        layout.addWidget(self.title_widget)
-        layout.addWidget(self.value_widget)
-        self.set_title(title)
-        if value is not None:
-            self.set_value(value)
-        else:
-            self.set_value(self.MISSING_VALUE_LABEL)
-
-    def set_title(self, title : str) -> None:
-        """Set the widget title.
-        """
-        self.title_widget.setText(title)
-
-    def set_value(self, value) -> None:
-        """Set the widget value.
-        """
-        if isinstance(self.value_widget, QtWidgets.QCheckBox):
-            self.value_widget.setChecked(value)
-        elif isinstance(self.value_widget, QtWidgets.QLineEdit):
-            self.value_widget.setText(value)
-        elif isinstance(self.value_widget, QtWidgets.QSpinBox):
-            self.value_widget.setValue(value)
-        elif isinstance(self.value_widget, QtWidgets.QDoubleSpinBox):
-            self.value_widget.setValue(value)
-        else:
-            raise RuntimeError(f'No handler for widget {self.value_widget.__class__.__name__}')
 
 
-
-class ConfigurationInput(QtWidgets.QFrame):
-
-    """
-    """
-
-    __WIDGET_DICT = {
-        'bool': QtWidgets.QCheckBox,
-        'int' : QtWidgets.QSpinBox,
-        'float': QtWidgets.QDoubleSpinBox,
-        'str': QtWidgets.QLineEdit
-    }
-
-    def __init__(self, configuration):
-        """Constructor.
-        """
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.configuration = configuration
-        self._item_dict = {}
-        for param in configuration.values():
-            cls = self.__WIDGET_DICT[param.type_name]
-            text = f'{param.intent}'
-            item = DataWidgetBase(cls, param.name, text, param.value)
-            self._item_dict[item.name] = item
-            self.layout().addWidget(item)
-        self.layout().addStretch()
-
-    def set_value(self, name, value):
-        """Set the value for a specific card item (addressed by name).
-
-        This will raise a KeyError if the card item does not exist.
-        """
-        self._item_dict[name].set_value(value)
 
 
 
@@ -369,8 +473,8 @@ if __name__ == '__main__':
     #tab.addTab(tab_card, '')
     #tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
 
-    from baldaquin.config import TestConfiguration
-    config = TestConfiguration()
+    from baldaquin.config import SampleConfiguration
+    config = SampleConfiguration()
     tab_config = ConfigurationInput(config)
     tab.addTab(tab_config, '')
     tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
