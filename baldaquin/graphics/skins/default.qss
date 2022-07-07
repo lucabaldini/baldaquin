@@ -39,8 +39,8 @@ QLabel#data_widget_title {
 }
 
 
-QLabel#date_widget_value {
-  font-size: 18px;
+QLabel#data_widget_value {
+  font-size: 20px;
 }
 
 QTextEdit {
