@@ -17,9 +17,13 @@
 """
 
 from collections import deque
+import os
+from threading import Lock, Thread
+import time
 
 from loguru import logger
 
+from baldaquin import BALDAQUIN_DATA
 from baldaquin._gui import QtCore
 
 
@@ -33,43 +37,52 @@ class DataBuffer(deque):
         """
         super().__init__([], max_length)
         self.file_path = file_path
-        self._mutex = QtCore.QMutex()
-        self._timer = QtCore.QTimer()
-        self._timer.setInterval(1000)
-        self._timer.timeout.connect(lambda item=self: item.write)
-        self._timer.start()
+        self._mutex = Lock()
 
     def append(self, item):
         """
         """
-        self._mutex.lock()
+        #self._mutex.acquire()
         super().append(item)
-        self._mutex.unlock()
+        #self._mutex.release()
 
     def write(self):
         """
         """
-        print(len(self))
         if not len(self):
             return
-        self._mutex.lock()
+        #self._mutex.acquire()
         logger.debug(f'Writing {len(self)} packets to {self.file_path}...')
-        with open(file_path, 'a') as output_file:
-            for item in self:
-                output_file.write(item)
-        self._mutex.unlock()
+        with open(self.file_path, 'a') as output_file:
+            while True:
+                try:
+                    output_file.write(f'{self.popleft()}\n')
+                except IndexError:
+                    break
+        #self._mutex.release()
 
 
-
-
-if __name__ == '__main__':
-    from baldaquin import BALDAQUIN_DATA
-    import os
-    import time
-    file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
-    buf = DataBuffer(file_path, 3)
-    for i in range(1000):
+def _fill(buf):
+    """
+    """
+    for i in range(100):
         buf.append(i)
         print(buf)
         time.sleep(0.1)
+
+def _write(buf):
+    """
+    """
+    while(1):
+        buf.write()
+        time.sleep(1.)
+
+
+if __name__ == '__main__':
+    file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
+    buf = DataBuffer(file_path, 100)
     print(buf)
+    t1 = Thread(target=_fill, args=(buf,))
+    t1.start()
+    t2 = Thread(target=_write, args=(buf,))
+    t2.start()
