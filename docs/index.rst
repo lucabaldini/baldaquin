@@ -41,5 +41,6 @@ application.
 
    about
    install
+   technologies
 
    api

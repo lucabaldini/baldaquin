@@ -51,3 +51,7 @@ QLineEdit#data_widget_value {
   border: 1px solid lightgray;
   border-radius: 4px;
 }
+
+QTabWidget {
+  border: none;
+}

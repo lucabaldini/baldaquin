@@ -21,7 +21,8 @@ import sys
 from loguru import logger
 
 from baldaquin.config import SampleConfiguration
-from baldaquin.gui import stylesheet_file_path, _icon_file_path, QtGui, QtCore, QtWidgets
+from baldaquin._gui import QtGui, QtCore, QtWidgets
+from baldaquin.gui import stylesheet_file_path, _icon_file_path
 import baldaquin.widgets
 
 
@@ -43,13 +44,14 @@ def test_gui_elements():
     layout.addWidget(ctrl_bar, 1, 0)
     # ...and a few tabs on the right.
     tab = QtWidgets.QTabWidget()
+    #tab.setTabPosition(tab.TabPosition.West)
     tab.setIconSize(QtCore.QSize(25, 25))
     layout.addWidget(tab, 0, 1, 2, 1)
     config_widget = baldaquin.widgets.ConfigurationWidget(SampleConfiguration())
-    tab.addTab(config_widget, '')
+    tab.addTab(config_widget, 'Monitor')
     tab.setTabIcon(0, QtGui.QIcon(_icon_file_path('hub')))
     logger_widget = baldaquin.widgets.LoggerDisplay()
-    tab.addTab(logger_widget, '')
+    tab.addTab(logger_widget, 'Logger')
     tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('chat')))
     # Interact with the widgets a little bit...
     logger.info('Howdy, partner?')
