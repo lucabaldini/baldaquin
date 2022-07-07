@@ -20,8 +20,7 @@
 import os
 from typing import Any
 
-from PySide2 import QtCore, QtGui, QtWidgets
-
+from baldaquin._gui import QtCore, QtGui, QtWidgets
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 
 

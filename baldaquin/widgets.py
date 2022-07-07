@@ -25,10 +25,10 @@ from typing import Any
 
 import loguru
 from loguru import logger
-from PySide2 import QtCore, QtGui, QtWidgets
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.config import ConfigurationParameter
+from baldaquin._gui import QtCore, QtGui, QtWidgets
 import baldaquin.gui
 
 

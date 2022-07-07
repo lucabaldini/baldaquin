@@ -13,31 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Application windows.
+"""Convenience module handling the Qt-related import.
+
+This is mainly to handle the possibility of switching from/to PyQy/PySide
+in the various available flavors.
 """
 
-import sys
-
-from baldaquin._gui import QtCore, QtGui, QtWidgets
-from baldaquin.gui import stylesheet_file_path
-
-
-class MainWindow(QtWidgets.QMainWindow):
-
-    """Basic main window class.
-    """
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    with open(stylesheet_file_path(), 'r') as f:
-        app.setStyleSheet(f.read())
-    window = MainWindow()
-    window.show()
-    sys.exit(app.exec_())
+from PySide2 import QtCore, QtGui, QtWidgets
