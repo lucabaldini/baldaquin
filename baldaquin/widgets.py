@@ -23,6 +23,7 @@ import os
 import sys
 from typing import Any
 
+import loguru
 from loguru import logger
 from PySide2 import QtCore, QtGui, QtWidgets
 
@@ -81,9 +82,15 @@ class CardWidget(QtWidgets.QFrame):
         """
         self._widget_dict[name].set_value(value)
 
+    def sizeHint(self) -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        return QtCore.QSize(200, 400)
 
 
-class ConfigurationWidget(QtWidgets.QFrame):
+
+
+class ConfigurationWidget(QtWidgets.QWidget):
 
     """Basic widget to display and edit an instance of a
     :class:`baldaquin.config.ConfigurationBase` subclass.
@@ -105,6 +112,11 @@ class ConfigurationWidget(QtWidgets.QFrame):
     @staticmethod
     def __param_widget(param : ConfigurationParameter) -> baldaquin.gui.DataWidgetBase:
         """Turn a configuration parameter into the corresponding widget.
+
+        The fact that we're using two different widgets for ``str`` input,
+        depending on whether ``choices`` is set or not, makes this slightly more
+        lengthy to code---we could have probably just used a plain dictionary,
+        if that was not the case.
         """
         args = param.name, param.intent, param.value, param.units, param.fmt
         kwargs = param.constraints
@@ -129,23 +141,59 @@ class ConfigurationWidget(QtWidgets.QFrame):
         """
         self._widget_dict[name].set_value(value)
 
+    def sizeHint(self) -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        return QtCore.QSize(400, 400)
+
+
+
+
+class LoggerDisplay(QtWidgets.QTextEdit):
+
+    """Simple widget to display records from the application logger.
+
+    This is simply connecting a QTextEdit as a sink of the application-wide
+    logger, which is made possible by the aweseome loguru library.
+    """
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        logger.add(self.display)
+
+    def display(self, message : loguru._handler.Message) -> None:
+        """Display a single message.
+        """
+        record = message.record
+        #icon = record["level"].icon
+        text = f'[{record["time"]}] {record["message"]}\n'
+        self.insertPlainText(text)
+
+    def sizeHint(self) -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        return QtCore.QSize(800, 400)
+
 
 
 class ControlBar(QtWidgets.QFrame):
 
-    """
+    """Class describing a control bar, that is, a series of QPushButton objects
+    arranged horizontally that can be used to control the Run control
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Constructor.
         """
         super().__init__()
         layout = QtWidgets.QHBoxLayout()
-        self.teardown_button = Button('file_download')
+        self.teardown_button = baldaquin.gui.Button('file_download')
         self.teardown_button.setToolTip('Teardown the run control')
-        self.setup_button = Button('file_upload')
+        self.setup_button = baldaquin.gui.Button('file_upload')
         self.setup_button.setToolTip('Setup the run control')
-        self.run_button = Button('play_arrow')
+        self.run_button = baldaquin.gui.Button('play_arrow')
         self.run_button.setToolTip('Start/stop the data acquisition')
         layout.addWidget(self.teardown_button)
         layout.addWidget(self.setup_button)
@@ -155,8 +203,16 @@ class ControlBar(QtWidgets.QFrame):
         self.set_stopped()
         self.run_button.clicked.connect(self.toggle_run_button)
 
-    def reset(self):
+    def toggle_run_button(self) -> None:
+        """Toggle between the running and stopped states.
         """
+        if self.__running:
+            self.set_stopped()
+        else:
+            self.set_running()
+
+    def reset(self) -> None:
+        """Set the bar in the reset state.
         """
         self.teardown_button.setEnabled(False)
         self.setup_button.setEnabled(True)
@@ -164,7 +220,7 @@ class ControlBar(QtWidgets.QFrame):
         self.run_button = Button('play_arrow')
 
     def set_running(self):
-        """
+        """Set the bar in the running state.
         """
         self.teardown_button.setEnabled(False)
         self.setup_button.setEnabled(False)
@@ -173,25 +229,13 @@ class ControlBar(QtWidgets.QFrame):
         self.__running = True
 
     def set_stopped(self):
-        """
+        """Set the bar in the stopped state.
         """
         self.teardown_button.setEnabled(True)
         self.setup_button.setEnabled(False)
         self.run_button.setEnabled(True)
         self.run_button.set_icon('play_arrow')
         self.__running = False
-
-    def toggle_run_button(self):
-        """
-        """
-        if self.__running:
-            self.set_stopped()
-        else:
-            self.set_running()
-
-
-
-
 
 
 
@@ -200,95 +244,14 @@ class RunControlCard(CardWidget):
     """Specialized card to display the run control information.
     """
 
-    def __init__(self, run_contro_name : str, backend_name : str):
+    def __init__(self, run_contro_name : str, backend_name : str) -> None:
         """Constructor.
         """
         super().__init__()
         self.add('ctrl', 'Run control', run_contro_name)
         self.add('backend', 'Back-end', backend_name)
         self.add('userapp', 'User application')
+        self.add('run_id', 'Run Id')
+        self.add('station_id', 'Test stand Id')
         self.add('uptime', 'Uptime', 0., units='s', fmt='.3f')
         self.add_bottom_stretch()
-
-    def set_user_application(self, value : str):
-        """Set the user application.
-        """
-        self.set_value('userapp', value)
-
-    def set_uptime(self, value : float):
-        """Set the uptime.
-        """
-        self.set_value('uptime', value)
-
-
-
-class LoggerDisplay(QtWidgets.QTextEdit):
-
-    """Simple widget to display records from the application logger.
-    """
-
-    def __init__(self):
-        """Constructor.
-        """
-        super().__init__()
-        logger.add(self.display)
-
-    def display(self, message):
-        """
-        """
-        record = message.record
-        #icon = record["level"].icon
-        text = f'[{record["time"]}] {record["message"]}\n'
-        self.insertPlainText(text)
-
-    def sizeHint(self):
-        """Overloaded method defining the default size.
-        """
-        return QtCore.QSize(800, 400)
-
-
-
-
-if __name__ == '__main__':
-    app = QtWidgets.QApplication(sys.argv)
-    with open(_stylesheet_file_path(), 'r') as f:
-        app.setStyleSheet(f.read())
-    window = QtWidgets.QMainWindow()
-    widget = QtWidgets.QWidget()
-    window.setCentralWidget(widget)
-    layout = QtWidgets.QGridLayout()
-    widget.setLayout(layout)
-    bar = ControlBar()
-    rc_card = RunControlCard('NoOp', 'NoOp')
-    layout.addWidget(rc_card, 0, 0)
-    layout.addWidget(bar, 1, 0)
-
-    tab = QtWidgets.QTabWidget()
-    tab.setIconSize(QtCore.QSize(25, 25))
-    layout.addWidget(tab, 0, 1, 2, 1)
-
-    log_display = LoggerDisplay()
-    tab.addTab(log_display, '')
-    tab.setTabIcon(0, QtGui.QIcon(_icon_file_path('chat')))
-
-    #tab_card = Card()
-    #tab_card.add_item('ip', 'IP address', '127.0.0.1')
-    #tab_card.add_item('port', 'Port', '12')
-    #tab_card.layout().addStretch()
-    #tab.addTab(tab_card, '')
-    #tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
-
-    from baldaquin.config import SampleConfiguration
-    config = SampleConfiguration()
-    tab_config = ConfigurationInput(config)
-    tab.addTab(tab_config, '')
-    tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('hub')))
-
-    rc_card.set_user_application('my_application.py')
-    rc_card.set_uptime(12.34)
-
-    logger.info('Hi...')
-    logger.info('...there!')
-
-    window.show()
-    sys.exit(app.exec_())

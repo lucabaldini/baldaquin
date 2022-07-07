@@ -96,7 +96,6 @@ class DataWidgetBase(QtWidgets.QWidget):
     VALUE_WIDGET_NAME = 'data_widget_value'
     MISSING_VALUE_LABEL = '-'
     VALUE_WIDGET_HEIGHT = 30
-    DEFAULT_SIZE = QtCore.QSize(150, 45)
 
     def __init__(self, name : str, title : str, value=None, units : str = None,
                  fmt : str = None, **kwargs) -> None:
@@ -125,11 +124,6 @@ class DataWidgetBase(QtWidgets.QWidget):
     def setup(self, **kwargs):
         """Do nothing post-construction hook that can be overloaded in derived classes.
         """
-
-    def sizeHint(self) -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        return self.DEFAULT_SIZE
 
     def set_title(self, title : str) -> None:
         """Set the widget title.

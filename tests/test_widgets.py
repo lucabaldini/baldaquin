@@ -18,9 +18,11 @@
 
 import sys
 
+from loguru import logger
+
 from baldaquin.config import SampleConfiguration
-from baldaquin.gui import stylesheet_file_path
-from baldaquin.widgets import *
+from baldaquin.gui import stylesheet_file_path, _icon_file_path, QtGui, QtCore, QtWidgets
+import baldaquin.widgets
 
 
 def test_gui_elements():
@@ -34,12 +36,26 @@ def test_gui_elements():
     layout = QtWidgets.QGridLayout()
     window.centralWidget().setLayout(layout)
     window.centralWidget().setMinimumWidth(500)
-
-    rc_card = RunControlCard('NoOp', 'NoOp')
-    layout.addWidget(rc_card, 0, 0)
-
-    config_widget = ConfigurationWidget(SampleConfiguration())
-    layout.addWidget(config_widget, 0, 1)
+    # Run control widget and control bar on the left...
+    ctrl_bar = baldaquin.widgets.ControlBar()
+    rc_widget = baldaquin.widgets.RunControlCard('NoOp', 'NoOp')
+    layout.addWidget(rc_widget, 0, 0)
+    layout.addWidget(ctrl_bar, 1, 0)
+    # ...and a few tabs on the right.
+    tab = QtWidgets.QTabWidget()
+    tab.setIconSize(QtCore.QSize(25, 25))
+    layout.addWidget(tab, 0, 1, 2, 1)
+    config_widget = baldaquin.widgets.ConfigurationWidget(SampleConfiguration())
+    tab.addTab(config_widget, '')
+    tab.setTabIcon(0, QtGui.QIcon(_icon_file_path('hub')))
+    logger_widget = baldaquin.widgets.LoggerDisplay()
+    tab.addTab(logger_widget, '')
+    tab.setTabIcon(1, QtGui.QIcon(_icon_file_path('chat')))
+    # Interact with the widgets a little bit...
+    logger.info('Howdy, partner?')
+    rc_widget.set_value('uptime', 0.)
+    rc_widget.set_value('run_id', 313)
+    rc_widget.set_value('station_id', 1)
 
     return app, window
 
