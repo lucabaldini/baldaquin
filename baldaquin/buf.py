@@ -18,15 +18,11 @@
 
 from collections import deque
 import os
-from threading import Lock, Thread
-import time
 
 from loguru import logger
 
-from baldaquin import BALDAQUIN_DATA
 
-
-class DataBuffer(deque):
+class CircularBuffer(deque):
 
     """
     """
@@ -36,21 +32,19 @@ class DataBuffer(deque):
         """
         super().__init__([], max_length)
         self.file_path = file_path
-        self._mutex = Lock()
 
-    def append(self, item):
+    def create_file(self):
         """
         """
-        #self._mutex.acquire()
-        super().append(item)
-        #self._mutex.release()
+        logger.info(f'Wiping out {self.file_path}')
+        with open(self.file_path, 'w') as output_file:
+            pass
 
     def write(self):
         """
         """
         if not len(self):
             return
-        #self._mutex.acquire()
         logger.debug(f'Writing {len(self)} packets to {self.file_path}...')
         with open(self.file_path, 'a') as output_file:
             while True:
@@ -58,30 +52,3 @@ class DataBuffer(deque):
                     output_file.write(f'{self.popleft()}\n')
                 except IndexError:
                     break
-        #self._mutex.release()
-
-
-def _fill(buf):
-    """
-    """
-    for i in range(100):
-        buf.append(i)
-        print(buf)
-        time.sleep(0.1)
-
-def _write(buf):
-    """
-    """
-    while(1):
-        buf.write()
-        time.sleep(1.)
-
-
-if __name__ == '__main__':
-    file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
-    buf = DataBuffer(file_path, 100)
-    print(buf)
-    t1 = Thread(target=_fill, args=(buf,))
-    t1.start()
-    t2 = Thread(target=_write, args=(buf,))
-    t2.start()

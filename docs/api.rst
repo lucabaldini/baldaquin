@@ -19,7 +19,9 @@ List of modules
    :caption: Core
 
    app
+   buf
    config
+   event
    runctrl
    timeline
 
