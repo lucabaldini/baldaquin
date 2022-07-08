@@ -28,7 +28,7 @@ from loguru import logger
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.config import ConfigurationParameter
-from baldaquin._gui import QtCore, QtGui, QtWidgets
+from baldaquin._qt import QtCore, QtGui, QtWidgets
 import baldaquin.gui
 
 

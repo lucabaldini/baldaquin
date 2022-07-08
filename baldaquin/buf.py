@@ -24,7 +24,6 @@ import time
 from loguru import logger
 
 from baldaquin import BALDAQUIN_DATA
-from baldaquin._gui import QtCore
 
 
 class DataBuffer(deque):

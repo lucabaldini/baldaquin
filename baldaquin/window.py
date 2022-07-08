@@ -18,7 +18,7 @@
 
 import sys
 
-from baldaquin._gui import QtCore, QtGui, QtWidgets
+from baldaquin._qt import QtCore, QtGui, QtWidgets
 from baldaquin.gui import stylesheet_file_path
 
 
