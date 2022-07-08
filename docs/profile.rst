@@ -1,8 +1,8 @@
-:mod:`baldaquin.evt` --- Event handler
+:mod:`baldaquin.profile` --- Profiling
 ======================================
 
 
 Module documentation
 --------------------
 
-.. automodule:: baldaquin.event
+.. automodule:: baldaquin.profile

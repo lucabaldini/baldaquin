@@ -28,6 +28,13 @@ List of modules
 
 .. toctree::
    :maxdepth: 2
+   :caption: Utils
+
+   profile
+
+
+.. toctree::
+   :maxdepth: 2
    :caption: GUI
 
    gui

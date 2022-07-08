@@ -8,4 +8,3 @@ Module documentation
 --------------------
 
 .. automodule:: baldaquin.runctrl
-   :members:

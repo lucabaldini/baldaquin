@@ -6,4 +6,3 @@ Module documentation
 --------------------
 
 .. automodule:: baldaquin.buf
-   :members:
