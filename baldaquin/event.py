@@ -23,7 +23,7 @@ from typing import Any
 
 from loguru import logger
 
-from baldaquin.buf import CircularBuffer
+from baldaquin.buf import FIFO, CircularBuffer
 from baldaquin._qt import QtCore
 
 
@@ -33,11 +33,12 @@ class EventHandlerBase(QtCore.QRunnable):
     """Base class for an event handler.
     """
 
-    def __init__(self, file_path : str, max_length : int = None) -> None:
+    def __init__(self, file_path : str, buffer_class : type = CircularBuffer,
+                max_length : int = None) -> None:
         """Constructor.
         """
         super().__init__()
-        self.buffer = CircularBuffer(file_path, max_length)
+        self.buffer = buffer_class(file_path)
         self.__running = False
 
     def stop(self) -> None:
@@ -50,12 +51,7 @@ class EventHandlerBase(QtCore.QRunnable):
         """
         self.__running = True
         while self.__running:
-            self.buffer.append(self.process_event())
-
-    def write(self):
-        """Write data to file.
-        """
-        self.buffer.write()
+            self.buffer.put_item(self.process_event())
 
     def process_event(self) -> Any:
         """Process a single event.
@@ -74,39 +70,49 @@ class MockEventHandler(EventHandlerBase):
     def __init__(self, file_path : str, max_length : int = None, rate : float = 10.):
         """Constructor.
         """
-        super().__init__(file_path, max_length)
+        super().__init__(file_path, CircularBuffer, max_length)
         self._rate = rate
-        self._trigger_id = 0
-        self._timestamp = 0.
+        self._trigger_id = -1
+        self._start_time = time.time()
 
     def process_event(self) -> Any:
         """Overloaded method.
         """
         dt = random.expovariate(self._rate)
         self._trigger_id += 1
-        self._timestamp += dt
+        self._timestamp = time.time() - self._start_time
         time.sleep(dt)
         return (self._trigger_id, self._timestamp)
 
 
 
 def test(rate=1000., write_interval=1., num_writes=5):
-    """Small test functions
+    """Small test function.
+
+    Basic stat for a stupid test.
+
+    * Circular buffer @ 27.5 bytes per event
+
+    input_rate  meas_rate   write_time
+    10          10          1 ms
+    100         100         1.5 ms
+    1000        800         5 ms
+    10000      5500         10--30 ms
+    100000    12500         20--50 ms
     """
     import os
     from baldaquin import BALDAQUIN_DATA
     file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
     evt = MockEventHandler(file_path, rate=rate)
-    evt.buffer.create_file()
     pool = QtCore.QThreadPool.globalInstance()
     pool.start(evt)
     for i in range(num_writes):
         time.sleep(write_interval)
-        evt.write()
+        evt.buffer.flush()
     evt.stop()
     pool.waitForDone()
-    evt.write()
-    assert len(evt.buffer) == 0
+    evt.buffer.flush()
+    assert evt.buffer.num_items() == 0
 
 
 
