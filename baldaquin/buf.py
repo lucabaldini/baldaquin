@@ -20,6 +20,7 @@ import collections
 import enum
 import os
 import queue
+from typing import Any
 
 from loguru import logger
 
@@ -59,14 +60,15 @@ class BufferBase:
         self._mode = mode
         if os.path.exists(self.file_path):
             logger.warning(f'Output file {file_path} exists and will be overwritten')
+        # pylint: disable=consider-using-with
         open(self.file_path, f'w{self._mode.value}').close()
 
-    def put_item(self):
+    def put_item(self, item : Any) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
         """
         raise NotImplementedError
 
-    def pop_item(self):
+    def pop_item(self) -> Any:
         """Pop an item from the buffer (to be reimplemented in derived classes).
 
         .. note::
@@ -78,7 +80,7 @@ class BufferBase:
         """
         raise NotImplementedError
 
-    def num_items(self):
+    def num_items(self) -> int:
         """Return the number of items in the buffer (to be reimplemented in derived classes).
         """
         raise NotImplementedError
@@ -99,7 +101,7 @@ class BufferBase:
         logger.debug(f'Writing {num_items} items to {self.file_path}...')
         total_size = 0
         with open(self.file_path, f'a{self._mode.value}') as output_file:
-            for i in range(num_items):
+            for _ in range(num_items):
                 item = self.pop_item()
                 total_size += len(item)
                 output_file.write(item)
@@ -127,17 +129,17 @@ class FIFO(queue.Queue, BufferBase):
         super().__init__(max_size)
         BufferBase.__init__(self, file_path, mode)
 
-    def put_item(self, item):
+    def put_item(self, item : Any) -> None:
         """Overloaded method.
         """
         self.put(item)
 
-    def pop_item(self):
+    def pop_item(self) -> Any:
         """Overloaded method.
         """
         return self.get()
 
-    def num_items(self):
+    def num_items(self) -> int:
         """Overloaded method.
         """
         return self.qsize()
@@ -166,17 +168,17 @@ class CircularBuffer(collections.deque, BufferBase):
         super().__init__([], max_size)
         BufferBase.__init__(self, file_path, mode)
 
-    def put_item(self, item):
+    def put_item(self, item : Any) -> None:
         """Overloaded method.
         """
         self.append(item)
 
-    def pop_item(self):
+    def pop_item(self) -> Any:
         """Overloaded method.
         """
         return self.popleft()
 
-    def num_items(self):
+    def num_items(self) -> int:
         """Overloaded method.
         """
         return len(self)

@@ -21,18 +21,17 @@ from __future__ import annotations
 from dataclasses import dataclass
 import random
 import struct
-import sys
 import time
 from typing import Any
 
-from loguru import logger
-
-from baldaquin.buf import FIFO, CircularBuffer
+from baldaquin.buf import CircularBuffer
 from baldaquin._qt import QtCore
 
 
 
 class EventHandlerBase(QtCore.QRunnable):
+
+    # pylint: disable=c-extension-no-member
 
     """Base class for an event handler.
 
@@ -111,6 +110,7 @@ class MockEvent:
         The pulse height value.
     """
 
+    # pylint: disable=invalid-name
     _FMT = 'llll'
 
     trigger_id : int
