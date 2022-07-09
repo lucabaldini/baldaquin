@@ -109,9 +109,6 @@ class MockEvent:
 
     pha : int
         The pulse height value.
-
-    _fmt : str
-        The string format to pack/unpack the event for binary I/O.
     """
 
     _FMT = 'llll'

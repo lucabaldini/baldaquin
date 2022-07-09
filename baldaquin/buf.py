@@ -84,7 +84,7 @@ class BufferBase:
         raise NotImplementedError
 
     @timing
-    def flush(self) -> int:
+    def flush(self) -> None:
         """Write the content of the buffer to file and returns the number of
         objects written to disk.
 
@@ -92,19 +92,18 @@ class BufferBase:
            This will write all the items in the buffer at the time of the
            function call, i.e., items added while writing to disk will need to
            wait for the next call.
-
-        Returns
-        -------
-        The number of objects written to disk. : int
         """
-        size = self.num_items()
-        if not size:
+        num_items = self.num_items()
+        if not num_items:
             return
-        logger.debug(f'Writing {size} packets to {self.file_path}...')
+        logger.debug(f'Writing {num_items} items to {self.file_path}...')
+        total_size = 0
         with open(self.file_path, f'a{self._mode.value}') as output_file:
-            for i in range(size):
-                output_file.write(self.pop_item())
-        return i
+            for i in range(num_items):
+                item = self.pop_item()
+                total_size += len(item)
+                output_file.write(item)
+        logger.debug(f'Done, {total_size} Bytes written to disk.')
 
 
 
