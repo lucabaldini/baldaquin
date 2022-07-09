@@ -52,7 +52,7 @@ class BufferBase:
         The file write mode.
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.TEXT) -> None:
+    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY) -> None:
         """Constructor.
         """
         self.file_path = file_path
@@ -101,9 +101,10 @@ class BufferBase:
         if not size:
             return
         logger.debug(f'Writing {size} packets to {self.file_path}...')
-        with open(self.file_path, 'a') as output_file:
+        with open(self.file_path, f'a{self._mode.value}') as output_file:
             for i in range(size):
-                output_file.write(f'{self.pop_item()}\n')
+                output_file.write(self.pop_item())
+        return i
 
 
 
@@ -115,7 +116,7 @@ class FIFO(queue.Queue, BufferBase):
     module in the Python standard library.
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.TEXT,
+    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY,
                  max_size : int = None) -> None:
         """Constructor.
         """
@@ -159,7 +160,7 @@ class CircularBuffer(collections.deque, BufferBase):
     comes from https://stackoverflow.com/questions/4151320
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.TEXT,
+    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY,
                  max_size : int = None) -> None:
         """Constructor.
         """

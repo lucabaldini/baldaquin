@@ -19,13 +19,68 @@
 import os
 import time
 
+from loguru import logger
+
 from baldaquin import BALDAQUIN_DATA
-from baldaquin.event import MockEventHandler
+from baldaquin.buf import CircularBuffer
+from baldaquin.event import MockEvent, MockEventHandler
 from baldaquin._qt import QtCore
 
 
+def test_mock_event():
+    """Create a mock event and make sure that pack() and unpack() roundtrip.
+    """
+    evt1 = MockEvent.random(0)
+    logger.info(evt1)
+    data = evt1.pack()
+    logger.info(data)
+    evt2 = MockEvent.unpack(data)
+    logger.info(evt2)
+    assert evt1.trigger_id == evt2.trigger_id
+    assert evt1.seconds == evt2.seconds
+    assert evt1.microseconds == evt2.microseconds
+    assert evt1.pha == evt2.pha
+
+def test_mock_event_io(num_events : int = 10):
+    """Make sure that mock events can be written and read back from file.
+    """
+    file_path = os.path.join(BALDAQUIN_DATA, 'test_mock_event_io.bin')
+    start_time = time.time()
+    # Write random events to file...
+    with open(file_path, 'wb') as output_file:
+        for i in range(num_events):
+            event = MockEvent.random(i, start_time)
+            logger.info(event)
+            output_file.write(event.pack())
+    # ... and read them back.
+    with open(file_path, 'rb') as input_file:
+        for i in range(num_events):
+            event = MockEvent.read_from_file(input_file)
+            logger.info(event)
+            assert event.trigger_id == i
+
+def test_mock_event_buffer(num_events : int = 10):
+    """Create an event buffer filled with mock events, and test the file I/O.
+    """
+    file_path = os.path.join(BALDAQUIN_DATA, 'test_mock_event_buffer.bin')
+    start_time = time.time()
+    # Create a circular buffer and fill it.
+    buffer = CircularBuffer(file_path)
+    for i in range(num_events):
+        event = MockEvent.random(i, start_time)
+        logger.info(event)
+        buffer.put_item(event.pack())
+    # Write the events to file...
+    buffer.flush()
+    # ... and read them back.
+    with open(file_path, 'rb') as input_file:
+        for i in range(num_events):
+            event = MockEvent.read_from_file(input_file)
+            logger.info(event)
+            assert event.trigger_id == i
+
 def test_mock_event_handler(rate=1000., write_interval=1., num_writes=5):
-    """Small test function for the event handler mechanism.
+    """Small test function for the asynchronous event handler mechanism.
     """
     file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
     evt_handler = MockEventHandler(file_path, rate=rate)

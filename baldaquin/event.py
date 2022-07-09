@@ -16,7 +16,11 @@
 """Event handler.
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 import random
+import struct
 import sys
 import time
 from typing import Any
@@ -74,6 +78,97 @@ class EventHandlerBase(QtCore.QRunnable):
 
 
 
+@dataclass
+class MockEvent:
+
+    """Mock event data structure for testing purposes.
+
+    This is a minimal event stucture including a trigger identifier, a timestamp
+    and a pulse-height value. The :meth:`pack() <baldaquin.event.MockEvent.pack()>`
+    method returns a bytes object that can be written into a binary file,
+    while the :meth:`unpack() <baldaquin.event.MockEvent.unpack()>` method does
+    the opposite, i.e., it constructs an event object from its binary representation
+    (the two are designed to round-trip).
+
+    .. note::
+
+       Although this is intended as a simple mock data structture for unit testing
+       this is a perfectly legitimate data structure that could be used
+       as an inspiration for real applications.
+
+    Arguments
+    ---------
+    trigger_id : int
+        The trigger identifier for the event.
+
+    seconds : int
+        The integer part of the timestamp in seconds.
+
+    microseconds : int
+        The fractional part of the timestamp in microseconds.
+
+    pha : int
+        The pulse height value.
+
+    _fmt : str
+        The string format to pack/unpack the event for binary I/O.
+    """
+
+    _FMT = 'llll'
+
+    trigger_id : int
+    seconds : int
+    microseconds : int
+    pha : int
+
+    @classmethod
+    def random(cls, trigger_id : int, start_time : float = 0., pha_mu : float = 1000.,
+               pha_sigma : float = 50.) -> MockEvent:
+        """Create a random event object on the fly.
+
+        Note that the trigger identifier must be passed externally as this function
+        has no notion of a global state. The timestamp is taken from the system
+        time and the pha is randomly generated from a gaussian distribution.
+
+        Arguments
+        ---------
+        trigger_id : int
+            The trigger identifier for the event.
+
+        start_time : float
+            Origin for the timestamp (will be subtracted from the system time).
+
+        pha_mu : float
+            The mean of of the pha (gaussian) distribution.
+
+        pha_sigma : float
+            The sigma of of the pha (gaussian) distribution.
+        """
+        timestamp = time.time() - start_time
+        seconds = int(timestamp)
+        microseconds = round((timestamp - seconds) * 1.e6)
+        pha = round(random.gauss(pha_mu, pha_sigma))
+        return cls(trigger_id, seconds, microseconds, pha)
+
+    def pack(self) -> bytes:
+        """Pack the event for supporting binary output to file.
+        """
+        return struct.pack(self._FMT, self.trigger_id, self.seconds, self.microseconds, self.pha)
+
+    @classmethod
+    def unpack(cls, data : bytes) -> MockEvent:
+        """Unpack some data into an event object.
+        """
+        return cls(*struct.unpack(cls._FMT, data))
+
+    @classmethod
+    def read_from_file(cls, input_file) -> MockEvent:
+        """Read a single event from a file object open in binary mode.
+        """
+        return cls.unpack(input_file.read(32))
+
+
+
 class MockEventHandler(EventHandlerBase):
 
     """Mock event handler for testing purposes.
@@ -109,8 +204,7 @@ class MockEventHandler(EventHandlerBase):
     def process_event(self) -> Any:
         """Overloaded method.
         """
-        dt = random.expovariate(self._rate)
+        time.sleep(random.expovariate(self._rate))
+        event = MockEvent.random(self._trigger_id, self._start_time)
         self._trigger_id += 1
-        self._timestamp = time.time() - self._start_time
-        time.sleep(dt)
-        return (self._trigger_id, self._timestamp)
+        return event.pack()
