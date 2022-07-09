@@ -178,8 +178,6 @@ class MockEventHandler(EventHandlerBase):
 
     Arguments
     ---------
-    Arguments
-    ---------
     file_path : str
         The path to the output file.
 
