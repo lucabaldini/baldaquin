@@ -13,64 +13,60 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 """User application framework.
 """
 
 from loguru import logger
+from typing import Any
+
+from baldaquin.buf import CircularBuffer
+from baldaquin._qt import QtCore
 
 
 
-class UserApplicationBase:
+class UserApplicationBase(QtCore.QRunnable):
 
     """Base class for user applications.
     """
 
+    BUFFER_CLASS = CircularBuffer
+
+    def __init__(self, file_path : str, **kwargs) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.buffer = BUFFER_CLASS(file_path, **kwargs)
+        self.__running = False
+
     def setup(self) -> None:
         """Function called when the run control transitions from RESET to STOPPED.
         """
-        logger.info('Nothing to do at setup()...')
+        logger.info(f'{self.__class__.__name__}.setup(): nothing to do...')
 
     def teardown(self) -> None:
         """Function called when the run control transitions from STOPPED to RESET.
         """
-        logger.info('Nothing to do at teardown()...')
+        logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
+
+    def run(self) -> None:
+        """Overloaded QRunnable method.
+        """
+        self.__running = True
+        while self.__running:
+            self.buffer.put_item(self.process_event())
 
     def start(self) -> None:
-        """Function called when the run control transitions from STOPPED to RUNNING.
+        """Start the event handler.
         """
-        raise NotImplementedError('start() not implemented')
+        self.run()
 
     def stop(self) -> None:
-        """Function called when the run control transitions from RUNNING to STOPPED.
+        """Stop the event handler.
         """
-        raise NotImplementedError('stop() not implemented')
+        self.__running = False
+        # Flush the buffer?
 
-
-
-class UserAppNoOp(UserApplicationBase):
-
-    """Simple do-nothing application for test purposes.
-    """
-
-    NAME = 'NoOp user application'
-
-    def setup(self) -> None:
-        """Overloaded do-nothing method.
+    def process_event(self) -> Any:
+        """Process a single event (must be overloaded in derived classes).
         """
-        logger.info('Executing no-op setup()...')
-
-    def teardown(self) -> None:
-        """Overloaded do-nothing method.
-        """
-        logger.info('Executing no-op teardown()...')
-
-    def start(self) -> None:
-        """Overloaded do-nothing method.
-        """
-        logger.info('Executing no-op start()...')
-
-    def stop(self) -> None:
-        """Overloaded do-nothing method.
-        """
-        logger.info('Executing no-op stop()...')
+        raise NotImplementedError
