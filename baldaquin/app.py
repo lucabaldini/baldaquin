@@ -19,24 +19,23 @@
 from loguru import logger
 from typing import Any
 
-from baldaquin.buf import CircularBuffer
 from baldaquin._qt import QtCore
 
 
 
-class UserApplicationBase(QtCore.QRunnable):
+class UserApplicationBase:
 
     """Base class for user applications.
     """
 
-    BUFFER_CLASS = CircularBuffer
+    EVENT_HANDLER_CLASS = None
 
-    def __init__(self, file_path : str, **kwargs) -> None:
+    def __init__(self) -> None:
         """Constructor.
         """
-        super().__init__()
-        self.buffer = BUFFER_CLASS(file_path, **kwargs)
-        self.__running = False
+        self.pool = QtCore.QThreadPool.globalInstance()
+        self.event_handler = self.EVENT_HANDLER_CLASS()
+        self.event_handler.process_event = self.process_event
 
     def setup(self) -> None:
         """Function called when the run control transitions from RESET to STOPPED.
@@ -48,23 +47,19 @@ class UserApplicationBase(QtCore.QRunnable):
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def run(self) -> None:
-        """Overloaded QRunnable method.
-        """
-        self.__running = True
-        while self.__running:
-            self.buffer.put_item(self.process_event())
-
-    def start(self) -> None:
+    def start(self, file_path, **kwargs) -> None:
         """Start the event handler.
         """
-        self.run()
+        logger.info(f'Starting application {self.__class__.__name__}')
+        self.event_handler.setup(file_path, **kwargs)
+        self.pool.start(self.event_handler)
 
     def stop(self) -> None:
         """Stop the event handler.
         """
-        self.__running = False
-        # Flush the buffer?
+        self.event_handler.stop()
+        self.pool.waitForDone()
+        self.event_handler.flush()
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

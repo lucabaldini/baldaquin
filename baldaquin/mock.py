@@ -24,9 +24,11 @@ import struct
 import time
 from typing import Any
 
+from loguru import logger
+
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
-from baldaquin.event import EventBase
+from baldaquin.event import EventBase, EventHandlerBase
 
 
 @dataclass
@@ -95,7 +97,7 @@ class MockEventServer:
         The average event rate.
     """
 
-    def __init__(self, rate : float = 100., pha_mu : float = 1000., pha_sigma : float = 50.):
+    def __init__(self, rate : float = 10., pha_mu : float = 1000., pha_sigma : float = 50.):
         """Constructor.
         """
         self.rate = rate
@@ -128,31 +130,47 @@ class MockUserAppConfiguration(ConfigurationBase):
 
 
 
+class MockEventHandler(EventHandlerBase):
+
+    """Mock event handler for testing purpose.
+    """
+
+
+
 class MockUserApplication(UserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    def __init__(self, file_path : str, rate : float = 100., pha_mu : float = 1000.,
-                 pha_sigma : float = 50.):
+    EVENT_HANDLER_CLASS = MockEventHandler
+
+    def __init__(self, rate : float = 10., pha_mu : float = 1000., pha_sigma : float = 50.):
         """Constructor.
         """
-        super().__init__(file_path)
+        super().__init__()
         self._event_server = MockEventServer(rate, pha_mu, pha_sigma)
 
     def process_event(self):
         """Overloaded method.
         """
-        return self._event_server.next()
+        evt = self._event_server.next()
+        logger.debug(evt)
+        return evt
 
 
 
 if __name__ == '__main__':
-    config = MockUserAppConfiguration()
-    print(config)
-    srv = MockEventServer()
-    for i in range(10):
-        evt = srv.next()
-        print(evt)
-    evt = MockEvent(1, 0, 0, 1000)
-    print(evt)
+    #config = MockUserAppConfiguration()
+    #print(config)
+    #srv = MockEventServer()
+    #for i in range(10):
+    #    evt = srv.next()
+    #    print(evt)
+    #evt = MockEvent(1, 0, 0, 1000)
+    #print(evt)
+    import os
+    from baldaquin import BALDAQUIN_DATA
+    app = MockUserApplication()
+    app.start(os.path.join(BALDAQUIN_DATA, 'test_app.bin'))
+    time.sleep(5)
+    app.stop()

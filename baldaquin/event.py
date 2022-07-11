@@ -109,17 +109,29 @@ class EventHandlerBase(QtCore.QRunnable):
         Keyword arguents for the data buffer creation.
     """
 
-    def __init__(self, file_path : str, buffer_class : type = CircularBuffer, **kwargs) -> None:
+    BUFFER_CLASS = CircularBuffer
+
+    def __init__(self) -> None:
         """Constructor.
         """
         super().__init__()
-        self.buffer = buffer_class(file_path, **kwargs)
+        self.buffer = None
         self.__running = False
 
     def stop(self) -> None:
         """Stop the event handler.
         """
         self.__running = False
+
+    def flush_buffer(self):
+        """
+        """
+        self.buffer.flush()
+
+    def setup(self, file_path : str, **kwargs) -> None:
+        """
+        """
+        self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
 
     def run(self) -> None:
         """Overloaded QRunnable method.
