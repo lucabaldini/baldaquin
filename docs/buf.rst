@@ -12,8 +12,9 @@ The base class defines three basic primitives---``put_item()``, ``pop_item()`` a
 concrete, derived classes. The implementation should be thread-safe, as a
 buffer, by definition, will be accessed from multiple threads.
 
-In addition, the base class provide a :meth:`write() <baldaquin.buf.BufferBase.write()>`
-method that can dumps the current content of the buffer to file.
+In addition, the base class provides a :meth:`flush() <baldaquin.buf.BufferBase.flush()>`
+method that can dumps the current content of the buffer to file, assuming that
+the path to the output file is properly set.
 
 The basic semantic for the object is that one will have a thread calling
 ``buffer.put_item()`` any time there are data available, and another thread is
