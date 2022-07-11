@@ -18,14 +18,64 @@
 
 from __future__ import annotations
 
+import dataclasses
 from dataclasses import dataclass
-import random
 import struct
-import time
 from typing import Any
 
 from baldaquin.buf import CircularBuffer
 from baldaquin._qt import QtCore
+
+
+
+@dataclass
+class EventBase:
+
+    """Virtual base class with possible event structure.
+
+    The actual event fields should be defined by the subclasses, using the
+    dataclass machinery. Mind that the ``FORMAT_STRING`` should be overridded,
+    matching the type and the order of the fields.
+
+    The basic idea, here, is that the :meth:`pack() <baldaquin.event.EventBase.pack()>`
+    method returns a bytes object that can be written into a binary file,
+    while the :meth:`unpack() <baldaquin.event.EventBase.unpack()>` method does
+    the opposite, i.e., it constructs an event object from its binary representation
+    (the two are designed to round-trip). Additionally,
+    """
+
+    # pylint: disable=invalid-name
+    FORMAT_STRING = None
+
+    def attribute_values(self) -> tuple:
+        """Return the values for all the attributes, to be used, e.g., in the
+        ``pack()`` method.
+
+        See, e.g., https://stackoverflow.com/questions/69090253/ for more
+        information about how to programmatically iterate over dataclass fields.
+        Since this is not necessarily blazingly fast, we provide the functionality
+        wrapped in a small function, so that subclasses can overaload it if
+        needed.
+        """
+        return tuple(getattr(self, field.name) for field in dataclasses.fields(self))
+
+    def pack(self) -> bytes:
+        """Pack the event for supporting binary output to file.
+        """
+        return struct.pack(self.FORMAT_STRING, *self.attribute_values())
+
+    @classmethod
+    def unpack(cls, data : bytes) -> EventBase:
+        """Unpack some data into an event object.
+        """
+        return cls(*struct.unpack(cls.FORMAT_STRING, data))
+
+    @classmethod
+    def read_from_file(cls, input_file) -> EventBase:
+        """Read a single event from a file object open in binary mode.
+        """
+        return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT_STRING)))
+
 
 
 

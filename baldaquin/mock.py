@@ -26,43 +26,19 @@ from typing import Any
 
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
+from baldaquin.event import EventBase
 
 
 @dataclass
-class MockEvent:
+class MockEvent(EventBase):
 
     """Mock event data structure for testing purposes.
 
     This is a minimal event stucture including a trigger identifier, a timestamp
-    and a pulse-height value. The :meth:`pack() <baldaquin.event.MockEvent.pack()>`
-    method returns a bytes object that can be written into a binary file,
-    while the :meth:`unpack() <baldaquin.event.MockEvent.unpack()>` method does
-    the opposite, i.e., it constructs an event object from its binary representation
-    (the two are designed to round-trip).
-
-    .. note::
-
-       Although this is intended as a simple mock data structture for unit testing
-       this is a perfectly legitimate data structure that could be used
-       as an inspiration for real applications.
-
-    Arguments
-    ---------
-    trigger_id : int
-        The trigger identifier for the event.
-
-    seconds : int
-        The integer part of the timestamp in seconds.
-
-    microseconds : int
-        The fractional part of the timestamp in microseconds.
-
-    pha : int
-        The pulse height value.
+    and a pulse-height value.
     """
 
-    # pylint: disable=invalid-name
-    _FMT = 'llll'
+    FORMAT_STRING = '=llll'
 
     trigger_id : int
     seconds : int
@@ -97,23 +73,6 @@ class MockEvent:
         microseconds = round((timestamp - seconds) * 1.e6)
         pha = round(random.gauss(pha_mu, pha_sigma))
         return cls(trigger_id, seconds, microseconds, pha)
-
-    def pack(self) -> bytes:
-        """Pack the event for supporting binary output to file.
-        """
-        return struct.pack(self._FMT, self.trigger_id, self.seconds, self.microseconds, self.pha)
-
-    @classmethod
-    def unpack(cls, data : bytes) -> MockEvent:
-        """Unpack some data into an event object.
-        """
-        return cls(*struct.unpack(cls._FMT, data))
-
-    @classmethod
-    def read_from_file(cls, input_file) -> MockEvent:
-        """Read a single event from a file object open in binary mode.
-        """
-        return cls.unpack(input_file.read(32))
 
 
 
@@ -193,4 +152,7 @@ if __name__ == '__main__':
     print(config)
     srv = MockEventServer()
     for i in range(10):
-        print(srv.next())
+        evt = srv.next()
+        print(evt)
+    evt = MockEvent(1, 0, 0, 1000)
+    print(evt)

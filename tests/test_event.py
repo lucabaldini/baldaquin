@@ -23,7 +23,7 @@ from loguru import logger
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.buf import CircularBuffer
-from baldaquin.event import MockEvent, MockEventHandler
+from baldaquin.mock import MockEvent, MockEventHandler
 from baldaquin._qt import QtCore
 
 
