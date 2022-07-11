@@ -53,13 +53,20 @@ class BufferBase:
         The file write mode.
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY) -> None:
+    def __init__(self, file_path : str = None, mode : BufferWriteMode = BufferWriteMode.BINARY) -> None:
         """Constructor.
         """
-        self.file_path = file_path
+        self.file_path = None
         self._mode = mode
+        if file_path is not None:
+            self.set_output_file(file_path)
+
+    def set_output_file(self, file_path):
+        """Set the output file for flushing the buffer.
+        """
+        self.file_path = file_path
         if os.path.exists(self.file_path):
-            logger.warning(f'Output file {file_path} exists and will be overwritten')
+            logger.warning(f'Output file {self.file_path} exists and will be overwritten')
         # pylint: disable=consider-using-with
         open(self.file_path, f'w{self._mode.value}').close()
 
@@ -95,6 +102,9 @@ class BufferBase:
            function call, i.e., items added while writing to disk will need to
            wait for the next call.
         """
+        if self.file_path is None:
+            logger.error('Output file not set---cannot flush buffer.')
+            return
         num_items = self.num_items()
         if not num_items:
             return

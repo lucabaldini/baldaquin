@@ -59,7 +59,7 @@ class UserApplicationBase:
         """
         self.event_handler.stop()
         self.pool.waitForDone()
-        self.event_handler.flush()
+        self.event_handler.flush_buffer()
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
