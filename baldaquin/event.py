@@ -33,15 +33,23 @@ class EventBase:
 
     """Virtual base class with possible event structure.
 
-    The actual event fields should be defined by the subclasses, using the
-    dataclass machinery. Mind that the ``FORMAT_STRING`` should be overridded,
-    matching the type and the order of the fields.
+    Concrete subclasses should define the relevant fields for the event, using
+    the dataclass machinery, and override the ``FORMAT_STRING`` class member
+
+    .. warning::
+
+       Mind that the ``FORMAT_STRING`` should match the type and the order of
+       the event fields fields. The format string is passed verbatim to the
+       Python ``struct`` module, and the related information is available at
+       https://docs.python.org/3/library/struct.html
 
     The basic idea, here, is that the :meth:`pack() <baldaquin.event.EventBase.pack()>`
     method returns a bytes object that can be written into a binary file,
     while the :meth:`unpack() <baldaquin.event.EventBase.unpack()>` method does
     the opposite, i.e., it constructs an event object from its binary representation
-    (the two are designed to round-trip). Additionally,
+    (the two are designed to round-trip). Additionally, the
+    :meth:`read_from_file() <baldaquin.event.EventBase.read_from_file()>`
+    method reads and unpack one event from file.
     """
 
     # pylint: disable=invalid-name
