@@ -41,8 +41,8 @@ class BufferBase:
 
     """Base class for a data buffer.
 
-    This is defining the three basic primitives, i.e., ``put_item()``, ``pop_item()``
-    and ``num_items()``, and provides a working implementation of file I/O.
+    This is defining the three basic primitives, i.e., ``put()``, ``pop()``
+    and ``size()``, and provides a working implementation of file I/O.
 
     Arguments
     ---------
@@ -70,12 +70,12 @@ class BufferBase:
         # pylint: disable=consider-using-with
         open(self.file_path, f'w{self._mode.value}').close()
 
-    def put_item(self, item : Any) -> None:
+    def put(self, item : Any) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
         """
         raise NotImplementedError
 
-    def pop_item(self) -> Any:
+    def pop(self) -> Any:
         """Pop an item from the buffer (to be reimplemented in derived classes).
 
         .. note::
@@ -87,8 +87,13 @@ class BufferBase:
         """
         raise NotImplementedError
 
-    def num_items(self) -> int:
+    def size(self) -> int:
         """Return the number of items in the buffer (to be reimplemented in derived classes).
+        """
+        raise NotImplementedError
+
+    def clear(self) -> None:
+        """Clear the buffer.
         """
         raise NotImplementedError
 
@@ -103,16 +108,15 @@ class BufferBase:
            wait for the next call.
         """
         if self.file_path is None:
-            logger.error('Output file not set---cannot flush buffer.')
+            raise RuntimeError('Output file not set, cannot flush buffer.')
+        size = self.size()
+        if not size:
             return
-        num_items = self.num_items()
-        if not num_items:
-            return
-        logger.debug(f'Writing {num_items} items to {self.file_path}...')
+        logger.debug(f'Writing {size} items to {self.file_path}...')
         total_size = 0
         with open(self.file_path, f'a{self._mode.value}') as output_file:
-            for _ in range(num_items):
-                item = self.pop_item()
+            for _ in range(size):
+                item = self.pop()
                 total_size += len(item)
                 output_file.write(item)
         logger.debug(f'Done, {total_size} Bytes written to disk.')
@@ -125,9 +129,14 @@ class FIFO(queue.Queue, BufferBase):
 
     This is using the `queue <https://docs.python.org/3/library/queue.html>`_
     module in the Python standard library.
+
+    Note that the queue.Queue class is internally using a collections.deque
+    object, so this is effectively another layer of complexity over the
+    CircularBuffer class below. It's not entirely clear to me what the real
+    difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY,
+    def __init__(self, file_path : str = None, mode : BufferWriteMode = BufferWriteMode.BINARY,
                  max_size : int = None) -> None:
         """Constructor.
         """
@@ -139,20 +148,25 @@ class FIFO(queue.Queue, BufferBase):
         super().__init__(max_size)
         BufferBase.__init__(self, file_path, mode)
 
-    def put_item(self, item : Any) -> None:
+    def put(self, item : Any) -> None:
         """Overloaded method.
         """
-        self.put(item)
+        queue.Queue.put(self, item)
 
-    def pop_item(self) -> Any:
+    def pop(self) -> Any:
         """Overloaded method.
         """
         return self.get()
 
-    def num_items(self) -> int:
+    def size(self) -> int:
         """Overloaded method.
         """
         return self.qsize()
+
+    def clear(self) -> None:
+        """Overloaded method.
+        """
+        self.queue.clear()
 
 
 
@@ -171,24 +185,29 @@ class CircularBuffer(collections.deque, BufferBase):
     comes from https://stackoverflow.com/questions/4151320
     """
 
-    def __init__(self, file_path : str, mode : BufferWriteMode = BufferWriteMode.BINARY,
+    def __init__(self, file_path : str = None, mode : BufferWriteMode = BufferWriteMode.BINARY,
                  max_size : int = None) -> None:
         """Constructor.
         """
         super().__init__([], max_size)
         BufferBase.__init__(self, file_path, mode)
 
-    def put_item(self, item : Any) -> None:
+    def put(self, item : Any) -> None:
         """Overloaded method.
         """
         self.append(item)
 
-    def pop_item(self) -> Any:
+    def pop(self) -> Any:
         """Overloaded method.
         """
         return self.popleft()
 
-    def num_items(self) -> int:
+    def size(self) -> int:
         """Overloaded method.
         """
         return len(self)
+
+    def clear(self) -> None:
+        """Overloaded method.
+        """
+        collections.deque.clear(self)
