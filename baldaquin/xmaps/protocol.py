@@ -22,12 +22,10 @@ import struct
 
 from loguru import logger
 
+from baldaquin.xmaps import XMAPS_NUM_COLS, XMAPS_NUM_ROWS, XMAPS_NUM_PIXELS
 
-XMAPS_NUM_COLS = 32
-XMAPS_NUM_ROWS = 32
-XMAPS_NUM_PIXELS = XMAPS_NUM_COLS * XMAPS_NUM_ROWS
 
-ENCODING = 'utf-8'
+_ENCODING = 'utf-8'
 
 
 class Command(Enum):
@@ -58,7 +56,7 @@ def _read_segment(connected_socket : socket.socket, length : int,
         The maximum size of the chunks to be read.
     """
     received_bytes = 0
-    segment = bytes('', ENCODING)
+    segment = bytes('', _ENCODING)
     while received_bytes < length:
         chunck_length = min(length - received_bytes, max_chunck_length)
         data = connected_socket.recv(chunck_length)
@@ -130,7 +128,7 @@ def send_message(connected_socket : socket.socket, message : str) -> None:
     # Send the length of the message first, packed as an integer...
     connected_socket.send(struct.pack("<L", len(message)))
     # ...and then the actual message.
-    message = message.encode(ENCODING, errors='strict')
+    message = message.encode(_ENCODING, errors='strict')
     connected_socket.sendall(message)
 
 

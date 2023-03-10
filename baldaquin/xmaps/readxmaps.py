@@ -28,19 +28,19 @@ from baldaquin.xmaps.protocol import send_command, Command
 __description__ = 'Simple command-line application to read XMAPS'
 
 
-def connect(ip : str, port : int) -> socket.socket:
+def connect(ip_address : str, port : int) -> socket.socket:
     """Connect to a socket.
     """
     connected_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    logger.info(f'Trying to connect to {ip} on port {port}...')
+    logger.info(f'Trying to connect to {ip_address} on port {port}...')
     connected_socket.settimeout(2)
     try:
-        connected_socket.connect((ip, port))
+        connected_socket.connect((ip_address, port))
         connected_socket.setblocking(True)
         logger.info('Done, socket connected!')
     except TimeoutError as exception:
-        logger.error(f'Cannot connect to server {ip} on port {port}')
-        raise(exception)
+        logger.error(f'Cannot connect to server {ip_address} on port {port}')
+        raise exception
     return connected_socket
 
 
@@ -66,5 +66,4 @@ if __name__ == '__main__':
         help='the port for the socket connection')
     parser.add_argument('--shutter', type=int, default=1000000,
         help='the shutter time in us')
-    args = parser.parse_args()
-    main(args)
+    main(parser.parse_args())
