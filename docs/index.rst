@@ -43,4 +43,6 @@ application.
    install
    technologies
 
+   xmaps
+
    api
