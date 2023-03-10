@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Copyright (C) 2023 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
@@ -16,68 +17,52 @@
 """Small application to read the XMAPS chip.
 """
 
+import argparse
 import socket
 
 from loguru import logger
 
-from baldaquin.xmaps.protocol import send_command
+from baldaquin.xmaps.protocol import send_command, Command
 
+
+__description__ = 'Simple command-line application to read XMAPS'
 
 
 def connect(ip : str, port : int) -> socket.socket:
     """Connect to a socket.
     """
     connected_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    logger.info(f'Trying to connect to {ip} on port {port}...')
+    connected_socket.settimeout(2)
     try:
         connected_socket.connect((ip, port))
-        # These seem in contradiction, as setblocking(1) is equivalent to settimeout(None)?
-        connected_socket.settimeout(2)
-        connected_socket.setblocking(1)
-    except:
+        connected_socket.setblocking(True)
+        logger.info('Done, socket connected!')
+    except TimeoutError as exception:
         logger.error(f'Cannot connect to server {ip} on port {port}')
+        raise(exception)
     return connected_socket
 
 
-
-
-
-
+def main(args):
+    """Main entry point for the application.
+    """
+    connected_socket = connect(args.ip, args.port)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=7, value=0.2)
+    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
+    send_command(connected_socket, Command.APPLY_LOADEN_PULSE)
+    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
+    send_command(connected_socket, Command.APPLY_SHUTTER, duration=8000000)
+    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
+    connected_socket.close()
 
 
 
 if __name__ == '__main__':
-
-    ServerIP = "192.168.0.1"
-  ServerPort = 6666
-
-
-  cmdlist = []
-  cmdlist.append("! SetDACV 0 .0\n")
-  cmdlist.append("! SetDACV 1 .0\n")
-  cmdlist.append("! SetDACV 2 .0\n")
-  cmdlist.append("! SetDACV 3 .0\n")
-  cmdlist.append("! SetDACV 4 2.2\n")#ibias
-  cmdlist.append("! SetDACV 5 1.4\n")#ibr
-  cmdlist.append("! SetDACV 6 .0\n")
-  cmdlist.append("SetDACV 7 0.2\n")#vtest
-
-  cmdlist.append("XMAPS_Scan_counters 255 896 0\n") #enable all
-  #cmdlist.append("XMAPS_Scan_counters 255 882 1\n") #enable few
-
-  cmdlist.append("XMAPS_Apply_loaden_pulse\n")
-
-  cmdlist.append("XMAPS_Scan_counters 255 896 0\n") #reset run
-
-  cmdlist.append("XMAPS_Apply_shutter_us 8000000\n") #count
-
-  cmdlist.append("XMAPS_Read_counters 255 0\n") #readout
-
-  #cmdlist.append("XMAPS_Apply_write_pulses 100000\n") #readout
-
-  #cmdlist.append("XMAPS_Scan_counters 0 1 0\n") #fake inc
-
-  #cmdlist.append("XMAPS_Scan_counters 255 896 0\n") #readout
-
-
-  SendCmd (cmdlist)
-  ConnSocket.close()
+    parser = argparse.ArgumentParser(description=__description__)
+    parser.add_argument('--ip', type=str, default='192.168.0.1',
+        help='the IP address of the server for the socket connection')
+    parser.add_argument('--port', type=int, default=6666,
+        help='the port for the socket connection')
+    args = parser.parse_args()
+    main(args)

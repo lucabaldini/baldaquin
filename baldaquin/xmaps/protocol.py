@@ -35,10 +35,10 @@ class Command(Enum):
     """Definition of the XMAPS valid commands.
     """
 
-    SET_DAC_V = 'SetDACV {arg1:d} {arg2:f}'
+    SET_DAC_V = 'SetDACV {buffer:d} {value:f}'
     SCAN_COUNTERS = 'XMAPS_Scan_counters {arg1:d} {arg2:d} {arg3:d}'
     APPLY_LOADEN_PULSE = 'XMAPS_Apply_loaden_pulse'
-    APPLY_SHUTTER = 'XMAPS_Apply_shutter_us {arg1:d}'
+    APPLY_SHUTTER = 'XMAPS_Apply_shutter_us {duration:d}'
 
 
 
