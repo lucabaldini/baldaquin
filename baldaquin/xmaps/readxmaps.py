@@ -13,38 +13,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""Small application to read the XMAPS chip.
 """
-"""
+
+import socket
+
+from loguru import logger
+
+from baldaquin.xmaps.protocol import send_command
 
 
-def SendCmd (cmdlist):
-    #############################################################################
-    ServerIP = "192.168.0.1"
-    ServerPort = 6666
-    terminator=''
-    for cmd in cmdlist:
-        #############################################################################
-        if cmd[-1] != '\n':
-         terminator = ''
-        #############################################################################
-        ConnSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-         ConnSocket.connect((ServerIP, ServerPort))
-         ConnSocket.settimeout(2)
-         ConnSocket.setblocking(1)
-        except:
-         print (ServerIP + " Not Available :( :(")
-        #############################################################################
-        sendmsg(ConnSocket, cmd+terminator)
-        #############################################################################
-        rcvmsg (ConnSocket)
+
+def connect(ip : str, port : int) -> socket.socket:
+    """Connect to a socket.
+    """
+    connected_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        connected_socket.connect((ip, port))
+        # These seem in contradiction, as setblocking(1) is equivalent to settimeout(None)?
+        connected_socket.settimeout(2)
+        connected_socket.setblocking(1)
+    except:
+        logger.error(f'Cannot connect to server {ip} on port {port}')
+    return connected_socket
 
 
-    ConnSocket.close()
 
-#################################################################################
+
+
+
+
+
 
 if __name__ == '__main__':
+
+    ServerIP = "192.168.0.1"
+  ServerPort = 6666
+
+
   cmdlist = []
   cmdlist.append("! SetDACV 0 .0\n")
   cmdlist.append("! SetDACV 1 .0\n")
@@ -74,3 +80,4 @@ if __name__ == '__main__':
 
 
   SendCmd (cmdlist)
+  ConnSocket.close()
