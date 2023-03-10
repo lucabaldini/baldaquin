@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from baldaquin.xmaps import XMAPS_NUM_COLS, XMAPS_NUM_ROWS
-from baldaquin.xmaps.protocol import send_command, Command
+from baldaquin.xmaps.protocol import setup_dac, enable_all_pixels, read_image
 
 
 __description__ = 'Simple command-line application to read XMAPS'
@@ -34,39 +34,28 @@ __description__ = 'Simple command-line application to read XMAPS'
 def connect(ip_address : str, port : int) -> socket.socket:
     """Connect to a socket.
     """
-    connected_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     logger.info(f'Trying to connect to {ip_address} on port {port}...')
-    connected_socket.settimeout(2)
+    socket_.settimeout(2)
     try:
-        connected_socket.connect((ip_address, port))
-        connected_socket.setblocking(True)
+        socket_.connect((ip_address, port))
+        socket_.setblocking(True)
         logger.info('Done, socket connected!')
     except TimeoutError as exception:
         logger.error(f'Cannot connect to server {ip_address} on port {port}')
         raise exception
-    return connected_socket
+    return socket_
 
 
 def main(args):
     """Main entry point for the application.
     """
-    connected_socket = connect(args.ip, args.port)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=0, value=0.)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=1, value=0.)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=2, value=0.)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=3, value=0.)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=4, value=2.2)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=5, value=1.4)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=6, value=0.)
-    send_command(connected_socket, Command.SET_DAC_V, buffer=7, value=0.2)
-    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
-    send_command(connected_socket, Command.APPLY_LOADEN_PULSE)
-    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
-
+    socket_ = connect(args.address, args.port)
+    setup_dac(socket_)
+    enable_all_pixels(socket_)
     data = np.zeros((XMAPS_NUM_COLS, XMAPS_NUM_ROWS), dtype=int)
-    for i in range(args.numframes):
-        send_command(connected_socket, Command.APPLY_SHUTTER, duration=args.shutter)
-        string, payload = send_command(connected_socket, Command.READ_COUNTERS, mask=255, din=0)
+    for _ in range(args.frames):
+        string, payload = read_image(socket_, args.shutter)
         data += np.array(payload).reshape(XMAPS_NUM_COLS, XMAPS_NUM_ROWS) - 1
         np.set_printoptions(linewidth= 160,threshold=2000)
         print(string)
@@ -75,7 +64,7 @@ def main(args):
     plt.figure('Image display')
     plt.imshow(data)
     plt.colorbar()
-    connected_socket.close()
+    socket_.close()
 
     logger.info('Saving data to file...')
     np.save('img.npy', data)
@@ -86,12 +75,12 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__description__)
-    parser.add_argument('--ip', type=str, default='192.168.0.1',
+    parser.add_argument('--address', type=str, default='192.168.0.1',
         help='the IP address of the server for the socket connection')
     parser.add_argument('--port', type=int, default=6666,
         help='the port for the socket connection')
     parser.add_argument('--shutter', type=int, default=1000000,
         help='the shutter time in us')
-    parser.add_argument('--numframes', type=int, default=10,
+    parser.add_argument('--frames', type=int, default=10,
         help='number of frames to be readout')
     main(parser.parse_args())

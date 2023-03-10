@@ -22,7 +22,7 @@ import struct
 
 from loguru import logger
 
-from baldaquin.xmaps import XMAPS_NUM_COLS, XMAPS_NUM_ROWS, XMAPS_NUM_PIXELS
+from baldaquin.xmaps import DacChannel, XMAPS_BUFFER_FULL_MASK, XMAPS_NUM_READOUT_CYCLES
 
 
 _ENCODING = 'utf-8'
@@ -30,24 +30,46 @@ _ENCODING = 'utf-8'
 
 class Command(Enum):
 
-    """Definition of the XMAPS valid commands.
+    """Definition of the basic commands.
     """
 
-    SET_DAC_V = 'SetDACV {buffer:d} {value:f}'
-    SCAN_COUNTERS = 'XMAPS_Scan_counters {arg1:d} {arg2:d} {arg3:d}'
+    # Setup the multi-channel DAC.
+    #
+    # channel -> the DAC channels;
+    # value -> the DAC value to be set in V.
+    SET_DAC = 'SetDACV {channel:d} {value:f}'
+
+    # Scan the pixel counters circulating a token across specific buffers/pixels.
+    #
+    # mask -> an 8-bit mask (0--255) mapping the readout buffers;
+    # cycles -> the number of clock cycles (typically 128 channels x 7 bits = 896) per buffer;
+    # din -> the d_in value (0 is enable, and 1 is disable).
+    SCAN_COUNTERS = 'XMAPS_Scan_counters {mask:d} {cycles:d} {din:d}'
+
+    # Load the proper values (circulated via a SCAN_COUNTER call) in the pixel registers.
+    # (This takes no argument.)
+    PULSE_COUNTERS = 'XMAPS_Apply_loaden_pulse'
+
+    # Read the pixel counter.
+    #
+    # mask -> an 8-bit mask (0--255) mapping the readout buffers;
+    # din -> obsolete, as in a READ_COUNTERS call this has to be 0. (Will be removed.)
     READ_COUNTERS = 'XMAPS_Read_counters {mask:d} {din:d}'
-    APPLY_LOADEN_PULSE = 'XMAPS_Apply_loaden_pulse'
-    APPLY_SHUTTER = 'XMAPS_Apply_shutter_us {duration:d}'
+
+    # Open the shutter signal for a pre-defined period of time.
+    #
+    # duration -> the shutter duration in us.
+    OPEN_SHUTTER = 'XMAPS_Apply_shutter_us {duration:d}'
 
 
 
-def _read_segment(connected_socket : socket.socket, length : int,
+def _read_segment(socket_ : socket.socket, length : int,
     max_chunck_length : int = 2048) -> bytes:
     """Read a message segment of a given length.
 
     Arguments
     ---------
-    connected_socket : socket.socket instance
+    socket_ : socket.socket instance
         The connected socket object that the message must be sent through.
 
     length : int
@@ -60,13 +82,13 @@ def _read_segment(connected_socket : socket.socket, length : int,
     segment = bytes('', _ENCODING)
     while received_bytes < length:
         chunck_length = min(length - received_bytes, max_chunck_length)
-        data = connected_socket.recv(chunck_length)
+        data = socket_.recv(chunck_length)
         segment += data
         received_bytes += len(data)
     return segment
 
 
-def _unpack_segment(connected_socket : socket.socket, length : int, fmt : str) -> int:
+def _unpack_segment(socket_ : socket.socket, length : int, fmt : str) -> int:
     """Unpack a message segment of a given length.
 
     Note that, according to the documentation of struc.unpack(), the result is a
@@ -75,7 +97,7 @@ def _unpack_segment(connected_socket : socket.socket, length : int, fmt : str) -
 
     Arguments
     ---------
-    connected_socket : socket.socket instance
+    socket_ : socket.socket instance
         The connected socket object that the message must be sent through.
 
     length : int
@@ -84,7 +106,7 @@ def _unpack_segment(connected_socket : socket.socket, length : int, fmt : str) -
     fmt : str
         The format string to be passed to struct.unpack().
     """
-    segment = _read_segment(connected_socket, length)
+    segment = _read_segment(socket_, length)
     data = struct.unpack(fmt, segment)
     # If the segment contain a single value, return that instead of a 1-element tuple.
     if len(data) == 1:
@@ -92,32 +114,32 @@ def _unpack_segment(connected_socket : socket.socket, length : int, fmt : str) -
     return data
 
 
-def receive_message(connected_socket : socket.socket):
+def receive_message(socket_ : socket.socket):
     """Receive a message through an already connected socket.
 
     Arguments
     ---------
-    connected_socket : socket.socket instance
+    socket_ : socket.socket instance
         The connected socket object that the message must be sent through.
     """
-    total_length = _unpack_segment(connected_socket, 4, '<L')
-    string_length = _unpack_segment(connected_socket, 4, '<L')
-    string = _read_segment(connected_socket, string_length)
+    total_length = _unpack_segment(socket_, 4, '<L')
+    string_length = _unpack_segment(socket_, 4, '<L')
+    string = _read_segment(socket_, string_length)
     logger.debug(f'Message string received: "{string}"')
     payload_length = total_length - string_length - 4
     if payload_length == 0:
         return string, None
     fmt = f'{payload_length}B'
-    payload = _unpack_segment(connected_socket, payload_length, fmt)
+    payload = _unpack_segment(socket_, payload_length, fmt)
     return string, payload
 
 
-def send_message(connected_socket : socket.socket, message : str) -> None:
+def send_message(socket_ : socket.socket, message : str) -> None:
     """Send a message through an already connected socket.
 
     Arguments
     ---------
-    connected_socket : socket.socket instance
+    socket_ : socket.socket instance
         The connected socket object that the message must be sent through.
 
     message : str
@@ -125,10 +147,10 @@ def send_message(connected_socket : socket.socket, message : str) -> None:
     """
     logger.debug(f'Sending message "{message}"...')
     # Send the length of the message first, packed as an integer...
-    connected_socket.send(struct.pack("<L", len(message)))
+    socket_.send(struct.pack("<L", len(message)))
     # ...and then the actual message.
     message = message.encode(_ENCODING, errors='strict')
-    connected_socket.sendall(message)
+    socket_.sendall(message)
 
 
 def format_command(command : Command, terminator : str = '\n', **kwargs):
@@ -151,13 +173,12 @@ def format_command(command : Command, terminator : str = '\n', **kwargs):
     return command
 
 
-def send_command(connected_socket : socket.socket, command : Command,
-    terminator : str = '\n', **kwargs):
+def send_command(socket_ : socket.socket, command : Command, terminator : str = '\n', **kwargs):
     """Send a command.
 
     Arguments
     ---------
-    connected_socket : socket.socket instance
+    socket_ : socket.socket instance
         The connected socket object that the message must be sent through.
 
     command : Command enum value
@@ -169,5 +190,57 @@ def send_command(connected_socket : socket.socket, command : Command,
     **kwargs
         The named values for all the command parameters.
     """
-    send_message(connected_socket, format_command(command, terminator, **kwargs))
-    return receive_message(connected_socket)
+    send_message(socket_, format_command(command, terminator, **kwargs))
+    return receive_message(socket_)
+
+
+def setup_dac(socket_ : socket.socket, ibias : float = 3.3, ibr : float = 1.4,
+    vtest : float = 0.) -> None:
+    """Setup the multi-channel DAC for the peripheral pixels.
+
+    Note that all the unused channels are set to 0.
+
+    Arguments
+    ---------
+    socket_ : socket.socket instance
+        The connected socket object that the message must be sent through.
+
+    ibias : float
+        The value for the IBIAS DAC channel in V.
+
+    ibr : float
+        The value for the IBR DAC channel in V.
+
+    vtest : float
+        The value for the VTEST DAC channel in V.
+    """
+    send_command(socket_, Command.SET_DAC, channel=DacChannel.IBIAS, value=ibias)
+    send_command(socket_, Command.SET_DAC, channel=DacChannel.IBR, value=ibr)
+    send_command(socket_, Command.SET_DAC, channel=DacChannel.VTEST, value=vtest)
+    for channel in DacChannel.unused_channels():
+        send_command(socket_, Command.SET_DAC, channel=channel, value=0.)
+
+
+def enable_all_pixels(socket_ : socket.socket):
+    """Enable all the pixels for counting.
+
+    Arguments
+    ---------
+    socket_ : socket.socket instance
+        The connected socket object that the message must be sent through.
+    """
+    send_command(socket_, Command.SCAN_COUNTERS, mask=XMAPS_BUFFER_FULL_MASK,
+        cycles=XMAPS_NUM_READOUT_CYCLES, din=0)
+    send_command(socket_, Command.PULSE_COUNTERS)
+
+
+def read_image(socket_ : socket.socket, shutter_time : int):
+    """Read a full image.
+
+    Arguments
+    ---------
+    socket_ : socket.socket instance
+        The connected socket object that the message must be sent through.
+    """
+    send_command(socket_, Command.OPEN_SHUTTER, duration=shutter_time)
+    return send_command(socket_, Command.READ_COUNTERS, mask=XMAPS_BUFFER_FULL_MASK, din=0)
