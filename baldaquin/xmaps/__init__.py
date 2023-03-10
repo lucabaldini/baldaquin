@@ -65,13 +65,3 @@ class DacChannel(IntEnum):
         all the channels whose names start with an underscore.
         """
         return tuple([ch.value for ch in cls if ch.name.startswith(prefix)])
-
-
-
-if __name__ == '__main__':
-    # To be moved into a unit test.
-    assert XMAPS_BUFFER_FULL_MASK == 255
-    assert XMAPS_NUM_PIXELS == 1024
-    assert XMAPS_NUM_PIXELS_PER_BUFFER == 128
-    assert XMAPS_NUM_READOUT_CYCLES == 896
-    assert DacChannel.unused_channels() == (0, 1, 2, 3, 6)
