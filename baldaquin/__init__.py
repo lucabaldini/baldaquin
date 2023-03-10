@@ -56,15 +56,32 @@ BALDAQUIN_CONFIG = os.path.join(os.path.expanduser('~'), '.baldaquin')
 if not os.path.exists(BALDAQUIN_CONFIG):
     os.makedirs(BALDAQUIN_CONFIG)
 
+
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
     format=">>> <level>{message}</level>")
 
 
-def config_logger(file_path=None, extra=None):
+def config_logger(file_path : str = None, extra=None):
     """Configure the loguru logger.
     """
     handlers = [DEFAULT_LOGURU_HANDLER]
     if file_path is not None:
         handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
     logger.configure(handlers=handlers, levels=None, extra=extra)
+
+
+def setup_project(project_name : str) -> tuple[str, str]:
+    """Setup the folder structure for a given project.
+
+    This is essentially creating a folder for the configuration files and
+    a folder for the data files, if they do not exist already, and returns
+    the path to the two (in this order---first config and then data).
+    """
+    config_folder_path = os.path.join(BALDAQUIN_DATA, project_name)
+    data_folder_path = os.path.join(BALDAQUIN_CONFIG, project_name)
+    for folder_path in (config_folder_path, data_folder_path):
+        if not os.path.exists(folder_path):
+            logger.info(f'Creating folder {folder_path} for project {project_name}...')
+            os.makedirs(folder_path)
+    return config_folder_path, data_folder_path

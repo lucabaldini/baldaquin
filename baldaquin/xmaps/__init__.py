@@ -17,7 +17,14 @@
 """
 
 from enum import IntEnum
+import os
 
+from baldaquin import setup_project
+
+
+XMAPS_PROJECT_NAME = 'xmaps'
+
+XMAPS_CONFIG, XMAPS_DATA = setup_project(XMAPS_PROJECT_NAME)
 
 # Geometrical layout of the matrix.
 XMAPS_NUM_COLS = 32
