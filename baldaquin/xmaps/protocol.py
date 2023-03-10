@@ -35,6 +35,7 @@ class Command(Enum):
 
     SET_DAC_V = 'SetDACV {buffer:d} {value:f}'
     SCAN_COUNTERS = 'XMAPS_Scan_counters {arg1:d} {arg2:d} {arg3:d}'
+    READ_COUNTERS = 'XMAPS_Read_counters {mask:d} {din:d}'
     APPLY_LOADEN_PULSE = 'XMAPS_Apply_loaden_pulse'
     APPLY_SHUTTER = 'XMAPS_Apply_shutter_us {duration:d}'
 
@@ -108,8 +109,6 @@ def receive_message(connected_socket : socket.socket):
         return string, None
     fmt = f'{payload_length}B'
     payload = _unpack_segment(connected_socket, payload_length, fmt)
-    if payload_length == XMAPS_NUM_PIXELS:
-        payload = payload.reshape(XMAPS_NUM_COLS, XMAPS_NUM_ROWS)
     return string, payload
 
 

@@ -21,6 +21,7 @@ import argparse
 import socket
 
 from loguru import logger
+import numpy as np
 
 from baldaquin.xmaps.protocol import send_command, Command
 
@@ -48,12 +49,23 @@ def main(args):
     """Main entry point for the application.
     """
     connected_socket = connect(args.ip, args.port)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=0, value=0.)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=1, value=0.)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=2, value=0.)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=3, value=0.)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=4, value=2.2)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=5, value=1.4)
+    send_command(connected_socket, Command.SET_DAC_V, buffer=6, value=0.)
     send_command(connected_socket, Command.SET_DAC_V, buffer=7, value=0.2)
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
     send_command(connected_socket, Command.APPLY_LOADEN_PULSE)
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
     send_command(connected_socket, Command.APPLY_SHUTTER, duration=args.shutter)
-    send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
+    string, payload = send_command(connected_socket, Command.READ_COUNTERS, mask=255, din=0)
+    data = np.array(payload).reshape(32,32)
+
+    np.set_printoptions(linewidth= 160,threshold=2000)
+    print(string, data)
     connected_socket.close()
 
 
