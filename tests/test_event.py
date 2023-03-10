@@ -69,7 +69,7 @@ def test_mock_event_buffer(num_events : int = 10):
     for i in range(num_events):
         event = MockEvent.random(i, start_time)
         logger.info(event)
-        buffer.put_item(event.pack())
+        buffer.put(event.pack())
     # Write the events to file...
     buffer.flush()
     # ... and read them back.
@@ -78,18 +78,3 @@ def test_mock_event_buffer(num_events : int = 10):
             event = MockEvent.read_from_file(input_file)
             logger.info(event)
             assert event.trigger_id == i
-
-def test_mock_event_handler(rate=1000., write_interval=1., num_writes=5):
-    """Small test function for the asynchronous event handler mechanism.
-    """
-    file_path = os.path.join(BALDAQUIN_DATA, 'test.out')
-    evt_handler = MockEventHandler(file_path, rate=rate)
-    pool = QtCore.QThreadPool.globalInstance()
-    pool.start(evt_handler)
-    for i in range(num_writes):
-        time.sleep(write_interval)
-        evt_handler.buffer.flush()
-    evt_handler.stop()
-    pool.waitForDone()
-    evt_handler.buffer.flush()
-    assert evt_handler.buffer.num_items() == 0

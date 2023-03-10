@@ -152,7 +152,8 @@ class RunControl:
             self._run_id += 1
             self._write_run_id()
             self._create_output_folder()
-            self._user_application.start()
+            file_path = f'testdata_{self._run_id:05d}.dat'
+            self._user_application.start(file_path)
         else:
             self._raise_invalid_transition(target)
         self._status = target

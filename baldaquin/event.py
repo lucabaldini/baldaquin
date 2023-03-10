@@ -138,7 +138,7 @@ class EventHandlerBase(QtCore.QRunnable):
         """
         self.__running = True
         while self.__running:
-            self.buffer.put_item(self.process_event())
+            self.buffer.put(self.process_event())
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

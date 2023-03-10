@@ -21,7 +21,7 @@ import sys
 from loguru import logger
 
 from baldaquin.config import SampleConfiguration
-from baldaquin._gui import QtGui, QtCore, QtWidgets
+from baldaquin._qt import QtGui, QtCore, QtWidgets
 from baldaquin.gui import stylesheet_file_path, _icon_file_path
 import baldaquin.widgets
 
