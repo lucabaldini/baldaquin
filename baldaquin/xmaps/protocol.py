@@ -173,5 +173,4 @@ def send_command(connected_socket : socket.socket, command : Command,
         The named values for all the command parameters.
     """
     send_message(connected_socket, format_command(command, terminator, **kwargs))
-    status, _ = receive_message(connected_socket)
-    return status
+    return receive_message(connected_socket)

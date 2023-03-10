@@ -52,7 +52,7 @@ def main(args):
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
     send_command(connected_socket, Command.APPLY_LOADEN_PULSE)
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
-    send_command(connected_socket, Command.APPLY_SHUTTER, duration=8000000)
+    send_command(connected_socket, Command.APPLY_SHUTTER, duration=args.shutter)
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
     connected_socket.close()
 
@@ -64,5 +64,7 @@ if __name__ == '__main__':
         help='the IP address of the server for the socket connection')
     parser.add_argument('--port', type=int, default=6666,
         help='the port for the socket connection')
+    parser.add_argument('--shutter', type=int, default=1000000,
+        help='the shutter time in us')
     args = parser.parse_args()
     main(args)
