@@ -29,6 +29,7 @@ from loguru import logger
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
+from baldaquin.runctrl import RunControl
 
 
 @dataclass
@@ -158,16 +159,11 @@ class MockUserApplication(UserApplicationBase):
         return evt
 
 
+#class MockRunControl()
+
+
 
 if __name__ == '__main__':
-    #config = MockUserAppConfiguration()
-    #print(config)
-    #srv = MockEventServer()
-    #for i in range(10):
-    #    evt = srv.next()
-    #    print(evt)
-    #evt = MockEvent(1, 0, 0, 1000)
-    #print(evt)
     import os
     from baldaquin import BALDAQUIN_DATA
     app = MockUserApplication()

@@ -42,8 +42,6 @@ class RunControl:
     """Run control class.
     """
 
-    NAME = 'Default run control'
-
     def __init__(self):
         """Constructor.
         """
@@ -135,7 +133,7 @@ class RunControl:
         elif self.is_running():
             self._user_application.stop()
             self.stop_timestamp = self.timeline.latch()
-            logger.info(f'{self.NAME} stopped on {self.stop_timestamp}')
+            logger.info(f'Run Control stopped on {self.stop_timestamp}')
         else:
             self._raise_invalid_transition(target)
         self._status = target
@@ -148,7 +146,7 @@ class RunControl:
         target = RunControlStatus.RUNNING
         if self.is_stopped():
             self.start_timestamp = self.timeline.latch()
-            logger.info(f'{self.NAME} started on {self.start_timestamp}')
+            logger.info(f'Run Control started on {self.start_timestamp}')
             self._run_id += 1
             self._write_run_id()
             self._create_output_folder()
