@@ -42,6 +42,8 @@ BALDAQUIN_DOCS = __join('docs', base_folder=BALDAQUIN_BASE)
 BALDAQUIN_DOCS_STATIC = __join('_static', base_folder=BALDAQUIN_DOCS)
 BALDAQUIN_TESTS = __join('test', base_folder=BALDAQUIN_BASE)
 
+# The path to the base folder for the output data defaults to ~/baldaquindata,
+# but can be changed via the $BALDAQUIN_DATA environmental variable.
 try:
     BALDAQUIN_DATA = os.environ['BALDAQUIN_DATA']
 except KeyError:
@@ -49,15 +51,18 @@ except KeyError:
 if not os.path.exists(BALDAQUIN_DATA):
     os.makedirs(BALDAQUIN_DATA)
 
+# On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
+BALDAQUIN_CONFIG = os.path.join(os.path.expanduser('~'), '.baldaquin')
+if not os.path.exists(BALDAQUIN_CONFIG):
+    os.makedirs(BALDAQUIN_CONFIG)
 
-
-DEFAULT_LOGURU_HANDLER = dict(
-    sink=sys.stderr, colorize=True, format=">>> <level>{message}</level>"
-    )
+# Logger setup.
+DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
+    format=">>> <level>{message}</level>")
 
 
 def config_logger(file_path=None, extra=None):
-    """
+    """Configure the loguru logger.
     """
     handlers = [DEFAULT_LOGURU_HANDLER]
     if file_path is not None:
