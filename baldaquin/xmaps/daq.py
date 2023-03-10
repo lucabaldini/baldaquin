@@ -17,20 +17,22 @@
 """DAQ control for XMAPS.
 """
 
+import socket
+
+from loguru import logger
+import numpy as np
+
 from baldaquin.app import UserApplicationBase
 from baldaquin.event import EventHandlerBase
 from baldaquin.runctrl import RunControl
+from baldaquin.xmaps import XMAPS_NUM_COLS, XMAPS_NUM_ROWS
+from baldaquin.xmaps.protocol import setup_dac, enable_all_pixels, read_image
 
 
 class XmapEventHandler(EventHandlerBase):
 
     """
     """
-
-    def process_event(self):
-        """
-        """
-        print(1)
 
 
 class XmapsUserApp(UserApplicationBase):
@@ -40,10 +42,46 @@ class XmapsUserApp(UserApplicationBase):
 
     EVENT_HANDLER_CLASS = XmapEventHandler
 
+    def __init__(self, address, port):
+        """
+        """
+        super().__init__()
+        self.socket_ = None
+        self.address = address
+        self.port = port
+
+    def setup(self):
+        """
+        """
+        self.socket_ = self.connect(self.address, self.port)
+        setup_dac(self.socket_)
+        enable_all_pixels(self.socket_)
+
+    @staticmethod
+    def connect(ip_address : str, port : int) -> socket.socket:
+        """Connect to a socket.
+        """
+        socket_ = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        logger.info(f'Trying to connect to {ip_address} on port {port}...')
+        socket_.settimeout(2)
+        try:
+            socket_.connect((ip_address, port))
+            socket_.setblocking(True)
+            logger.info('Done, socket connected!')
+        except TimeoutError as exception:
+            logger.error(f'Cannot connect to server {ip_address} on port {port}')
+            raise exception
+        return socket_
+
     def process_event(self):
         """
         """
-        print(2)
+        string, payload = read_image(self.socket_, 1000000)
+        data = np.array(payload).reshape(XMAPS_NUM_COLS, XMAPS_NUM_ROWS) - 1
+        np.set_printoptions(linewidth= 160,threshold=2000)
+        print(string)
+        print(data)
+        return data
 
 
 
@@ -56,8 +94,19 @@ class XmapsRunControl(RunControl):
 
 
 if __name__ == '__main__':
+    import os
+    import time
+    from baldaquin import BALDAQUIN_DATA
+    file_path = os.path.join(BALDAQUIN_DATA, 'test_xmaps.bin')
+    app = XmapsUserApp('192.168.0.1', 6666)
     rc = XmapsRunControl()
-    app = XmapsUserApp()
     rc.set_user_application(app)
     rc.set_stopped()
     rc.set_running()
+
+    """
+    app.setup()
+    app.start(file_path)
+    time.sleep(5)
+    app.stop()
+    """

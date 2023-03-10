@@ -133,7 +133,8 @@ class EventHandlerBase(QtCore.QRunnable):
         """
         self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
 
-    def run(self) -> None:
+    @QtCore.Slot()
+    def run(self):
         """Overloaded QRunnable method.
         """
         self.__running = True
