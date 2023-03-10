@@ -21,8 +21,10 @@ import argparse
 import socket
 
 from loguru import logger
+import matplotlib.pyplot as plt
 import numpy as np
 
+from baldaquin.xmaps import XMAPS_NUM_COLS, XMAPS_NUM_ROWS
 from baldaquin.xmaps.protocol import send_command, Command
 
 
@@ -60,13 +62,25 @@ def main(args):
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
     send_command(connected_socket, Command.APPLY_LOADEN_PULSE)
     send_command(connected_socket, Command.SCAN_COUNTERS, arg1=255, arg2=896, arg3=0)
-    send_command(connected_socket, Command.APPLY_SHUTTER, duration=args.shutter)
-    string, payload = send_command(connected_socket, Command.READ_COUNTERS, mask=255, din=0)
-    data = np.array(payload).reshape(32,32)
 
-    np.set_printoptions(linewidth= 160,threshold=2000)
-    print(string, data)
+    data = np.zeros((XMAPS_NUM_COLS, XMAPS_NUM_ROWS), dtype=int)
+    for i in range(args.numframes):
+        send_command(connected_socket, Command.APPLY_SHUTTER, duration=args.shutter)
+        string, payload = send_command(connected_socket, Command.READ_COUNTERS, mask=255, din=0)
+        data += np.array(payload).reshape(XMAPS_NUM_COLS, XMAPS_NUM_ROWS) - 1
+        np.set_printoptions(linewidth= 160,threshold=2000)
+        print(string)
+        print(data)
+
+    plt.figure('Image display')
+    plt.imshow(data)
+    plt.colorbar()
     connected_socket.close()
+
+    logger.info('Saving data to file...')
+    np.save('img.npy', data)
+
+    plt.show()
 
 
 
@@ -78,4 +92,6 @@ if __name__ == '__main__':
         help='the port for the socket connection')
     parser.add_argument('--shutter', type=int, default=1000000,
         help='the shutter time in us')
+    parser.add_argument('--numframes', type=int, default=10,
+        help='number of frames to be readout')
     main(parser.parse_args())
