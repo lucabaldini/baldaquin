@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2022--2023 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ class RunControlBase:
     def __init__(self):
         """Constructor.
         """
-        self._machine_id = self._read_machine_id()
+        self._test_stand_id = self._read_test_stand_id()
         self._run_id = self._read_run_id()
         self._status = RunControlStatus.RESET
         self.timeline = Timeline()
@@ -66,22 +66,40 @@ class RunControlBase:
         self.stop_timestamp = None
         self._user_application = None
 
-    def set_user_application(self, app):
+    def _test_stand_id_file_path(self) -> Path:
+        """Return the path to the configuration file holding the test stand id.
         """
-        """
-        if not isinstance(app, UserApplicationBase):
-            raise RuntimeError('Invalid user application')
-        self._user_application = app
+        return config_folder_path(self.PROJECT_NAME) / 'test_stand.cfg'
 
-    def _read_machine_id(self):
+    def _read_test_stand_id(self, default : int = 101) -> int:
+        """Read the test stand id from file.
         """
+        file_path = self._test_stand_id_file_path()
+        if not file_path.exists():
+            logger.warning(f'Cannot find test-stand id file, creating a default one...')
+            self._write_test_stand_id(default)
+            return default
+        logger.info(f'Reading test-stand id from {file_path}...')
+        test_stand_id = int(file_path.read_text())
+        logger.info(f'Done, test-stand id is {test_stand_id}.')
+        return test_stand_id
+
+    def _write_test_stand_id(self, test_stand_id : int) -> None:
+        """Write a given test-stand id to file.
         """
-        return 0
+        file_path = self._test_stand_id_file_path()
+        logger.info(f'Writing test-stand id {test_stand_id} to {file_path}...')
+        file_path.write_text(f'{test_stand_id}')
+
+    def _run_id_file_path(self) -> Path:
+        """Return the path to the configuration file holding the run id.
+        """
+        return config_folder_path(self.PROJECT_NAME) / 'run.cfg'
 
     def _read_run_id(self) -> int:
         """Read the run ID from the proper configuration file.
         """
-        file_path = config_folder_path(self.PROJECT_NAME) / 'runid.cfg'
+        file_path = config_folder_path(self.PROJECT_NAME) / 'run.cfg'
         print(file_path)
         return 0
 
@@ -94,6 +112,16 @@ class RunControlBase:
         """
         """
         pass
+
+
+    def set_user_application(self, app):
+        """
+        """
+        if not isinstance(app, UserApplicationBase):
+            raise RuntimeError('Invalid user application')
+        self._user_application = app
+
+
 
     def _create_output_folder(self):
         """
