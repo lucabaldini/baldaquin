@@ -29,7 +29,8 @@ from loguru import logger
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
-from baldaquin.runctrl import RunControl
+from baldaquin.runctrl import RunControlBase
+from baldaquin.mock import MOCK_PROJECT_NAME
 
 
 @dataclass
@@ -159,14 +160,20 @@ class MockUserApplication(UserApplicationBase):
         return evt
 
 
-#class MockRunControl()
+class MockRunControl(RunControlBase):
+
+    """
+    """
+
+    PROJECT_NAME = MOCK_PROJECT_NAME
 
 
 
 if __name__ == '__main__':
     import os
     from baldaquin import BALDAQUIN_DATA
-    app = MockUserApplication()
-    app.start(os.path.join(BALDAQUIN_DATA, 'test_app.bin'))
-    time.sleep(5)
-    app.stop()
+    #app = MockUserApplication()
+    #app.start(os.path.join(BALDAQUIN_DATA, 'test_app.bin'))
+    #time.sleep(5)
+    #app.stop()
+    rc = MockRunControl()

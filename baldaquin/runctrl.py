@@ -19,9 +19,11 @@
 
 from enum import Enum, auto
 from datetime import datetime
+from pathlib import Path
 
 from loguru import logger
 
+from baldaquin import BALDAQUIN_CONFIG, config_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.timeline import Timeline
 
@@ -37,10 +39,21 @@ class RunControlStatus(Enum):
 
 
 
-class RunControl:
+class AppNotLoadedError(RuntimeError):
+
+    def __init__(self):
+        """Constructor.
+        """
+        super().__init__('User application not loaded.')
+
+
+
+class RunControlBase:
 
     """Run control class.
     """
+
+    PROJECT_NAME = None
 
     def __init__(self):
         """Constructor.
@@ -65,9 +78,11 @@ class RunControl:
         """
         return 0
 
-    def _read_run_id(self):
+    def _read_run_id(self) -> int:
+        """Read the run ID from the proper configuration file.
         """
-        """
+        file_path = config_folder_path(self.PROJECT_NAME) / 'runid.cfg'
+        print(file_path)
         return 0
 
     def _increment_run_id(self):

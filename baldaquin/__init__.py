@@ -18,43 +18,43 @@
 """
 
 import os
+from pathlib import Path
 import sys
 
 from loguru import logger
 
 
-BALDAQUIN_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
-BALDAQUIN_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
-
-def __join(*args, base_folder : str = BALDAQUIN_ROOT) -> str:
-    """Path concatenation relative to the base package folder (avoids some typing).
-    """
-    return os.path.join(base_folder, *args)
-
-
 # Basic package structure.
-BALDAQUIN_CORE = __join('core')
-BALDAQUIN_GRAPHICS = __join('graphics')
-BALDAQUIN_ICONS = __join('icons', base_folder=BALDAQUIN_GRAPHICS)
-BALDAQUIN_SKINS = __join('skins', base_folder=BALDAQUIN_GRAPHICS)
-BALDAQUIN_DOCS = __join('docs', base_folder=BALDAQUIN_BASE)
-BALDAQUIN_DOCS_STATIC = __join('_static', base_folder=BALDAQUIN_DOCS)
-BALDAQUIN_TESTS = __join('test', base_folder=BALDAQUIN_BASE)
+BALDAQUIN_ROOT = Path(__file__).parent
+BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
+BALDAQUIN_CORE = BALDAQUIN_ROOT / 'core'
+BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
+BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
+BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'
+BALDAQUIN_DOCS = BALDAQUIN_BASE / 'docs'
+BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
+BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
+
+
+def _create_folder(folder_path : Path) -> None:
+    """Create a given folder if it does not exist.
+    """
+    if not folder_path.exists():
+        logger.info(f'Creating folder {folder_path}...')
+        Path.mkdir(folder_path, parents=True)
+
 
 # The path to the base folder for the output data defaults to ~/baldaquindata,
 # but can be changed via the $BALDAQUIN_DATA environmental variable.
 try:
-    BALDAQUIN_DATA = os.environ['BALDAQUIN_DATA']
+    BALDAQUIN_DATA = Path(os.environ['BALDAQUIN_DATA'])
 except KeyError:
-    BALDAQUIN_DATA = os.path.join(os.path.expanduser('~'), 'baldaquindata')
-if not os.path.exists(BALDAQUIN_DATA):
-    os.makedirs(BALDAQUIN_DATA)
+    BALDAQUIN_DATA = Path.home() / 'baldaquindata'
+_create_folder(BALDAQUIN_DATA)
 
 # On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
-BALDAQUIN_CONFIG = os.path.join(os.path.expanduser('~'), '.baldaquin')
-if not os.path.exists(BALDAQUIN_CONFIG):
-    os.makedirs(BALDAQUIN_CONFIG)
+BALDAQUIN_CONFIG = Path.home() / '.baldaquin'
+_create_folder(BALDAQUIN_CONFIG)
 
 
 # Logger setup.
@@ -71,17 +71,35 @@ def config_logger(file_path : str = None, extra=None):
     logger.configure(handlers=handlers, levels=None, extra=extra)
 
 
-def setup_project(project_name : str) -> tuple[str, str]:
+def config_folder_path(project_name : str) -> Path:
+    """Return the path to the configuration folder for a given project.
+
+    Arguments
+    ---------
+    project_name : str
+        The name of the project.
+    """
+    return BALDAQUIN_CONFIG / project_name
+
+
+def data_folder_path(project_name : str) -> Path:
+    """Return the path to the data folder for a given project.
+
+    Arguments
+    ---------
+    project_name : str
+        The name of the project.
+    """
+    return BALDAQUIN_DATA / project_name
+
+
+def setup_project(project_name : str) -> tuple[Path, Path]:
     """Setup the folder structure for a given project.
 
     This is essentially creating a folder for the configuration files and
     a folder for the data files, if they do not exist already, and returns
     the path to the two (in this order---first config and then data).
     """
-    config_folder_path = os.path.join(BALDAQUIN_DATA, project_name)
-    data_folder_path = os.path.join(BALDAQUIN_CONFIG, project_name)
-    for folder_path in (config_folder_path, data_folder_path):
-        if not os.path.exists(folder_path):
-            logger.info(f'Creating folder {folder_path} for project {project_name}...')
-            os.makedirs(folder_path)
+    for folder_path in (config_folder_path(project_name), data_folder_path(project_name)):
+        _create_folder(folder_path)
     return config_folder_path, data_folder_path
