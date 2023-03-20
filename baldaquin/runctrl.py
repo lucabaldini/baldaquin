@@ -59,6 +59,7 @@ class RunControlBase:
         """Constructor.
         """
         self._test_stand_id = self._read_test_stand_id()
+        logger.info(f'Test stand is is {self._test_stand_id}')
         self._run_id = self._read_run_id()
         self._status = RunControlStatus.RESET
         self.timeline = Timeline()
@@ -66,52 +67,78 @@ class RunControlBase:
         self.stop_timestamp = None
         self._user_application = None
 
+    def _config_file_path(self, file_name : str) -> Path:
+        """Return the path to a generic configuration file.
+
+        Arguments
+        ---------
+        file_name : str
+            The file name.
+        """
+        return config_folder_path(self.PROJECT_NAME) / file_name
+
     def _test_stand_id_file_path(self) -> Path:
         """Return the path to the configuration file holding the test stand id.
         """
-        return config_folder_path(self.PROJECT_NAME) / 'test_stand.cfg'
+        return self._config_file_path('test_stand.cfg')
+
+    def _run_id_file_path(self) -> Path:
+        """Return the path to the configuration file holding the run id.
+        """
+        return self._config_file_path('run.cfg')
+
+    def _read_config_file(self, default : int) -> int:
+        """
+        """
+        pass
+
+    def _write_config_file(self) -> int:
+        """
+        """
+        pass
 
     def _read_test_stand_id(self, default : int = 101) -> int:
         """Read the test stand id from file.
         """
         file_path = self._test_stand_id_file_path()
         if not file_path.exists():
-            logger.warning(f'Cannot find test-stand id file, creating a default one...')
-            self._write_test_stand_id(default)
+            logger.warning(f'Cannot find test-stand configuration file, creating a default one...')
+            self._create_test_stand_id_file(default)
             return default
         logger.info(f'Reading test-stand id from {file_path}...')
         test_stand_id = int(file_path.read_text())
-        logger.info(f'Done, test-stand id is {test_stand_id}.')
         return test_stand_id
 
-    def _write_test_stand_id(self, test_stand_id : int) -> None:
+    def _create_test_stand_id_file(self, test_stand_id : int) -> None:
         """Write a given test-stand id to file.
         """
         file_path = self._test_stand_id_file_path()
         logger.info(f'Writing test-stand id {test_stand_id} to {file_path}...')
         file_path.write_text(f'{test_stand_id}')
 
-    def _run_id_file_path(self) -> Path:
-        """Return the path to the configuration file holding the run id.
-        """
-        return config_folder_path(self.PROJECT_NAME) / 'run.cfg'
-
     def _read_run_id(self) -> int:
         """Read the run ID from the proper configuration file.
         """
         file_path = config_folder_path(self.PROJECT_NAME) / 'run.cfg'
-        print(file_path)
-        return 0
+        if not file_path.exists():
+            logger.warning(f'Cannot find run id file, starting from zero...')
+            return 0
+        logger.info(f'Reading run id from {file_path}...')
+        run_id = int(file_path.read_text())
+        return run_id
 
     def _write_run_id(self):
         """
         """
-        pass
+        file_path = self._run_id_file_path()
+        logger.info(f'Writing run id {self._run_id} to {file_path}...')
+        file_path.write_text(f'{run_id}')
 
     def _increment_run_id(self):
         """
         """
-        pass
+        self._run_id += 1
+        self._write_run_id()
 
     def set_user_application(self, app):
         """
@@ -187,8 +214,7 @@ class RunControlBase:
         if self.is_stopped():
             self.start_timestamp = self.timeline.latch()
             logger.info(f'Run Control started on {self.start_timestamp}')
-            self._run_id += 1
-            self._write_run_id()
+            self._increment_run_id()
             self._create_output_folder()
             file_path = f'testdata_{self._run_id:05d}.dat'
             self._user_application.start(file_path)
