@@ -103,16 +103,15 @@ class RunControlBase:
         print(file_path)
         return 0
 
-    def _increment_run_id(self):
-        """
-        """
-        pass
-
     def _write_run_id(self):
         """
         """
         pass
 
+    def _increment_run_id(self):
+        """
+        """
+        pass
 
     def set_user_application(self, app):
         """
@@ -120,8 +119,6 @@ class RunControlBase:
         if not isinstance(app, UserApplicationBase):
             raise RuntimeError('Invalid user application')
         self._user_application = app
-
-
 
     def _create_output_folder(self):
         """
