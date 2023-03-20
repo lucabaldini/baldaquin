@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2022--2023 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,11 @@ import sys
 from loguru import logger
 
 
+# Logger setup.
+DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
+    format=">>> <level>{message}</level>")
+
+
 # Basic package structure.
 BALDAQUIN_ROOT = Path(__file__).parent
 BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
@@ -38,6 +43,14 @@ BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 
 def _create_folder(folder_path : Path) -> None:
     """Create a given folder if it does not exist.
+
+    This is a small utility function to ensure that the relevant directories
+    exist when needed at runtime.
+
+    Arguments
+    ---------
+    folder_path : Path instance
+        The path to the target folder.
     """
     if not folder_path.exists():
         logger.info(f'Creating folder {folder_path}...')
@@ -55,20 +68,6 @@ _create_folder(BALDAQUIN_DATA)
 # On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
 BALDAQUIN_CONFIG = Path.home() / '.baldaquin'
 _create_folder(BALDAQUIN_CONFIG)
-
-
-# Logger setup.
-DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
-    format=">>> <level>{message}</level>")
-
-
-def config_logger(file_path : str = None, extra=None):
-    """Configure the loguru logger.
-    """
-    handlers = [DEFAULT_LOGURU_HANDLER]
-    if file_path is not None:
-        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
-    logger.configure(handlers=handlers, levels=None, extra=extra)
 
 
 def config_folder_path(project_name : str) -> Path:
@@ -99,7 +98,22 @@ def setup_project(project_name : str) -> tuple[Path, Path]:
     This is essentially creating a folder for the configuration files and
     a folder for the data files, if they do not exist already, and returns
     the path to the two (in this order---first config and then data).
+
+    Arguments
+    ---------
+    project_name : str
+        The name of the project.
     """
-    for folder_path in (config_folder_path(project_name), data_folder_path(project_name)):
+    folder_list = (config_folder_path(project_name), data_folder_path(project_name))
+    for folder_path in folder_list:
         _create_folder(folder_path)
-    return config_folder_path, data_folder_path
+    return folder_list
+
+
+def config_logger(file_path : str = None, extra=None):
+    """Configure the loguru logger.
+    """
+    handlers = [DEFAULT_LOGURU_HANDLER]
+    if file_path is not None:
+        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
+    logger.configure(handlers=handlers, levels=None, extra=extra)
