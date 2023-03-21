@@ -18,14 +18,173 @@
 """
 
 from enum import Enum, auto
-from datetime import datetime
 from pathlib import Path
 
 from loguru import logger
 
-from baldaquin import BALDAQUIN_CONFIG, config_folder_path
+from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.timeline import Timeline
+
+
+
+
+
+class FsmState(Enum):
+
+    """Enum for the run control finite state machine possible states.
+    """
+
+    RESET = auto()
+    STOPPED = auto()
+    RUNNING = auto()
+    PAUSED = auto()
+
+
+
+class InvalidFsmTransitionError(RuntimeError):
+
+    """RuntimeError subclass to signal an invalid FSM transition.
+    """
+
+    def __init__(self, src, dest):
+        """Constructor.
+        """
+        super().__init__(f'Invalid FSM transition {src.name} -> {dest.name}.')
+
+
+
+class FiniteStateMachine:
+
+    """Definition of the finite-state machine (FSM) underlying the run control.
+
+    The finite state machine has a unique _state class member, and all the logic
+    embedded to manage the transitions between its different values.
+
+    This is an abstract class, and subclasses are ultimately responsible for
+    reimplementing all the virtual methods, i.e.,
+
+    * setup(), called in the RESET -> STOPPED transition;
+    * teardown(), called in the STOPPED -> RESET transition;
+    * start_run(), called in the STOPPED -> RUNNING transition;
+    * stop_run(), called in the RUNNING -> STOPPED transition;
+    * pause(), called in the RUNNING -> PAUSED transition;
+    * resume(), called in the PAUSED -> RUNNING transition;
+    * stop(), called in the PAUSED -> STOPPED transition.
+
+    The interaction with concrete instances of subclasses happens through the
+    four methods that set the FSM state, calling the proper hook:
+
+    * set_reset();
+    * set_stopped();
+    * set_running();
+    * set_paused().
+    """
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        self._state = FsmState.RESET
+
+    def is_reset(self) -> bool:
+        """Return True if the run control is reset.
+        """
+        return self._state == FsmState.RESET
+
+    def is_stopped(self) -> bool:
+        """Return True if the run control is stopped.
+        """
+        return self._state == FsmState.STOPPED
+
+    def is_running(self) -> bool:
+        """Return True if the run control is running.
+        """
+        return self._state == FsmState.RUNNING
+
+    def is_paused(self) -> bool:
+        """Return True if the run control is paused.
+        """
+        return self._state == FsmState.PAUSED
+
+    def setup(self):
+        """Method called in the RESET -> STOPPED transition.
+        """
+        raise NotImplementedError
+
+    def teardown(self):
+        """Method called in the STOPPED -> RESET transition.
+        """
+        raise NotImplementedError
+
+    def start_run(self):
+        """Method called in the STOPPED -> RUNNING transition.
+        """
+        raise NotImplementedError
+
+    def stop_run(self):
+        """Method called in the RUNNING -> STOPPED transition.
+        """
+        raise NotImplementedError
+
+    def pause(self):
+        """Method called in the RUNNING -> PAUSED transition.
+        """
+        raise NotImplementedError
+
+    def resume(self):
+        """Method called in the PAUSED -> RUNNING transition.
+        """
+        raise NotImplementedError
+
+    def stop(self):
+        """Method called in the PAUSED -> STOPPED transition.
+        """
+        raise NotImplementedError
+
+    def set_reset(self) -> None:
+        """Set the FST in the RESET state.
+        """
+        target_state = FsmState.RESET
+        if self.is_stopped():
+            self.teardown()
+        else:
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self._state = target_state
+
+    def set_stopped(self) -> None:
+        """Set the FST in the STOPPED state.
+        """
+        target_state = FsmState.STOPPED
+        if self.is_reset():
+            self.setup()
+        elif self.is_running():
+            self.stop()
+        else:
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self._state = target_state
+
+    def set_running(self) -> None:
+        """Set the FST in the RUNNING state.
+        """
+        target_state = FsmState.RUNNING
+        if self.is_stopped():
+            self.start_run()
+        elif self.is_paused():
+            self.resume()
+        else:
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self._state = target_state
+
+    def set_paused(self) -> None:
+        """Set the FST in the PAUSED state.
+        """
+        target_state = FsmState.PAUSED
+        if self.is_running():
+            self.pause()
+        else:
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self._state = target_state
+
 
 
 class RunControlStatus(Enum):
@@ -59,7 +218,6 @@ class RunControlBase:
         """Constructor.
         """
         self._test_stand_id = self._read_test_stand_id()
-        logger.info(f'Test stand is is {self._test_stand_id}')
         self._run_id = self._read_run_id()
         self._status = RunControlStatus.RESET
         self.timeline = Timeline()
@@ -87,58 +245,87 @@ class RunControlBase:
         """
         return self._config_file_path('run.cfg')
 
-    def _read_config_file(self, default : int) -> int:
+    def data_folder_path(self) -> Path:
+        """Return the path to the data folder for the current run.
         """
-        """
-        pass
+        folder_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
+        return data_folder_path(self.PROJECT_NAME) / folder_name
 
-    def _write_config_file(self) -> int:
+    def _read_config_file(self, file_path : Path, default : int) -> int:
+        """Read a single integer value from a given configuration file.
+
+        If the file is not found, a new one is created, holding the default value,
+        and the latter is returned.
+
+        Arguments
+        ---------
+        file_path : Path
+            The path to the configuration file.
+
+        default : int
+            The default value, to be used if the file is not found.
         """
+        if not file_path.exists():
+            logger.warning(f'Configuration file {file_path} not found, creating one...')
+            self._write_config_file(file_path, default)
+            return default
+        logger.info(f'Reading configuration file {file_path}...')
+        value = int(file_path.read_text())
+        logger.info(f'Done, {value} found.')
+        return value
+
+    @staticmethod
+    def _write_config_file(file_path : Path, value : int) -> None:
+        """Write a single integer value to a given configuration file.
+
+        Arguments
+        ---------
+        file_path : Path
+            The path to the configuration file.
+
+        value : int
+            The value to be written.
         """
-        pass
+        logger.info(f'Writing {value} to config file {file_path}...')
+        file_path.write_text(f'{value}')
 
     def _read_test_stand_id(self, default : int = 101) -> int:
-        """Read the test stand id from file.
+        """Read the test stand id from the proper configuration file.
         """
-        file_path = self._test_stand_id_file_path()
-        if not file_path.exists():
-            logger.warning(f'Cannot find test-stand configuration file, creating a default one...')
-            self._create_test_stand_id_file(default)
-            return default
-        logger.info(f'Reading test-stand id from {file_path}...')
-        test_stand_id = int(file_path.read_text())
-        return test_stand_id
-
-    def _create_test_stand_id_file(self, test_stand_id : int) -> None:
-        """Write a given test-stand id to file.
-        """
-        file_path = self._test_stand_id_file_path()
-        logger.info(f'Writing test-stand id {test_stand_id} to {file_path}...')
-        file_path.write_text(f'{test_stand_id}')
+        return self._read_config_file(self._test_stand_id_file_path(), default)
 
     def _read_run_id(self) -> int:
         """Read the run ID from the proper configuration file.
         """
-        file_path = config_folder_path(self.PROJECT_NAME) / 'run.cfg'
-        if not file_path.exists():
-            logger.warning(f'Cannot find run id file, starting from zero...')
-            return 0
-        logger.info(f'Reading run id from {file_path}...')
-        run_id = int(file_path.read_text())
-        return run_id
+        return self._read_config_file(self._run_id_file_path(), 0)
 
     def _write_run_id(self):
+        """Write the current run ID to the proper configuration file.
         """
-        """
-        file_path = self._run_id_file_path()
-        logger.info(f'Writing run id {self._run_id} to {file_path}...')
-        file_path.write_text(f'{run_id}')
+        self._write_config_file(self._run_id_file_path(), self._run_id)
 
     def _increment_run_id(self):
-        """
+        """Increment the run ID by one unit and update the corresponding
+        configuration file.
         """
         self._run_id += 1
         self._write_run_id()
+
+    def _create_data_folder(self):
+        """Create the folder for the output data.
+        """
+        folder_path = self.data_folder_path()
+        logger.info(f'Creating output data folder {folder_path}')
+        Path.mkdir(folder_path)
+
+    def elapsed_time(self) -> float:
+        """
+        """
+        if self.start_timestamp is None:
+            return None
+        if self.stop_timestamp is None:
+            return self.timeline.latch() - self.start_timestamp
+        return self.stop_timestamp - self.start_timestamp
 
     def set_user_application(self, app):
         """
@@ -146,11 +333,6 @@ class RunControlBase:
         if not isinstance(app, UserApplicationBase):
             raise RuntimeError('Invalid user application')
         self._user_application = app
-
-    def _create_output_folder(self):
-        """
-        """
-        pass
 
     def is_reset(self) -> bool:
         """Return True if the run control is reset.
@@ -172,7 +354,8 @@ class RunControlBase:
         """
         raise RuntimeError(f'Invalid state transition {self._status.name} -> {target.name}')
 
-    def _raise_user_application_not_loaded(self) -> None:
+    @staticmethod
+    def _raise_user_application_not_loaded() -> None:
         """
         """
         raise RuntimeError('User application not loaded...')
@@ -215,18 +398,15 @@ class RunControlBase:
             self.start_timestamp = self.timeline.latch()
             logger.info(f'Run Control started on {self.start_timestamp}')
             self._increment_run_id()
-            self._create_output_folder()
+            self._create_data_folder()
             file_path = f'testdata_{self._run_id:05d}.dat'
             self._user_application.start(file_path)
         else:
             self._raise_invalid_transition(target)
         self._status = target
 
-    def elapsed_time(self) -> float:
-        """
-        """
-        if self.start_timestamp is None:
-            return None
-        if self.stop_timestamp is None:
-            return self.timeline.latch() - self.start_timestamp
-        return self.stop_timestamp - self.start_timestamp
+
+
+if __name__ == '__main__':
+    fsm = FiniteStateMachine()
+    fsm.set_reset()
