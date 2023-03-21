@@ -23,6 +23,8 @@ from dataclasses import dataclass
 import struct
 from typing import Any
 
+from loguru import logger
+
 from baldaquin.buf import CircularBuffer
 from baldaquin._qt import QtCore
 
@@ -132,6 +134,7 @@ class EventHandlerBase(QtCore.QRunnable):
         """
         """
         self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
+        logger.info(f'{self.buffer.__class__.__name__} -> {file_path}')
 
     @QtCore.Slot()
     def run(self):
@@ -144,4 +147,5 @@ class EventHandlerBase(QtCore.QRunnable):
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
         """
-        raise NotImplementedError
+        print('EventHandlerBase.process_event()')
+        #raise NotImplementedError

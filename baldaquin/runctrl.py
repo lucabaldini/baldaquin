@@ -319,7 +319,7 @@ class RunControlBase(FiniteStateMachine):
             return self.timeline.latch() - self.start_timestamp
         return self.stop_timestamp - self.start_timestamp
 
-    def set_user_application(self, app : UserApplicationBase) -> None:
+    def load_user_application(self, app : UserApplicationBase) -> None:
         """Set the user application to be run.
         """
         if not self.is_reset():
@@ -355,7 +355,8 @@ class RunControlBase(FiniteStateMachine):
         self._create_data_folder()
         self.start_timestamp = self.timeline.latch()
         logger.info(f'Run Control started on {self.start_timestamp}')
-        file_path = f'testdata_{self._run_id:05d}.dat'
+        file_name = f'{self._test_stand_id:04d}_{self._run_id:05d}.dat'
+        file_path = self.data_folder_path() / file_name
         self._user_application.start(file_path)
 
     def stop_run(self) -> None:

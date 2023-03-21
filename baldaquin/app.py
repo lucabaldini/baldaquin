@@ -64,11 +64,5 @@ class UserApplicationBase:
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
         """
-        raise NotImplementedError
-
-
-
-class UserAppNoOp(UserApplicationBase):
-
-    """Simple mock application.
-    """
+        pass
+        #raise NotImplementedError
