@@ -28,8 +28,6 @@ from baldaquin.timeline import Timeline
 
 
 
-
-
 class FsmState(Enum):
 
     """Enum for the run control finite state machine possible states.
@@ -106,37 +104,37 @@ class FiniteStateMachine:
         """
         return self._state == FsmState.PAUSED
 
-    def setup(self):
+    def setup(self) -> None:
         """Method called in the RESET -> STOPPED transition.
         """
         raise NotImplementedError
 
-    def teardown(self):
+    def teardown(self) -> None:
         """Method called in the STOPPED -> RESET transition.
         """
         raise NotImplementedError
 
-    def start_run(self):
+    def start_run(self) -> None:
         """Method called in the STOPPED -> RUNNING transition.
         """
         raise NotImplementedError
 
-    def stop_run(self):
+    def stop_run(self) -> None:
         """Method called in the RUNNING -> STOPPED transition.
         """
         raise NotImplementedError
 
-    def pause(self):
+    def pause(self) -> None:
         """Method called in the RUNNING -> PAUSED transition.
         """
         raise NotImplementedError
 
-    def resume(self):
+    def resume(self) -> None:
         """Method called in the PAUSED -> RUNNING transition.
         """
         raise NotImplementedError
 
-    def stop(self):
+    def stop(self) -> None:
         """Method called in the PAUSED -> STOPPED transition.
         """
         raise NotImplementedError
@@ -187,18 +185,10 @@ class FiniteStateMachine:
 
 
 
-class RunControlStatus(Enum):
-
-    """Enum for the run control finite state machine possible states.
-    """
-
-    RESET = auto()
-    STOPPED = auto()
-    RUNNING = auto()
-
-
-
 class AppNotLoadedError(RuntimeError):
+
+    """RuntimeError subclass to signal that the run control has no user application loaded.
+    """
 
     def __init__(self):
         """Constructor.
@@ -207,7 +197,7 @@ class AppNotLoadedError(RuntimeError):
 
 
 
-class RunControlBase:
+class RunControlBase(FiniteStateMachine):
 
     """Run control class.
     """
@@ -217,9 +207,9 @@ class RunControlBase:
     def __init__(self):
         """Constructor.
         """
+        super().__init__()
         self._test_stand_id = self._read_test_stand_id()
         self._run_id = self._read_run_id()
-        self._status = RunControlStatus.RESET
         self.timeline = Timeline()
         self.start_timestamp = None
         self.stop_timestamp = None
@@ -319,7 +309,7 @@ class RunControlBase:
         Path.mkdir(folder_path)
 
     def elapsed_time(self) -> float:
-        """
+        """Return the elapsed time.
         """
         if self.start_timestamp is None:
             return None
@@ -327,86 +317,62 @@ class RunControlBase:
             return self.timeline.latch() - self.start_timestamp
         return self.stop_timestamp - self.start_timestamp
 
-    def set_user_application(self, app):
-        """
+    def set_user_application(self, app : UserApplicationBase) -> None:
+        """Set the user application to be run.
         """
         if not isinstance(app, UserApplicationBase):
             raise RuntimeError('Invalid user application')
         self._user_application = app
 
-    def is_reset(self) -> bool:
-        """Return True if the run control is reset.
-        """
-        return self._status == RunControlStatus.RESET
-
-    def is_stopped(self) -> bool:
-        """Return True if the run control is stopped.
-        """
-        return self._status == RunControlStatus.STOPPED
-
-    def is_running(self) -> bool:
-        """Return True if the run control is running.
-        """
-        return self._status == RunControlStatus.RUNNING
-
-    def _raise_invalid_transition(self, target : RunControlStatus) -> None:
-        """
-        """
-        raise RuntimeError(f'Invalid state transition {self._status.name} -> {target.name}')
-
-    @staticmethod
-    def _raise_user_application_not_loaded() -> None:
-        """
-        """
-        raise RuntimeError('User application not loaded...')
-
-    def set_reset(self) -> None:
-        """
+    def setup(self):
+        """Overloaded method.
         """
         if self._user_application is None:
-            self._raise_user_application_not_loaded()
-        target = RunControlStatus.RESET
-        if self.is_stopped():
-            self._user_application.teardown()
-        else:
-            self._raise_invalid_transition(target)
-        self._status = target
+            raise AppNotLoadedError
+        self._user_application.setup()
 
-    def set_stopped(self) -> None:
-        """
+    def teardown(self):
+        """Overloaded method.
         """
         if self._user_application is None:
-            self._raise_user_application_not_loaded()
-        target = RunControlStatus.STOPPED
-        if self.is_reset():
-            self._user_application.setup()
-        elif self.is_running():
-            self._user_application.stop()
-            self.stop_timestamp = self.timeline.latch()
-            logger.info(f'Run Control stopped on {self.stop_timestamp}')
-        else:
-            self._raise_invalid_transition(target)
-        self._status = target
+            raise AppNotLoadedError
+        self._user_application.teardown()
 
-    def set_running(self) -> None:
-        """
+    def start_run(self):
+        """Overloaded method.
         """
         if self._user_application is None:
-            self._raise_user_application_not_loaded()
-        target = RunControlStatus.RUNNING
-        if self.is_stopped():
-            self.start_timestamp = self.timeline.latch()
-            logger.info(f'Run Control started on {self.start_timestamp}')
-            self._increment_run_id()
-            self._create_data_folder()
-            file_path = f'testdata_{self._run_id:05d}.dat'
-            self._user_application.start(file_path)
-        else:
-            self._raise_invalid_transition(target)
-        self._status = target
+            raise AppNotLoadedError
+        self._increment_run_id()
+        self._create_data_folder()
+        self.start_timestamp = self.timeline.latch()
+        logger.info(f'Run Control started on {self.start_timestamp}')
+        file_path = f'testdata_{self._run_id:05d}.dat'
+        self._user_application.start(file_path)
 
+    def stop_run(self):
+        """Overloaded method.
+        """
+        if self._user_application is None:
+            raise AppNotLoadedError
+        self._user_application.stop()
+        self.stop_timestamp = self.timeline.latch()
+        logger.info(f'Run Control stopped on {self.stop_timestamp}')
 
+    def pause(self):
+        """Overloaded method.
+        """
+        if self._user_application is None:
+            raise AppNotLoadedError
 
-if __name__ == '__main__':
-    fsm = FiniteStateMachine()
-    fsm.set_reset()
+    def resume(self):
+        """Overloaded method.
+        """
+        if self._user_application is None:
+            raise AppNotLoadedError
+
+    def stop(self):
+        """Overloaded method.
+        """
+        if self._user_application is None:
+            raise AppNotLoadedError
