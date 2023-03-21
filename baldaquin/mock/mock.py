@@ -188,3 +188,5 @@ if __name__ == '__main__':
     rc.load_user_application(app)
     rc.set_stopped()
     rc.set_running()
+    time.sleep(5)
+    rc.set_stopped()
