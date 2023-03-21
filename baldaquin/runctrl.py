@@ -243,18 +243,45 @@ class RunControlBase(FiniteStateMachine):
         folder_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
         return data_folder_path(self.PROJECT_NAME) / folder_name
 
+    def _file_name_base(self, label : str, extension : str) -> str:
+        """Generic function implementing a file name factory, given the
+        test stand and the run ID.
+
+        Arguments
+        ---------
+        label : str
+            A text label to attach to the file name.
+
+        extension : str
+            The file extension
+        """
+        return f'{self._test_stand_id:04d}_{self._run_id:05d}_{label}.{extension}'
+
     def data_file_name(self) -> str:
         """Return the current data file name.
 
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
         """
-        return f'{self._test_stand_id:04d}_{self._run_id:05d}_data.dat'
+        return self._file_name_base('data', 'dat')
 
     def data_file_path(self) -> Path:
         """Return the current
         """
         return self.data_folder_path() / self.data_file_name()
+
+    def log_file_name(self):
+        """Return the current log file name.
+
+        Note that RunControlBase subclasses can overload this if a different
+        naming convention is desired.
+        """
+        return self._file_name_base('run', 'log')
+
+    def log_file_path(self) -> Path:
+        """Return the current
+        """
+        return self.data_folder_path() / self.log_file_name()
 
     def _read_config_file(self, file_path : Path, default : int) -> int:
         """Read a single integer value from a given configuration file.
