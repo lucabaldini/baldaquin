@@ -291,19 +291,19 @@ class RunControlBase(FiniteStateMachine):
         """
         return self._read_config_file(self._run_id_file_path(), 0)
 
-    def _write_run_id(self):
+    def _write_run_id(self) -> None:
         """Write the current run ID to the proper configuration file.
         """
         self._write_config_file(self._run_id_file_path(), self._run_id)
 
-    def _increment_run_id(self):
+    def _increment_run_id(self) -> None:
         """Increment the run ID by one unit and update the corresponding
         configuration file.
         """
         self._run_id += 1
         self._write_run_id()
 
-    def _create_data_folder(self):
+    def _create_data_folder(self) -> None:
         """Create the folder for the output data.
         """
         folder_path = self.data_folder_path()
@@ -322,29 +322,35 @@ class RunControlBase(FiniteStateMachine):
     def set_user_application(self, app : UserApplicationBase) -> None:
         """Set the user application to be run.
         """
+        if not self.is_reset():
+            raise RuntimeError(f'Cannot load a user application in the {self._state.name} state')
         if not isinstance(app, UserApplicationBase):
-            raise RuntimeError('Invalid user application')
+            raise RuntimeError(f'Invalid user application of type {type(app)}')
         self._user_application = app
 
-    def setup(self):
-        """Overloaded method.
+    def _check_user_application(self) -> None:
+        """Make sure we have a valid use application loaded, and raise an
+        AppNotLoadedError if that is not the case.
         """
         if self._user_application is None:
             raise AppNotLoadedError
+
+    def setup(self) -> None:
+        """Overloaded FiniteStateMachine method.
+        """
+        self._check_user_application()
         self._user_application.setup()
 
-    def teardown(self):
-        """Overloaded method.
+    def teardown(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
         self._user_application.teardown()
 
-    def start_run(self):
-        """Overloaded method.
+    def start_run(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
         self._increment_run_id()
         self._create_data_folder()
         self.start_timestamp = self.timeline.latch()
@@ -352,29 +358,25 @@ class RunControlBase(FiniteStateMachine):
         file_path = f'testdata_{self._run_id:05d}.dat'
         self._user_application.start(file_path)
 
-    def stop_run(self):
-        """Overloaded method.
+    def stop_run(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
         self._user_application.stop()
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')
 
-    def pause(self):
-        """Overloaded method.
+    def pause(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
 
-    def resume(self):
-        """Overloaded method.
+    def resume(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
 
-    def stop(self):
-        """Overloaded method.
+    def stop(self) -> None:
+        """Overloaded FiniteStateMachine method.
         """
-        if self._user_application is None:
-            raise AppNotLoadedError
+        self._check_user_application()
