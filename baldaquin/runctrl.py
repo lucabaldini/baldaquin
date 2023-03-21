@@ -156,6 +156,8 @@ class FiniteStateMachine:
         if self.is_reset():
             self.setup()
         elif self.is_running():
+            self.stop_run()
+        elif self.is_paused():
             self.stop()
         else:
             raise InvalidFsmTransitionError(self._state, target_state)
