@@ -175,14 +175,6 @@ class MockRunControl(RunControlBase):
 
 
 if __name__ == '__main__':
-    """
-    import os
-    from baldaquin import BALDAQUIN_DATA
-    app = MockUserApplication()
-    app.start(os.path.join(BALDAQUIN_DATA, 'test_app.bin'))
-    time.sleep(5)
-    app.stop()
-    """
     rc = MockRunControl()
     app = MockUserApplication()
     rc.load_user_application(app)

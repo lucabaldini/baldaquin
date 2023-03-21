@@ -243,6 +243,19 @@ class RunControlBase(FiniteStateMachine):
         folder_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
         return data_folder_path(self.PROJECT_NAME) / folder_name
 
+    def data_file_name(self) -> str:
+        """Return the current data file name.
+
+        Note that RunControlBase subclasses can overload this if a different
+        naming convention is desired.
+        """
+        return f'{self._test_stand_id:04d}_{self._run_id:05d}_data.dat'
+
+    def data_file_path(self) -> Path:
+        """Return the current
+        """
+        return self.data_folder_path() / self.data_file_name()
+
     def _read_config_file(self, file_path : Path, default : int) -> int:
         """Read a single integer value from a given configuration file.
 
@@ -355,9 +368,7 @@ class RunControlBase(FiniteStateMachine):
         self._create_data_folder()
         self.start_timestamp = self.timeline.latch()
         logger.info(f'Run Control started on {self.start_timestamp}')
-        file_name = f'{self._test_stand_id:04d}_{self._run_id:05d}.dat'
-        file_path = self.data_folder_path() / file_name
-        self._user_application.start(file_path)
+        self._user_application.start(self.data_file_path())
 
     def stop_run(self) -> None:
         """Overloaded FiniteStateMachine method.

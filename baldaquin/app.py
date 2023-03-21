@@ -57,6 +57,7 @@ class UserApplicationBase:
     def stop(self) -> None:
         """Stop the event handler.
         """
+        logger.info(f'Stopping application {self.__class__.__name__}')
         self.event_handler.stop()
         self.pool.waitForDone()
         self.event_handler.flush_buffer()
@@ -64,5 +65,4 @@ class UserApplicationBase:
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
         """
-        pass
-        #raise NotImplementedError
+        raise NotImplementedError

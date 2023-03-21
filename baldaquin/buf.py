@@ -112,14 +112,14 @@ class BufferBase:
         size = self.size()
         if not size:
             return
-        logger.debug(f'Writing {size} items to {self.file_path}...')
+        logger.info(f'Writing {size} items to {self.file_path}...')
         total_size = 0
         with open(self.file_path, f'a{self._mode.value}') as output_file:
             for _ in range(size):
                 item = self.pop()
                 total_size += len(item)
                 output_file.write(item)
-        logger.debug(f'Done, {total_size} Bytes written to disk.')
+        logger.info(f'Done, {total_size} Bytes written to disk.')
 
 
 

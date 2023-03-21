@@ -128,6 +128,7 @@ class EventHandlerBase(QtCore.QRunnable):
     def flush_buffer(self):
         """
         """
+        logger.info('Flushing event buffer...')
         self.buffer.flush()
 
     def setup(self, file_path : str, **kwargs) -> None:
@@ -147,5 +148,4 @@ class EventHandlerBase(QtCore.QRunnable):
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
         """
-        print('EventHandlerBase.process_event()')
-        #raise NotImplementedError
+        raise NotImplementedError
