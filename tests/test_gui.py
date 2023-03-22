@@ -35,9 +35,9 @@ def test_main_window():
     window.add_logger_tab()
     # Interact with the widgets a little bit...
     logger.info('Howdy, partner?')
-    window.run_control_card.set_value(RunControlCardField.UPTIME, 12.)
-    window.run_control_card.set_value(RunControlCardField.TEST_STAND_ID, 1)
-    window.run_control_card.set_value(RunControlCardField.RUN_ID, 313)
+    window.run_control_card.set(RunControlCardField.UPTIME, 12.)
+    window.run_control_card.set(RunControlCardField.TEST_STAND_ID, 1)
+    window.run_control_card.set(RunControlCardField.RUN_ID, 313)
     return app, window
 
 

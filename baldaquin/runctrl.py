@@ -24,6 +24,7 @@ from loguru import logger
 
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
+from baldaquin._qt import QtCore
 from baldaquin.timeline import Timeline
 
 
@@ -78,6 +79,8 @@ class FiniteStateMachine:
     * set_running();
     * set_paused().
     """
+
+    #state_changed = QtCore.Signal(int)
 
     def __init__(self) -> None:
         """Constructor.
@@ -148,6 +151,7 @@ class FiniteStateMachine:
         else:
             raise InvalidFsmTransitionError(self._state, target_state)
         self._state = target_state
+        #self.state_changed.emit(0)
 
     def set_stopped(self) -> None:
         """Set the FST in the STOPPED state.
@@ -162,6 +166,7 @@ class FiniteStateMachine:
         else:
             raise InvalidFsmTransitionError(self._state, target_state)
         self._state = target_state
+        #self.state_changed.emit(self._state)
 
     def set_running(self) -> None:
         """Set the FST in the RUNNING state.
@@ -174,6 +179,7 @@ class FiniteStateMachine:
         else:
             raise InvalidFsmTransitionError(self._state, target_state)
         self._state = target_state
+        #self.state_changed.emit(self._state)
 
     def set_paused(self) -> None:
         """Set the FST in the PAUSED state.
@@ -184,6 +190,7 @@ class FiniteStateMachine:
         else:
             raise InvalidFsmTransitionError(self._state, target_state)
         self._state = target_state
+        #self.state_changed.emit(self._state)
 
 
 
@@ -206,11 +213,15 @@ class RunControlBase(FiniteStateMachine):
 
     PROJECT_NAME = None
 
+    #test_stand_id_read = QtCore.Signal(int)
+    #run_id_changed = QtCore.Signal(int)
+
     def __init__(self):
         """Constructor.
         """
         super().__init__()
         self._test_stand_id = self._read_test_stand_id()
+        #self.test_stand_id_read.emit(self._test_stand_id)
         self._run_id = self._read_run_id()
         self.timeline = Timeline()
         self.start_timestamp = None
