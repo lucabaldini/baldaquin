@@ -354,12 +354,21 @@ class RunControlBase(FiniteStateMachine):
 
     def elapsed_time(self) -> float:
         """Return the elapsed time.
+
+        The precise semantics of this function is:
+
+        * is the run control is either running or paused, return the elapsed time
+          since the start of the run;
+        * if both the start and the stop timestamps are not None, then return the
+          total elapsed time in the last run;
+        * if both of the above fail, then return None.
         """
-        if self.start_timestamp is None:
-            return None
-        if self.stop_timestamp is None:
+        if self.is_running() or self.is_paused():
             return self.timeline.latch() - self.start_timestamp
-        return self.stop_timestamp - self.start_timestamp
+        try:
+            return self.stop_timestamp - self.start_timestamp
+        except AttributeError:
+            return None
 
     def load_user_application(self, app : UserApplicationBase) -> None:
         """Set the user application to be run.
@@ -397,6 +406,7 @@ class RunControlBase(FiniteStateMachine):
         self._create_data_folder()
         self._log_file_handler_id = logger.add(self.log_file_path())
         self.start_timestamp = self.timeline.latch()
+        self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.start(self.data_file_path())
 
@@ -407,6 +417,7 @@ class RunControlBase(FiniteStateMachine):
         self._user_application.stop()
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')
+        logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
         logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
 
