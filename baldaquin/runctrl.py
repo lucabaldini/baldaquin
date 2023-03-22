@@ -283,7 +283,8 @@ class RunControlBase(FiniteStateMachine):
         """
         return self.data_folder_path() / self.log_file_name()
 
-    def _read_config_file(self, file_path : Path, default : int) -> int:
+    @staticmethod
+    def _read_config_file(file_path : Path, default : int) -> int:
         """Read a single integer value from a given configuration file.
 
         If the file is not found, a new one is created, holding the default value,
@@ -299,7 +300,7 @@ class RunControlBase(FiniteStateMachine):
         """
         if not file_path.exists():
             logger.warning(f'Configuration file {file_path} not found, creating one...')
-            self._write_config_file(file_path, default)
+            RunControlBase._write_config_file(file_path, default)
             return default
         logger.info(f'Reading configuration file {file_path}...')
         value = int(file_path.read_text())
