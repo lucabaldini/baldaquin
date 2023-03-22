@@ -17,219 +17,111 @@
 """Basic GUI elements.
 """
 
-import os
-from typing import Any
+from pathlib import Path
+import sys
 
 from baldaquin._qt import QtCore, QtGui, QtWidgets
-from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from baldaquin import BALDAQUIN_SKINS
+from baldaquin.widgets import ControlBar, RunControlCard, LoggerDisplay, load_icon
 
 
-_DEFAULT_ICON_CATALOG = 'material3'
-_DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
-
-
-def _icon_file_path(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
-    style : str = _DEFAULT_ICON_STYLE):
-    """Return the path to a given icon file.
-    """
-    file_name = f'{name}_{style}.{fmt}'
-    file_path = os.path.join(BALDAQUIN_ICONS, catalog, file_name)
-    return file_path
-
-
-def stylesheet_file_path(name : str = 'default'):
+def stylesheet_file_path(name : str = 'default') -> Path:
     """Return the path to a given stylesheet file.
     """
     file_name = f'{name}.qss'
-    file_path = os.path.join(BALDAQUIN_SKINS, file_name)
-    return file_path
+    return BALDAQUIN_SKINS / file_name
 
 
-#pylint: disable=c-extension-no-member
 
+class MainWindow(QtWidgets.QMainWindow):
 
-class Button(QtWidgets.QPushButton):
-
-    """Small wrapper aroung the QtWidgets.QPushButton class.
+    """Base class for a DAQ main window.
     """
 
-    #pylint: disable=too-few-public-methods
+    MINIMUM_WIDTH = 500
+    TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
-    def __init__(self, icon_name : str, size : int = 40, icon_size : int = 25) -> None:
+    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
-        super().__init__()
-        self.setFixedSize(size, size)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
-        self.set_icon(icon_name, icon_size)
+        super().__init__(parent)
+        self.setCentralWidget(QtWidgets.QWidget())
+        self.centralWidget().setLayout(QtWidgets.QGridLayout())
+        self.centralWidget().setMinimumWidth(self.MINIMUM_WIDTH)
+        self.control_bar = ControlBar()
+        self.add_widget(self.control_bar, 1, 0)
+        self.run_control_card = RunControlCard('NoOp', 'NoOp')
+        self.add_widget(self.run_control_card, 0, 0)
+        self.tab_widget = QtWidgets.QTabWidget()
+        #tab.setTabPosition(tab.TabPosition.West)
+        self.tab_widget.setIconSize(self.TAB_ICON_SIZE)
+        self.add_widget(self.tab_widget, 0, 1, 2, 1)
 
-    def set_icon(self, icon_name : str, icon_size : int = 25) -> None:
-        """Set the button icon.
+    def add_widget(self, widget : QtWidgets.QWidget, row : int, col : int,
+        row_span : int = 1, col_span : int = 1,
+        align : QtCore.Qt.Alignment = QtCore.Qt.Alignment()) -> None:
+        """Add a widget to the underlying layout.
+
+        This is just a convenience method mimicking the corresponding hook of the
+        underlying layout.
+
+        Arguments
+        ---------
+        widget : QtWidgets.QWidget
+            The widget to be added to the underlying layout.
+
+        row : int
+            The starting row position for the widget.
+
+        col : int
+            The starting column position for the widget.
+
+        row_span : int, optional (default 1)
+            The number of rows spanned by the widget.
+
+        col_span : int, optional (default 1)
+            The number of columns spanned by the widget.
+
+        align : QtCore.Qt.Alignment
+            The alignment for the widget.
         """
-        self.setIcon(QtGui.QIcon(_icon_file_path(icon_name)))
-        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+        #pylint: disable=too-many-arguments
+        self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
+
+    def add_tab(self, page : QtWidgets.QWidget, label : str, icon_name : str = None) -> None:
+        """Add a page to the tab widget.
+
+        Arguments
+        ---------
+        page : QtWidgets.QWidget
+            The widget to be added to the tab widget.
+
+        label : str
+            The text label to be displayed on the tab.
+
+        icon_name : str, optional
+            The name of the icon to be displayed on the tab (if None, non icon is shown).
+        """
+        pos = self.tab_widget.addTab(page, label)
+        if icon_name is not None:
+            self.tab_widget.setTabIcon(pos, load_icon(icon_name))
+
+    def add_logger_tab(self) -> None:
+        """Add the default logger tab.
+        """
+        self.add_tab(LoggerDisplay(), 'Logger', 'chat')
 
 
 
-class DataWidgetBase(QtWidgets.QWidget):
+def bootstrap_window(window_class):
+    """Bootstrap a main window.
 
-    """Base class for a widget holding a single piece of information.
-
-    This is nothing more than a pair of widget---a QLabel holding a title and
-    a generic widget holding some data---arranged in a vertical layout.
-    This is an abstract class, and specialized subclasses are provided below
-    to show or edit data in different fashions, representing the basic building
-    block to construct complex user interfaces.
-
-    Derived classes must override, at the very minimum, the ``VALUE_WIDGET_CLASS``
-    class member and the ``set_value`` class method; overloading ``setup()``
-    is instead optional.
-
-    Note that the constructor of this base class calls the ``setObjectName()``
-    method for both widgets (with different arguments) to make it easier to
-    stylesheet the application downstream.
+    This is creating a QApplication, applying the relevant stylesheet, and
+    creating an actual instance of the window class passed as an argument.
     """
-
-    VALUE_WIDGET_CLASS = None
-    TITLE_WIDGET_NAME = 'data_widget_title'
-    VALUE_WIDGET_NAME = 'data_widget_value'
-    MISSING_VALUE_LABEL = '-'
-    VALUE_WIDGET_HEIGHT = 30
-
-    def __init__(self, name : str, title : str, value=None, units : str = None,
-                 fmt : str = None, **kwargs) -> None:
-        """Constructor
-        """
-        #pylint: disable=not-callable, too-many-arguments
-        self.name = name
-        self._units = units
-        self._fmt = fmt
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self.title_widget = QtWidgets.QLabel()
-        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
-        self.value_widget = self.VALUE_WIDGET_CLASS()
-        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
-        self.value_widget.setFixedHeight(self.VALUE_WIDGET_HEIGHT)
-        self.layout().addWidget(self.title_widget)
-        self.layout().addWidget(self.value_widget)
-        self.set_title(title)
-        self.setup(**kwargs)
-        if value is not None:
-            self.set_value(value)
-        else:
-            self.set_value(self.MISSING_VALUE_LABEL)
-
-    def setup(self, **kwargs):
-        """Do nothing post-construction hook that can be overloaded in derived classes.
-        """
-
-    def set_title(self, title : str) -> None:
-        """Set the widget title.
-        """
-        self.title_widget.setText(title)
-
-    def set_value(self, value : Any) -> None:
-        """Set hook to be reimplemented by derived classes.
-        """
-        raise NotImplementedError
-
-
-
-class DisplayWidget(DataWidgetBase):
-
-    """Simple widget to display a single piece of information in a read-only fashion.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLabel
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_widget.setText(text)
-
-
-
-class ParameterCheckBox(DataWidgetBase):
-
-    """Check box data widget, mapipng ``bool`` input parameters.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setChecked(value)
-
-
-
-class ParameterSpinBox(DataWidgetBase):
-
-    """Spin box data widget, mapping ``int`` input parameters.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
-
-    def setup(self, **kwargs) -> None:
-        """Overloaded method.
-        """
-        if self._units is not None:
-            self.value_widget.setSuffix(f' {self._units}')
-        for key, value in kwargs.items():
-            if key == 'min':
-                self.value_widget.setMinimum(value)
-            elif key == 'max':
-                self.value_widget.setMaximum(value)
-            elif key == 'step':
-                self.value_widget.setSingleStep(value)
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setValue(value)
-
-
-
-class ParameterDoubleSpinBox(ParameterSpinBox):
-
-    """Double spin box data widget, mapping ``float`` input parameters.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QDoubleSpinBox
-
-
-
-class ParameterLineEdit(DataWidgetBase):
-
-    """Line edit data widget, mapping ``str`` input parameters when there is
-    no ``choice`` constraint applied.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLineEdit
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setText(value)
-
-
-
-class ParameterComboBox(DataWidgetBase):
-
-    """Combo box data widget, mapping ``str`` input parameters when there is
-    a ``choice`` constraint applied.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QComboBox
-
-    def setup(self, **kwargs) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.addItems(kwargs.get('choices', ()))
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        self.value_widget.setCurrentIndex(self.value_widget.findText(value))
+    #pylint: disable=unspecified-encoding
+    app = QtWidgets.QApplication(sys.argv)
+    with open(stylesheet_file_path(), 'r') as stylesheet:
+        app.setStyleSheet(stylesheet.read())
+    window = window_class()
+    return app, window

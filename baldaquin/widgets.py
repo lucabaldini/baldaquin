@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2022--2023 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,19 +17,224 @@
 """Custom widgets for the user interface.
 """
 
-
-
-import os
-import sys
 from typing import Any
 
 import loguru
 from loguru import logger
 
-from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from baldaquin import BALDAQUIN_ICONS
 from baldaquin.config import ConfigurationParameter
 from baldaquin._qt import QtCore, QtGui, QtWidgets
-import baldaquin.gui
+
+
+_DEFAULT_ICON_CATALOG = 'material3'
+_DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
+
+
+def _icon_file_path(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
+    style : str = _DEFAULT_ICON_STYLE) -> str:
+    """Return the path to a given icon file.
+
+    Note this is returning a string, rather than a Path object, as the function
+    is mainly used in Qt calls, where Path objects are not readily understood.
+    """
+    file_name = f'{name}_{style}.{fmt}'
+    return f'{BALDAQUIN_ICONS / catalog / file_name}'
+
+
+def load_icon(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
+    style : str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
+    """Load an icon from the given catalog.
+    """
+    return QtGui.QIcon(_icon_file_path(name, catalog, fmt, style))
+
+
+
+class Button(QtWidgets.QPushButton):
+
+    """Small wrapper aroung the QtWidgets.QPushButton class.
+    """
+
+    #pylint: disable=too-few-public-methods
+
+    def __init__(self, icon_name : str, size : int = 40, icon_size : int = 25) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setFixedSize(size, size)
+        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.set_icon(icon_name, icon_size)
+
+    def set_icon(self, icon_name : str, icon_size : int = 25) -> None:
+        """Set the button icon.
+        """
+        self.setIcon(load_icon(icon_name))
+        self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+
+
+class DataWidgetBase(QtWidgets.QWidget):
+
+    """Base class for a widget holding a single piece of information.
+
+    This is nothing more than a pair of widget---a QLabel holding a title and
+    a generic widget holding some data---arranged in a vertical layout.
+    This is an abstract class, and specialized subclasses are provided below
+    to show or edit data in different fashions, representing the basic building
+    block to construct complex user interfaces.
+
+    Derived classes must override, at the very minimum, the ``VALUE_WIDGET_CLASS``
+    class member and the ``set_value`` class method; overloading ``setup()``
+    is instead optional.
+
+    Note that the constructor of this base class calls the ``setObjectName()``
+    method for both widgets (with different arguments) to make it easier to
+    stylesheet the application downstream.
+    """
+
+    VALUE_WIDGET_CLASS = None
+    TITLE_WIDGET_NAME = 'data_widget_title'
+    VALUE_WIDGET_NAME = 'data_widget_value'
+    MISSING_VALUE_LABEL = '-'
+    VALUE_WIDGET_HEIGHT = 30
+
+    def __init__(self, name : str, title : str, value=None, units : str = None,
+                 fmt : str = None, **kwargs) -> None:
+        """Constructor
+        """
+        #pylint: disable=not-callable, too-many-arguments
+        self.name = name
+        self._units = units
+        self._fmt = fmt
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self.title_widget = QtWidgets.QLabel()
+        self.title_widget.setObjectName(self.TITLE_WIDGET_NAME)
+        self.value_widget = self.VALUE_WIDGET_CLASS()
+        self.value_widget.setObjectName(self.VALUE_WIDGET_NAME)
+        self.value_widget.setFixedHeight(self.VALUE_WIDGET_HEIGHT)
+        self.layout().addWidget(self.title_widget)
+        self.layout().addWidget(self.value_widget)
+        self.set_title(title)
+        self.setup(**kwargs)
+        if value is not None:
+            self.set_value(value)
+        else:
+            self.set_value(self.MISSING_VALUE_LABEL)
+
+    def setup(self, **kwargs):
+        """Do nothing post-construction hook that can be overloaded in derived classes.
+        """
+
+    def set_title(self, title : str) -> None:
+        """Set the widget title.
+        """
+        self.title_widget.setText(title)
+
+    def set_value(self, value : Any) -> None:
+        """Set hook to be reimplemented by derived classes.
+        """
+        raise NotImplementedError
+
+
+
+class DisplayWidget(DataWidgetBase):
+
+    """Simple widget to display a single piece of information in a read-only fashion.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLabel
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
+        self.value_widget.setText(text)
+
+
+
+class ParameterCheckBox(DataWidgetBase):
+
+    """Check box data widget, mapipng ``bool`` input parameters.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setChecked(value)
+
+
+
+class ParameterSpinBox(DataWidgetBase):
+
+    """Spin box data widget, mapping ``int`` input parameters.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
+
+    def setup(self, **kwargs) -> None:
+        """Overloaded method.
+        """
+        if self._units is not None:
+            self.value_widget.setSuffix(f' {self._units}')
+        for key, value in kwargs.items():
+            if key == 'min':
+                self.value_widget.setMinimum(value)
+            elif key == 'max':
+                self.value_widget.setMaximum(value)
+            elif key == 'step':
+                self.value_widget.setSingleStep(value)
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setValue(value)
+
+
+
+class ParameterDoubleSpinBox(ParameterSpinBox):
+
+    """Double spin box data widget, mapping ``float`` input parameters.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QDoubleSpinBox
+
+
+
+class ParameterLineEdit(DataWidgetBase):
+
+    """Line edit data widget, mapping ``str`` input parameters when there is
+    no ``choice`` constraint applied.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLineEdit
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setText(value)
+
+
+
+class ParameterComboBox(DataWidgetBase):
+
+    """Combo box data widget, mapping ``str`` input parameters when there is
+    a ``choice`` constraint applied.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QComboBox
+
+    def setup(self, **kwargs) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.addItems(kwargs.get('choices', ()))
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        self.value_widget.setCurrentIndex(self.value_widget.findText(value))
 
 
 
@@ -41,7 +246,7 @@ class CardWidget(QtWidgets.QFrame):
     https://material.io/components/cards
     cards are surfaces that display content and actions on a single topic.
     For our purposes, cards are basically QFrame objects holding a vertical layout
-    to which we attach :class:`DisplayWidget <baldaquin.gui.DisplayWidget>`
+    to which we attach :class:`DisplayWidget <baldaquin.widget.DisplayWidget>`
     instances.
     """
 
@@ -67,9 +272,9 @@ class CardWidget(QtWidgets.QFrame):
         """Add an item to the card.
 
         Note the signature, here, is designed to match exactly that of the
-        :class:`DisplayWidget <baldaquin.gui.DisplayWidget>` constructor.
+        :class:`DisplayWidget <baldaquin.widget.DisplayWidget>` constructor.
         """
-        widget = baldaquin.gui.DisplayWidget(*args, **kwargs)
+        widget = DisplayWidget(*args, **kwargs)
         if widget.name in self._widget_dict:
             raise RuntimeError(f'Duplicated card item name "{widget.name}"')
         self._widget_dict[widget.name] = widget
@@ -110,7 +315,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.layout().addStretch()
 
     @staticmethod
-    def __param_widget(param : ConfigurationParameter) -> baldaquin.gui.DataWidgetBase:
+    def __param_widget(param : ConfigurationParameter) -> DataWidgetBase:
         """Turn a configuration parameter into the corresponding widget.
 
         The fact that we're using two different widgets for ``str`` input,
@@ -122,16 +327,15 @@ class ConfigurationWidget(QtWidgets.QWidget):
         kwargs = param.constraints
         type_ = param.type_name
         if type_ == 'bool':
-            return baldaquin.gui.ParameterCheckBox(*args, **kwargs)
+            return ParameterCheckBox(*args, **kwargs)
         if type_ == 'int':
-            return baldaquin.gui.ParameterSpinBox(*args, **kwargs)
+            return ParameterSpinBox(*args, **kwargs)
         if type_ == 'float':
-            return baldaquin.gui.ParameterDoubleSpinBox(*args, **kwargs)
+            return ParameterDoubleSpinBox(*args, **kwargs)
         if type_ == 'str':
             if len(kwargs):
-                return baldaquin.gui.ParameterLineEdit(*args, **kwargs)
-            else:
-                return baldaquin.gui.ParameterComboBox(*args, **kwargs)
+                return ParameterLineEdit(*args, **kwargs)
+            return ParameterComboBox(*args, **kwargs)
         raise RuntimeError(f'Unknown parameter type {type_}')
 
     def set_value(self, name : str, value : Any) -> None:
@@ -145,7 +349,6 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """Overloaded method defining the default size.
         """
         return QtCore.QSize(400, 400)
-
 
 
 
@@ -189,11 +392,11 @@ class ControlBar(QtWidgets.QFrame):
         """
         super().__init__()
         layout = QtWidgets.QHBoxLayout()
-        self.teardown_button = baldaquin.gui.Button('file_download')
+        self.teardown_button = Button('file_download')
         self.teardown_button.setToolTip('Teardown the run control')
-        self.setup_button = baldaquin.gui.Button('file_upload')
+        self.setup_button = Button('file_upload')
         self.setup_button.setToolTip('Setup the run control')
-        self.run_button = baldaquin.gui.Button('play_arrow')
+        self.run_button = Button('play_arrow')
         self.run_button.setToolTip('Start/stop the data acquisition')
         layout.addWidget(self.teardown_button)
         layout.addWidget(self.setup_button)
@@ -244,14 +447,14 @@ class RunControlCard(CardWidget):
     """Specialized card to display the run control information.
     """
 
-    def __init__(self, run_contro_name : str, backend_name : str) -> None:
+    def __init__(self, run_control_name : str, backend_name : str) -> None:
         """Constructor.
         """
         super().__init__()
-        self.add('ctrl', 'Run control', run_contro_name)
+        self.add('ctrl', 'Run control', run_control_name)
         self.add('backend', 'Back-end', backend_name)
         self.add('userapp', 'User application')
-        self.add('run_id', 'Run Id')
         self.add('station_id', 'Test stand Id')
+        self.add('run_id', 'Run Id')
         self.add('uptime', 'Uptime', 0., units='s', fmt='.3f')
         self.add_bottom_stretch()
