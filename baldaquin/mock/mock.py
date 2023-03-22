@@ -181,6 +181,9 @@ class MockMainWindow(MainWindow):
     """
     """
 
+    PROJECT_NAME = MOCK_PROJECT_NAME
+
+
 
 
 

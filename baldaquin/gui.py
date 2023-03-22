@@ -22,7 +22,8 @@ import sys
 
 from baldaquin._qt import QtCore, QtGui, QtWidgets
 from baldaquin import BALDAQUIN_SKINS
-from baldaquin.widgets import ControlBar, RunControlCard, LoggerDisplay, load_icon
+from baldaquin.widgets import ControlBar, RunControlCard, LoggerDisplay, load_icon,\
+    RunControlCardField
 
 
 def stylesheet_file_path(name : str = 'default') -> Path:
@@ -38,6 +39,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """Base class for a DAQ main window.
     """
 
+    PROJECT_NAME = None
     MINIMUM_WIDTH = 500
     TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
@@ -51,6 +53,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_bar = ControlBar()
         self.add_widget(self.control_bar, 1, 0)
         self.run_control_card = RunControlCard()
+        self.run_control_card.set(RunControlCardField.PROJECT_NAME, self.PROJECT_NAME)
         self.add_widget(self.run_control_card, 0, 0)
         self.tab_widget = QtWidgets.QTabWidget()
         #tab.setTabPosition(tab.TabPosition.West)

@@ -441,7 +441,7 @@ class CardWidget(QtWidgets.QFrame):
         self._widget_dict[widget.name] = widget
         self.layout().addWidget(widget)
 
-    def set_value(self, name : str, value : Any):
+    def set(self, name : str, value : Any):
         """Set the value for a specific card item (addressed by name).
 
         This will raise a KeyError if the card item does not exist.
@@ -465,7 +465,7 @@ class RunControlCardField(Enum):
     the card less error-prone.
     """
 
-    RUN_CONTROL = 'Run control'
+    PROJECT_NAME = 'Project'
     USER_APPLICATION = 'User application'
     TEST_STAND_ID = 'Test stand'
     RUN_ID = 'Run ID'
