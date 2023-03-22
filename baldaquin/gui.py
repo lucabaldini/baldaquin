@@ -50,7 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.centralWidget().setMinimumWidth(self.MINIMUM_WIDTH)
         self.control_bar = ControlBar()
         self.add_widget(self.control_bar, 1, 0)
-        self.run_control_card = RunControlCard('NoOp', 'NoOp')
+        self.run_control_card = RunControlCard()
         self.add_widget(self.run_control_card, 0, 0)
         self.tab_widget = QtWidgets.QTabWidget()
         #tab.setTabPosition(tab.TabPosition.West)

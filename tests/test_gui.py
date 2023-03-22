@@ -23,7 +23,7 @@ from loguru import logger
 from baldaquin.config import SampleConfiguration
 from baldaquin._qt import QtGui, QtCore, QtWidgets
 from baldaquin.gui import MainWindow, bootstrap_window
-from baldaquin.widgets import _icon_file_path, ConfigurationWidget
+from baldaquin.widgets import _icon_file_path, ConfigurationWidget, RunControlCardField
 
 
 def test_main_window():
@@ -35,9 +35,9 @@ def test_main_window():
     window.add_logger_tab()
     # Interact with the widgets a little bit...
     logger.info('Howdy, partner?')
-    window.run_control_card.set_value('uptime', 0.)
-    window.run_control_card.set_value('run_id', 313)
-    window.run_control_card.set_value('station_id', 1)
+    window.run_control_card.set_value(RunControlCardField.UPTIME, 12.)
+    window.run_control_card.set_value(RunControlCardField.TEST_STAND_ID, 1)
+    window.run_control_card.set_value(RunControlCardField.RUN_ID, 313)
     return app, window
 
 

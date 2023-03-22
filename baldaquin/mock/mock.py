@@ -21,12 +21,14 @@ from __future__ import annotations
 from dataclasses import dataclass
 import random
 import struct
+import sys
 import time
 from typing import Any
 
 from loguru import logger
 
 from baldaquin.app import UserApplicationBase
+from baldaquin.gui import MainWindow, bootstrap_window
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.runctrl import RunControlBase
@@ -174,11 +176,25 @@ class MockRunControl(RunControlBase):
 
 
 
+class MockMainWindow(MainWindow):
+
+    """
+    """
+
+
+
+
+
+
 if __name__ == '__main__':
-    rc = MockRunControl()
-    app = MockUserApplication()
-    rc.load_user_application(app)
-    rc.set_stopped()
-    rc.set_running()
-    time.sleep(5)
-    rc.set_stopped()
+    app, window = bootstrap_window(MockMainWindow)
+    window.show()
+    sys.exit(app.exec_())
+
+    #rc = MockRunControl()
+    #app = MockUserApplication()
+    #rc.load_user_application(app)
+    #rc.set_stopped()
+    #rc.set_running()
+    #time.sleep(5)
+    #rc.set_stopped()

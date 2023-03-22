@@ -17,6 +17,7 @@
 """Custom widgets for the user interface.
 """
 
+from enum import Enum
 from typing import Any
 
 import loguru
@@ -98,11 +99,13 @@ class DataWidgetBase(QtWidgets.QWidget):
     MISSING_VALUE_LABEL = '-'
     VALUE_WIDGET_HEIGHT = 30
 
-    def __init__(self, name : str, title : str, value=None, units : str = None,
+    def __init__(self, name : str, title : str = None, value=None, units : str = None,
                  fmt : str = None, **kwargs) -> None:
         """Constructor
         """
         #pylint: disable=not-callable, too-many-arguments
+        if title is None:
+            title = name
         self.name = name
         self._units = units
         self._fmt = fmt
@@ -136,20 +139,6 @@ class DataWidgetBase(QtWidgets.QWidget):
         """
         raise NotImplementedError
 
-
-
-class DisplayWidget(DataWidgetBase):
-
-    """Simple widget to display a single piece of information in a read-only fashion.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLabel
-
-    def set_value(self, value) -> None:
-        """Overloaded method.
-        """
-        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_widget.setText(text)
 
 
 
@@ -235,63 +224,6 @@ class ParameterComboBox(DataWidgetBase):
         """Overloaded method.
         """
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
-
-
-
-class CardWidget(QtWidgets.QFrame):
-
-    """Small class implementing a (read-only) card.
-
-    According to the material design guidelines
-    https://material.io/components/cards
-    cards are surfaces that display content and actions on a single topic.
-    For our purposes, cards are basically QFrame objects holding a vertical layout
-    to which we attach :class:`DisplayWidget <baldaquin.widget.DisplayWidget>`
-    instances.
-    """
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self._widget_dict = {}
-
-    def add_bottom_stretch(self) -> None:
-        """Add a vertical stretch at the bottom of the layout.
-
-        This is to ensure that the card item are "floating" in the card container
-        without being expanded, and the net effect is that the items appear
-        aligned to the top in the card. There might be a clever way to achieve
-        this automatically in the loop filling the card, but I could not make it
-        work, of not manually.
-        """
-        self.layout().addStretch()
-
-    def add(self, *args, **kwargs) -> None:
-        """Add an item to the card.
-
-        Note the signature, here, is designed to match exactly that of the
-        :class:`DisplayWidget <baldaquin.widget.DisplayWidget>` constructor.
-        """
-        widget = DisplayWidget(*args, **kwargs)
-        if widget.name in self._widget_dict:
-            raise RuntimeError(f'Duplicated card item name "{widget.name}"')
-        self._widget_dict[widget.name] = widget
-        self.layout().addWidget(widget)
-
-    def set_value(self, name : str, value : Any):
-        """Set the value for a specific card item (addressed by name).
-
-        This will raise a KeyError if the card item does not exist.
-        """
-        self._widget_dict[name].set_value(value)
-
-    def sizeHint(self) -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        return QtCore.QSize(200, 400)
-
 
 
 
@@ -442,19 +374,109 @@ class ControlBar(QtWidgets.QFrame):
 
 
 
+class DisplayWidget(DataWidgetBase):
+
+    """Simple widget to display a single piece of information in a read-only fashion.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLabel
+
+    def set_value(self, value) -> None:
+        """Overloaded method.
+        """
+        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
+        self.value_widget.setText(text)
+
+
+
+class CardWidget(QtWidgets.QFrame):
+
+    """Small class implementing a (read-only) card.
+
+    According to the material design guidelines
+    https://material.io/components/cards
+    cards are surfaces that display content and actions on a single topic.
+    For our purposes, cards are basically QFrame objects holding a vertical layout
+    to which we attach :class:`DisplayWidget <baldaquin.widget.DisplayWidget>`
+    instances.
+    """
+
+    _FIELD_ENUM : Enum = ()
+    _VALUE_DICT = {}
+    _KWARGS_DICT = {}
+
+    def __init__(self, add_bottom_stretch : bool = True) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self._widget_dict = {}
+        for field in self._FIELD_ENUM:
+            value = self._VALUE_DICT.get(field)
+            kwargs = self._KWARGS_DICT.get(field, {})
+            self.add(field.value, None, value, **kwargs)
+        if add_bottom_stretch:
+            self.add_bottom_stretch()
+
+    def add_bottom_stretch(self) -> None:
+        """Add a vertical stretch at the bottom of the layout.
+
+        This is to ensure that the card item are "floating" in the card container
+        without being expanded, and the net effect is that the items appear
+        aligned to the top in the card. There might be a clever way to achieve
+        this automatically in the loop filling the card, but I could not make it
+        work, of not manually.
+        """
+        self.layout().addStretch()
+
+    def add(self, *args, **kwargs) -> None:
+        """Add an item to the card.
+
+        Note the signature, here, is designed to match exactly that of the
+        :class:`DisplayWidget <baldaquin.widget.DisplayWidget>` constructor.
+        """
+        widget = DisplayWidget(*args, **kwargs)
+        if widget.name in self._widget_dict:
+            raise RuntimeError(f'Duplicated card item name "{widget.name}"')
+        self._widget_dict[widget.name] = widget
+        self.layout().addWidget(widget)
+
+    def set_value(self, name : str, value : Any):
+        """Set the value for a specific card item (addressed by name).
+
+        This will raise a KeyError if the card item does not exist.
+        """
+        if isinstance(name, Enum):
+            name = name.value
+        self._widget_dict[name].set_value(value)
+
+    def sizeHint(self) -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        return QtCore.QSize(200, 400)
+
+
+
+class RunControlCardField(Enum):
+
+    """Definition of the relevant fields for the run control card.
+
+    This is done with the intent of making the process of updating the values of
+    the card less error-prone.
+    """
+
+    RUN_CONTROL = 'Run control'
+    USER_APPLICATION = 'User application'
+    TEST_STAND_ID = 'Test stand'
+    RUN_ID = 'Run ID'
+    UPTIME = 'Uptime'
+
+
+
 class RunControlCard(CardWidget):
 
     """Specialized card to display the run control information.
     """
-
-    def __init__(self, run_control_name : str, backend_name : str) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.add('ctrl', 'Run control', run_control_name)
-        self.add('backend', 'Back-end', backend_name)
-        self.add('userapp', 'User application')
-        self.add('station_id', 'Test stand Id')
-        self.add('run_id', 'Run Id')
-        self.add('uptime', 'Uptime', 0., units='s', fmt='.3f')
-        self.add_bottom_stretch()
+    _FIELD_ENUM = RunControlCardField
+    _VALUE_DICT = {RunControlCardField.UPTIME: 0.}
+    _KWARGS_DICT = {RunControlCardField.UPTIME: dict(units='s', fmt='.3f')}
