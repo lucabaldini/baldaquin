@@ -230,7 +230,7 @@ class RunControlBase(FiniteStateMachine):
     """
 
     PROJECT_NAME = None
-    STAT_UPDATE_INTERVAL = 1000
+    UPDATE_TIMER_INTERVAL = 750
 
     #pylint: disable=c-extension-no-member
     run_id_changed = QtCore.Signal(int)
@@ -249,7 +249,7 @@ class RunControlBase(FiniteStateMachine):
         self._user_application = None
         self._log_file_handler_id = None
         self._update_timer = QtCore.QTimer()
-        self._update_timer.setInterval(self.STAT_UPDATE_INTERVAL)
+        self._update_timer.setInterval(self.UPDATE_TIMER_INTERVAL)
         self._update_timer.timeout.connect(self.update_stats)
 
     def _config_file_path(self, file_name : str) -> Path:
@@ -402,11 +402,11 @@ class RunControlBase(FiniteStateMachine):
             return self.timeline.latch() - self.start_timestamp
         try:
             return self.stop_timestamp - self.start_timestamp
-        except AttributeError:
+        except TypeError:
             return None
 
     def update_stats(self):
-        """
+        """Signal the proper updates to the run statistics.
         """
         self.uptime_updated.emit(self.elapsed_time())
 
@@ -452,6 +452,7 @@ class RunControlBase(FiniteStateMachine):
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.start(self.data_file_path())
         self._update_timer.start()
+        self.update_stats()
 
     def stop_run(self) -> None:
         """Overloaded FiniteStateMachine method.
@@ -464,6 +465,7 @@ class RunControlBase(FiniteStateMachine):
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
         logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
+        self.update_stats()
 
     def pause(self) -> None:
         """Overloaded FiniteStateMachine method.
