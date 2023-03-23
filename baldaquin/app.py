@@ -16,8 +16,9 @@
 """User application framework.
 """
 
-from loguru import logger
 from typing import Any
+
+from loguru import logger
 
 from baldaquin._qt import QtCore
 
@@ -28,6 +29,7 @@ class UserApplicationBase:
     """Base class for user applications.
     """
 
+    #pylint: disable=c-extension-no-member
     EVENT_HANDLER_CLASS = None
 
     def __init__(self) -> None:

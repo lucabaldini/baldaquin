@@ -21,15 +21,4 @@ from baldaquin import setup_project, _create_folder
 
 MOCK_PROJECT_NAME = 'mock'
 
-MOCK_CONFIG, MOCK_DATA = setup_project(MOCK_PROJECT_NAME)
-
-# We should evaluate if the following makes sense and should be propagated
-# to all the projects.
-MOCK_APP_CONFIG = MOCK_CONFIG / 'apps'
-_create_folder(MOCK_APP_CONFIG)
-
-def user_application_config_file_path(application_name : str):
-    """
-    """
-    file_name = f'{application_name}.cfg'
-    return MOCK_APP_CONFIG / file_name
+MOCK_CONFIG, MOCK_APP_CONFIG, MOCK_DATA = setup_project(MOCK_PROJECT_NAME)

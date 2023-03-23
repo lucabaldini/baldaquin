@@ -26,7 +26,7 @@ import loguru
 from loguru import logger
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-from baldaquin.config import ConfigurationParameter
+from baldaquin.config import ConfigurationParameter, ConfigurationBase
 from baldaquin._qt import QtCore, QtGui, QtWidgets
 from baldaquin.runctrl import FsmState, RunControlBase
 
@@ -290,6 +290,12 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """Overloaded method defining the default size.
         """
         return QtCore.QSize(400, 400)
+
+    def configuration(self) -> ConfigurationBase:
+        """Return the current configuration displayed in the widget.
+        """
+        for key, value in self._widget_dict.items():
+            print(key, value)
 
 
 

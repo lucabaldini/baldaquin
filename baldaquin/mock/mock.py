@@ -31,7 +31,7 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.gui import ConfigurationWidget, MainWindow, bootstrap_window
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
-from baldaquin.mock import MOCK_PROJECT_NAME, user_application_config_file_path
+from baldaquin.mock import MOCK_PROJECT_NAME
 from baldaquin.runctrl import RunControlBase
 
 
@@ -183,7 +183,6 @@ class MockMainWindow(MainWindow):
         """
         super().__init__()
         self.config_widget = ConfigurationWidget(MockUserAppConfiguration())
-        print(self.config_widget.configuration)
         self.add_tab(self.config_widget, 'Configuration', 'sensors')
         #self.add_logger_tab()
 
@@ -196,7 +195,6 @@ if __name__ == '__main__':
     rc = MockRunControl()
     window.connect_to_run_control(rc)
     user_app = MockUserApplication()
-    print(user_application_config_file_path(user_app.name))
     rc.load_user_application(user_app)
     window.show()
     sys.exit(app.exec_())

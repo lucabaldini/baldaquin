@@ -104,7 +104,10 @@ def setup_project(project_name : str) -> tuple[Path, Path]:
     project_name : str
         The name of the project.
     """
-    folder_list = (config_folder_path(project_name), data_folder_path(project_name))
+    config_folder = config_folder_path(project_name)
+    app_config_folder = config_folder / 'app'
+    data_folder = data_folder_path(project_name)
+    folder_list = (config_folder, app_config_folder, data_folder)
     for folder_path in folder_list:
         _create_folder(folder_path)
     return folder_list
