@@ -469,6 +469,7 @@ class RunControlCardField(Enum):
     USER_APPLICATION = 'User application'
     TEST_STAND_ID = 'Test stand'
     RUN_ID = 'Run ID'
+    STATE = 'State'
     UPTIME = 'Uptime'
 
 

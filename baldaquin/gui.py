@@ -20,8 +20,9 @@
 from pathlib import Path
 import sys
 
-from baldaquin._qt import QtCore, QtGui, QtWidgets
 from baldaquin import BALDAQUIN_SKINS
+from baldaquin._qt import QtCore, QtGui, QtWidgets
+from baldaquin.runctrl import FsmState, RunControlBase
 from baldaquin.widgets import ControlBar, RunControlCard, LoggerDisplay, load_icon,\
     RunControlCardField
 
@@ -113,6 +114,28 @@ class MainWindow(QtWidgets.QMainWindow):
         """Add the default logger tab.
         """
         self.add_tab(LoggerDisplay(), 'Logger', 'chat')
+
+    def set_test_stand_id(self, test_stand_id : int) -> None:
+        """Set the test stand ID in the run control card.
+        """
+        self.run_control_card.set(RunControlCardField.TEST_STAND_ID, test_stand_id)
+
+    def set_run_id(self, run_id : int) -> None:
+        """Set the test run ID in the run control card.
+        """
+        self.run_control_card.set(RunControlCardField.RUN_ID, run_id)
+
+    def set_state(self, state : FsmState) -> None:
+        """Set the test run control state in the run control card.
+        """
+        self.run_control_card.set(RunControlCardField.STATE, state.value)
+
+    def connect_to_run_control(self, run_control : RunControlBase) -> None:
+        """Connect the window to a given run control.
+        """
+        self.set_test_stand_id(run_control._test_stand_id)
+        self.set_run_id(run_control._run_id)
+        self.set_state(run_control.state())
 
 
 

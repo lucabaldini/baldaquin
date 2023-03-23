@@ -191,10 +191,13 @@ class MockMainWindow(MainWindow):
 
 if __name__ == '__main__':
     app, window = bootstrap_window(MockMainWindow)
+    rc = MockRunControl()
+    window.connect_to_run_control(rc)
+
     window.show()
     sys.exit(app.exec_())
 
-    #rc = MockRunControl()
+    #
     #app = MockUserApplication()
     #rc.load_user_application(app)
     #rc.set_stopped()

@@ -17,7 +17,7 @@
 """Basic run control structure.
 """
 
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
 
 from loguru import logger
@@ -28,16 +28,15 @@ from baldaquin._qt import QtCore
 from baldaquin.timeline import Timeline
 
 
-
 class FsmState(Enum):
 
     """Enum for the run control finite state machine possible states.
     """
 
-    RESET = auto()
-    STOPPED = auto()
-    RUNNING = auto()
-    PAUSED = auto()
+    RESET = 'Reset'
+    STOPPED = 'Stopped'
+    RUNNING = 'Running'
+    PAUSED = 'Paused'
 
 
 
@@ -53,7 +52,7 @@ class InvalidFsmTransitionError(RuntimeError):
 
 
 
-class FiniteStateMachine:
+class FiniteStateMachine(QtCore.QObject):
 
     """Definition of the finite-state machine (FSM) underlying the run control.
 
@@ -78,34 +77,57 @@ class FiniteStateMachine:
     * set_stopped();
     * set_running();
     * set_paused().
+
+    The finite-state machine emits a state_changed() signal whenever the underlying
+    state changes. (Note that, for this to work, it needs to inherit from QObject
+    and, in addition to that, properly call the constructor of the base class.)
     """
 
-    #state_changed = QtCore.Signal(int)
+    #pylint: disable=c-extension-no-member
+    state_changed = QtCore.Signal(int)
 
     def __init__(self) -> None:
         """Constructor.
         """
-        self._state = FsmState.RESET
+        super().__init__()
+        self.__state = FsmState.RESET
+
+    def state(self) -> FsmState:
+        """Return the state of the FSM.
+        """
+        return self.__state
+
+    def _set_state(self, state : FsmState) -> None:
+        """Set the state of the FSM and emit a state_changed() signal with the
+        proper state after the change.
+
+        Note this hook is intended to be restricted (hence the leading underscore)
+        because all the interaction with concrete instances is supposed to happen
+        via the four "public" methods. This is used internally to dispatch the
+        state_changed() signal consistently when the FSM state is changed.
+        """
+        self.__state = state
+        self.state_changed.emit(self.__state)
 
     def is_reset(self) -> bool:
         """Return True if the run control is reset.
         """
-        return self._state == FsmState.RESET
+        return self.__state == FsmState.RESET
 
     def is_stopped(self) -> bool:
         """Return True if the run control is stopped.
         """
-        return self._state == FsmState.STOPPED
+        return self.__state == FsmState.STOPPED
 
     def is_running(self) -> bool:
         """Return True if the run control is running.
         """
-        return self._state == FsmState.RUNNING
+        return self.__state == FsmState.RUNNING
 
     def is_paused(self) -> bool:
         """Return True if the run control is paused.
         """
-        return self._state == FsmState.PAUSED
+        return self.__state == FsmState.PAUSED
 
     def setup(self) -> None:
         """Method called in the RESET -> STOPPED transition.
@@ -149,9 +171,8 @@ class FiniteStateMachine:
         if self.is_stopped():
             self.teardown()
         else:
-            raise InvalidFsmTransitionError(self._state, target_state)
-        self._state = target_state
-        #self.state_changed.emit(0)
+            raise InvalidFsmTransitionError(self.__state, target_state)
+        self._set_state(target_state)
 
     def set_stopped(self) -> None:
         """Set the FST in the STOPPED state.
@@ -164,9 +185,8 @@ class FiniteStateMachine:
         elif self.is_paused():
             self.stop()
         else:
-            raise InvalidFsmTransitionError(self._state, target_state)
-        self._state = target_state
-        #self.state_changed.emit(self._state)
+            raise InvalidFsmTransitionError(self.__state, target_state)
+        self._set_state(target_state)
 
     def set_running(self) -> None:
         """Set the FST in the RUNNING state.
@@ -177,9 +197,8 @@ class FiniteStateMachine:
         elif self.is_paused():
             self.resume()
         else:
-            raise InvalidFsmTransitionError(self._state, target_state)
-        self._state = target_state
-        #self.state_changed.emit(self._state)
+            raise InvalidFsmTransitionError(self.__state, target_state)
+        self._set_state(target_state)
 
     def set_paused(self) -> None:
         """Set the FST in the PAUSED state.
@@ -188,9 +207,8 @@ class FiniteStateMachine:
         if self.is_running():
             self.pause()
         else:
-            raise InvalidFsmTransitionError(self._state, target_state)
-        self._state = target_state
-        #self.state_changed.emit(self._state)
+            raise InvalidFsmTransitionError(self.__state, target_state)
+        self._set_state(target_state)
 
 
 
@@ -213,15 +231,14 @@ class RunControlBase(FiniteStateMachine):
 
     PROJECT_NAME = None
 
-    #test_stand_id_read = QtCore.Signal(int)
-    #run_id_changed = QtCore.Signal(int)
+    #pylint: disable=c-extension-no-member
+    run_id_changed = QtCore.Signal(int)
 
     def __init__(self):
         """Constructor.
         """
         super().__init__()
         self._test_stand_id = self._read_test_stand_id()
-        #self.test_stand_id_read.emit(self._test_stand_id)
         self._run_id = self._read_run_id()
         self.timeline = Timeline()
         self.start_timestamp = None
@@ -354,6 +371,7 @@ class RunControlBase(FiniteStateMachine):
         configuration file.
         """
         self._run_id += 1
+        self.run_id_changed.emit(self._run_id)
         self._write_run_id()
 
     def _create_data_folder(self) -> None:
@@ -385,7 +403,7 @@ class RunControlBase(FiniteStateMachine):
         """Set the user application to be run.
         """
         if not self.is_reset():
-            raise RuntimeError(f'Cannot load a user application in the {self._state.name} state')
+            raise RuntimeError(f'Cannot load a user application in the {self.state().name} state')
         if not isinstance(app, UserApplicationBase):
             raise RuntimeError(f'Invalid user application of type {type(app)}')
         self._user_application = app
