@@ -28,12 +28,11 @@ from typing import Any
 from loguru import logger
 
 from baldaquin.app import UserApplicationBase
-from baldaquin.gui import MainWindow, bootstrap_window
+from baldaquin.gui import ConfigurationWidget, MainWindow, bootstrap_window
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME, user_application_config_file_path
 from baldaquin.runctrl import RunControlBase
-from baldaquin.widgets import ConfigurationWidget
 
 
 @dataclass
