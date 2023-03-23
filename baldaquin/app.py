@@ -33,9 +33,7 @@ class UserApplicationBase:
     def __init__(self) -> None:
         """Constructor.
         """
-        self.pool = QtCore.QThreadPool.globalInstance()
-        self.event_handler = self.EVENT_HANDLER_CLASS()
-        self.event_handler.process_event = self.process_event
+        self.event_handler = None
 
     def setup(self) -> None:
         """Function called when the run control transitions from RESET to STOPPED.
@@ -49,18 +47,32 @@ class UserApplicationBase:
 
     def start(self, file_path, **kwargs) -> None:
         """Start the event handler.
+
+        .. warning::
+
+           Note that we create a new handler every time, as earlier attempts to
+           create the handler in the constructor and then start it multiple
+           times seemed to trigger an error along the lines of:
+
+           RuntimeError: Internal C++ object (MockEventHandler) already deleted.
+
+           I am sure this deserves more study to make sure we are doing things
+           correctly.
         """
         logger.info(f'Starting application {self.__class__.__name__}')
+        self.event_handler = self.EVENT_HANDLER_CLASS()
+        self.event_handler.process_event = self.process_event
         self.event_handler.setup(file_path, **kwargs)
-        self.pool.start(self.event_handler)
+        QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
         """Stop the event handler.
         """
         logger.info(f'Stopping application {self.__class__.__name__}')
         self.event_handler.stop()
-        self.pool.waitForDone()
+        QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
+        self.event_handler = None
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

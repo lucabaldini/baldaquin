@@ -137,7 +137,6 @@ class EventHandlerBase(QtCore.QRunnable):
         self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
         logger.info(f'{self.buffer.__class__.__name__} -> {file_path}')
 
-    @QtCore.Slot()
     def run(self):
         """Overloaded QRunnable method.
         """
