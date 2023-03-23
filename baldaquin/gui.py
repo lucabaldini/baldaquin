@@ -61,7 +61,6 @@ def stylesheet_file_path(name : str = 'default') -> Path:
 
 
 
-
 class Button(QtWidgets.QPushButton):
 
     """Small wrapper aroung the QtWidgets.QPushButton class.
@@ -149,7 +148,6 @@ class DataWidgetBase(QtWidgets.QWidget):
         """Set hook to be reimplemented by derived classes.
         """
         raise NotImplementedError
-
 
 
 
@@ -284,7 +282,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
     def set_value(self, name : str, value : Any) -> None:
         """Set the value for a specific parameter (addressed by name).
 
-        Mind this will raise a KeyError if the widget does not exist.
+        This will raise a KeyError if the widget does not exist.
         """
         self._widget_dict[name].set_value(value)
 
