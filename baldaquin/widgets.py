@@ -319,6 +319,10 @@ class ControlBar(QtWidgets.QFrame):
     arranged horizontally that can be used to control the Run control
     """
 
+    #pylint: disable=c-extension-no-member
+    started = QtCore.Signal()
+    stopped = QtCore.Signal()
+
     def __init__(self) -> None:
         """Constructor.
         """
@@ -362,6 +366,7 @@ class ControlBar(QtWidgets.QFrame):
         self.run_button.setEnabled(True)
         self.run_button.set_icon('stop')
         self.__running = True
+        self.started.emit()
 
     def set_stopped(self):
         """Set the bar in the stopped state.
@@ -371,6 +376,7 @@ class ControlBar(QtWidgets.QFrame):
         self.run_button.setEnabled(True)
         self.run_button.set_icon('play_arrow')
         self.__running = False
+        self.stopped.emit()
 
 
 

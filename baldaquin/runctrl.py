@@ -84,7 +84,7 @@ class FiniteStateMachine(QtCore.QObject):
     """
 
     #pylint: disable=c-extension-no-member
-    state_changed = QtCore.Signal(int)
+    state_changed = QtCore.Signal(FsmState)
 
     def __init__(self) -> None:
         """Constructor.
@@ -230,9 +230,12 @@ class RunControlBase(FiniteStateMachine):
     """
 
     PROJECT_NAME = None
+    STAT_UPDATE_INTERVAL = 1000
 
     #pylint: disable=c-extension-no-member
     run_id_changed = QtCore.Signal(int)
+    user_application_loaded = QtCore.Signal(str)
+    uptime_updated = QtCore.Signal(float)
 
     def __init__(self):
         """Constructor.
@@ -245,6 +248,9 @@ class RunControlBase(FiniteStateMachine):
         self.stop_timestamp = None
         self._user_application = None
         self._log_file_handler_id = None
+        self._update_timer = QtCore.QTimer()
+        self._update_timer.setInterval(self.STAT_UPDATE_INTERVAL)
+        self._update_timer.timeout.connect(self.update_stats)
 
     def _config_file_path(self, file_name : str) -> Path:
         """Return the path to a generic configuration file.
@@ -399,6 +405,11 @@ class RunControlBase(FiniteStateMachine):
         except AttributeError:
             return None
 
+    def update_stats(self):
+        """
+        """
+        self.uptime_updated.emit(self.elapsed_time())
+
     def load_user_application(self, app : UserApplicationBase) -> None:
         """Set the user application to be run.
         """
@@ -407,6 +418,8 @@ class RunControlBase(FiniteStateMachine):
         if not isinstance(app, UserApplicationBase):
             raise RuntimeError(f'Invalid user application of type {type(app)}')
         self._user_application = app
+        self.user_application_loaded.emit(app.__class__.__name__)
+        self.set_stopped()
 
     def _check_user_application(self) -> None:
         """Make sure we have a valid use application loaded, and raise an
@@ -438,11 +451,13 @@ class RunControlBase(FiniteStateMachine):
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.start(self.data_file_path())
+        self._update_timer.start()
 
     def stop_run(self) -> None:
         """Overloaded FiniteStateMachine method.
         """
         self._check_user_application()
+        self._update_timer.stop()
         self._user_application.stop()
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')

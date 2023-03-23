@@ -130,12 +130,28 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.run_control_card.set(RunControlCardField.STATE, state.value)
 
+    def set_user_application_name(self, name : str) -> None:
+        """
+        """
+        self.run_control_card.set(RunControlCardField.USER_APPLICATION, name)
+
+    def set_uptime(self, value : float):
+        """
+        """
+        self.run_control_card.set(RunControlCardField.UPTIME, value)
+
     def connect_to_run_control(self, run_control : RunControlBase) -> None:
         """Connect the window to a given run control.
         """
         self.set_test_stand_id(run_control._test_stand_id)
         self.set_run_id(run_control._run_id)
         self.set_state(run_control.state())
+        run_control.user_application_loaded.connect(self.set_user_application_name)
+        run_control.state_changed.connect(self.set_state)
+        run_control.run_id_changed.connect(self.set_run_id)
+        run_control.uptime_updated.connect(self.set_uptime)
+        self.control_bar.started.connect(run_control.set_running)
+        self.control_bar.stopped.connect(run_control.set_stopped)
 
 
 

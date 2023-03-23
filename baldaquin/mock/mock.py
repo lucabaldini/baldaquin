@@ -183,7 +183,11 @@ class MockMainWindow(MainWindow):
 
     PROJECT_NAME = MOCK_PROJECT_NAME
 
-
+    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        #self.add_logger_tab()
 
 
 
@@ -193,14 +197,11 @@ if __name__ == '__main__':
     app, window = bootstrap_window(MockMainWindow)
     rc = MockRunControl()
     window.connect_to_run_control(rc)
-
+    user_app = MockUserApplication()
+    rc.load_user_application(user_app)
     window.show()
     sys.exit(app.exec_())
 
-    #
-    #app = MockUserApplication()
-    #rc.load_user_application(app)
-    #rc.set_stopped()
     #rc.set_running()
     #time.sleep(5)
     #rc.set_stopped()
