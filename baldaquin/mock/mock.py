@@ -31,8 +31,9 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.gui import MainWindow, bootstrap_window
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventBase, EventHandlerBase
+from baldaquin.mock import MOCK_PROJECT_NAME, user_application_config_file_path
 from baldaquin.runctrl import RunControlBase
-from baldaquin.mock import MOCK_PROJECT_NAME
+from baldaquin.widgets import ConfigurationWidget
 
 
 @dataclass
@@ -127,7 +128,7 @@ class MockUserAppConfiguration(ConfigurationBase):
 
     TITLE = 'Mock application configuration'
     PARAMETER_SPECS = (
-        ('rate', 'float', 100., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
+        ('rate', 'float', 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
         ('pha_mu', 'float', 1000., 'Average pulse height', 'ADC counts', '.1f', dict(min=100.)),
         ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
     )
@@ -138,11 +139,6 @@ class MockEventHandler(EventHandlerBase):
 
     """Mock event handler for testing purpose.
     """
-
-    #def process_event(self):
-    #    """
-    #    """
-    #    pass
 
 
 
@@ -187,6 +183,9 @@ class MockMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
+        self.config_widget = ConfigurationWidget(MockUserAppConfiguration())
+        print(self.config_widget.configuration)
+        self.add_tab(self.config_widget, 'Configuration', 'sensors')
         #self.add_logger_tab()
 
 
@@ -198,6 +197,7 @@ if __name__ == '__main__':
     rc = MockRunControl()
     window.connect_to_run_control(rc)
     user_app = MockUserApplication()
+    print(user_application_config_file_path(user_app.name))
     rc.load_user_application(user_app)
     window.show()
     sys.exit(app.exec_())

@@ -33,6 +33,7 @@ class UserApplicationBase:
     def __init__(self) -> None:
         """Constructor.
         """
+        self.name = self.__class__.__name__
         self.event_handler = None
 
     def setup(self) -> None:
