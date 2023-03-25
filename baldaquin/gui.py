@@ -95,8 +95,8 @@ class DataWidgetBase(QtWidgets.QWidget):
     block to construct complex user interfaces.
 
     Derived classes must override, at the very minimum, the ``VALUE_WIDGET_CLASS``
-    class member and the ``set_value`` class method; overloading ``setup()``
-    is instead optional.
+    class member and the ``current_value()`` and ``set_value()`` class methods;
+    overloading ``setup()`` is optional.
 
     Note that the constructor of this base class calls the ``setObjectName()``
     method for both widgets (with different arguments) to make it easier to
@@ -144,6 +144,11 @@ class DataWidgetBase(QtWidgets.QWidget):
         """
         self.title_widget.setText(title)
 
+    def current_value(self) -> Any:
+        """Return the current value hold by the configuration widget.
+        """
+        raise NotImplementedError
+
     def set_value(self, value : Any) -> None:
         """Set hook to be reimplemented by derived classes.
         """
@@ -157,6 +162,11 @@ class ParameterCheckBox(DataWidgetBase):
     """
 
     VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
+
+    def current_value(self) -> bool:
+        """Overloaded method.
+        """
+        return self.value_widget.isChecked()
 
     def set_value(self, value) -> None:
         """Overloaded method.
@@ -185,6 +195,11 @@ class ParameterSpinBox(DataWidgetBase):
             elif key == 'step':
                 self.value_widget.setSingleStep(value)
 
+    def current_value(self) -> int:
+        """Overloaded method.
+        """
+        return self.value_widget.value()
+
     def set_value(self, value) -> None:
         """Overloaded method.
         """
@@ -199,6 +214,11 @@ class ParameterDoubleSpinBox(ParameterSpinBox):
 
     VALUE_WIDGET_CLASS = QtWidgets.QDoubleSpinBox
 
+    def current_value(self) -> float:
+        """Overloaded method.
+        """
+        return self.value_widget.value()
+
 
 
 class ParameterLineEdit(DataWidgetBase):
@@ -208,6 +228,11 @@ class ParameterLineEdit(DataWidgetBase):
     """
 
     VALUE_WIDGET_CLASS = QtWidgets.QLineEdit
+
+    def current_value(self) -> str:
+        """Overloaded method.
+        """
+        return self.value_widget.text()
 
     def set_value(self, value) -> None:
         """Overloaded method.
@@ -229,6 +254,11 @@ class ParameterComboBox(DataWidgetBase):
         """
         self.value_widget.addItems(kwargs.get('choices', ()))
 
+    def current_value(self) -> str:
+        """Overloaded method.
+        """
+        return self.value_widget.currentText()
+
     def set_value(self, value) -> None:
         """Overloaded method.
         """
@@ -242,12 +272,15 @@ class ConfigurationWidget(QtWidgets.QWidget):
     :class:`baldaquin.config.ConfigurationBase` subclass.
     """
 
-    def __init__(self, configuration) -> None:
+    def __init__(self, configuration : ConfigurationBase) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
-        self.configuration = configuration
+        # Keep a reference to the input configuration class so that we can return
+        # the current (possibly modified) configuration as an instance of the
+        # proper class.
+        self._config_class = configuration.__class__
         self._widget_dict = {}
         for param in configuration.values():
             widget = self.__param_widget(param)
@@ -274,10 +307,15 @@ class ConfigurationWidget(QtWidgets.QWidget):
         if type_ == 'float':
             return ParameterDoubleSpinBox(*args, **kwargs)
         if type_ == 'str':
-            if len(kwargs):
-                return ParameterLineEdit(*args, **kwargs)
-            return ParameterComboBox(*args, **kwargs)
+            if 'choices' in kwargs:
+                return ParameterComboBox(*args, **kwargs)
+            return ParameterLineEdit(*args, **kwargs)
         raise RuntimeError(f'Unknown parameter type {type_}')
+
+    def current_value(self, name : str) -> Any:
+        """Retrieve the current value for a given key.
+        """
+        return self._widget_dict[name].current_value()
 
     def set_value(self, name : str, value : Any) -> None:
         """Set the value for a specific parameter (addressed by name).
@@ -291,11 +329,13 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         return QtCore.QSize(400, 400)
 
-    def configuration(self) -> ConfigurationBase:
+    def current_configuration(self) -> ConfigurationBase:
         """Return the current configuration displayed in the widget.
         """
-        for key, value in self._widget_dict.items():
-            print(key, value)
+        configuration = self._config_class()
+        for key, widget in self._widget_dict.items():
+            configuration.update_value(key, widget.current_value())
+        return configuration
 
 
 
@@ -625,15 +665,22 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 
+def bootstrap_qapplication():
+    """Create a QApplication object and apply the proper stypesheet.
+    """
+    #pylint: disable=unspecified-encoding
+    qapp = QtWidgets.QApplication(sys.argv)
+    with open(stylesheet_file_path(), 'r') as stylesheet:
+        qapp.setStyleSheet(stylesheet.read())
+    return qapp
+
+
 def bootstrap_window(window_class):
     """Bootstrap a main window.
 
     This is creating a QApplication, applying the relevant stylesheet, and
     creating an actual instance of the window class passed as an argument.
     """
-    #pylint: disable=unspecified-encoding
-    app = QtWidgets.QApplication(sys.argv)
-    with open(stylesheet_file_path(), 'r') as stylesheet:
-        app.setStyleSheet(stylesheet.read())
+    qapp = bootstrap_qapplication()
     window = window_class()
-    return app, window
+    return qapp, window

@@ -291,7 +291,8 @@ class SampleConfiguration(ConfigurationBase):
     TITLE = 'A simple test configuration'
     PARAMETER_SPECS = (
         ('enabled', 'bool', True, 'Enable connection', None, None, {}),
+        ('protocol', 'str', 'UDP', 'Communication protocol', None, None, dict(choices=('UDP', 'TCP/IP'))),
         ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
-        ('port', 'int', 20004, 'UDP port', None, None, dict(min=1024, max=65535)),
+        ('port', 'int', 20004, 'Port', None, None, dict(min=1024, max=65535)),
         ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))
     )

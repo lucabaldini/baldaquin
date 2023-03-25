@@ -22,8 +22,7 @@ from loguru import logger
 
 from baldaquin.config import SampleConfiguration
 from baldaquin._qt import QtGui, QtCore, QtWidgets
-from baldaquin.gui import MainWindow, bootstrap_window
-from baldaquin.widgets import _icon_file_path, ConfigurationWidget, RunControlCardField
+from baldaquin.gui import ConfigurationWidget, RunControlCardField, MainWindow, bootstrap_window
 
 
 def test_main_window():
@@ -43,6 +42,6 @@ def test_main_window():
 
 
 if __name__ == '__main__':
-    app, window = test_main_window()
+    qapp, window = test_main_window()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(qapp.exec_())

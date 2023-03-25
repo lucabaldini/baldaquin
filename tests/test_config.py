@@ -17,9 +17,11 @@
 """
 
 import os
+import sys
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.config import ConfigurationParameter, ConfigurationBase, SampleConfiguration
+from baldaquin.gui import ConfigurationWidget, bootstrap_qapplication
 
 
 def _test_base_match(type_name, value, **constraints):
@@ -96,3 +98,24 @@ def test_configuration():
     config = SampleConfiguration()
     config.update(file_path)
     assert config.value('port') == 20003
+
+def test_configuration_display(port=9999):
+    """Test the widget displaying configuration objects.
+    """
+    config = SampleConfiguration()
+    print(config)
+    assert config.value('port') != port
+    qapp = bootstrap_qapplication()
+    widget = ConfigurationWidget(config)
+    widget.set_value('port', port)
+    config = widget.current_configuration()
+    print(config)
+    assert config.value('port') == port
+    return qapp, widget
+
+
+
+if __name__ == '__main__':
+    qapp, widget = test_configuration_display()
+    widget.show()
+    sys.exit(qapp.exec_())
