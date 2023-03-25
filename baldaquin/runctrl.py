@@ -24,6 +24,7 @@ from loguru import logger
 
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
+from baldaquin.config import ConfigurationBase
 from baldaquin._qt import QtCore
 from baldaquin.timeline import Timeline
 
@@ -188,14 +189,14 @@ class FiniteStateMachine(QtCore.QObject):
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
 
-    def set_running(self) -> None:
+    def set_running(self, *args, **kwargs) -> None:
         """Set the FST in the RUNNING state.
         """
         target_state = FsmState.RUNNING
         if self.is_stopped():
-            self.start_run()
+            self.start_run(*args, **kwargs)
         elif self.is_paused():
-            self.resume()
+            self.resume(*args, **kwargs)
         else:
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
@@ -234,7 +235,7 @@ class RunControlBase(FiniteStateMachine):
 
     #pylint: disable=c-extension-no-member
     run_id_changed = QtCore.Signal(int)
-    user_application_loaded = QtCore.Signal(str)
+    user_application_loaded = QtCore.Signal(UserApplicationBase)
     uptime_updated = QtCore.Signal(float)
 
     def __init__(self):
@@ -410,15 +411,15 @@ class RunControlBase(FiniteStateMachine):
         """
         self.uptime_updated.emit(self.elapsed_time())
 
-    def load_user_application(self, app : UserApplicationBase) -> None:
+    def load_user_application(self, user_application : UserApplicationBase) -> None:
         """Set the user application to be run.
         """
         if not self.is_reset():
             raise RuntimeError(f'Cannot load a user application in the {self.state().name} state')
-        if not isinstance(app, UserApplicationBase):
-            raise RuntimeError(f'Invalid user application of type {type(app)}')
-        self._user_application = app
-        self.user_application_loaded.emit(app.__class__.__name__)
+        if not isinstance(user_application, UserApplicationBase):
+            raise RuntimeError(f'Invalid user application of type {type(user_application)}')
+        self._user_application = user_application
+        self.user_application_loaded.emit(user_application)
         self.set_stopped()
 
     def _check_user_application(self) -> None:
@@ -440,10 +441,13 @@ class RunControlBase(FiniteStateMachine):
         self._check_user_application()
         self._user_application.teardown()
 
-    def start_run(self) -> None:
+    def start_run(self, user_app_configuration : ConfigurationBase = None) -> None:
         """Overloaded FiniteStateMachine method.
         """
         self._check_user_application()
+        if user_app_configuration is not None:
+            logger.info(f'Configuring user application...\n{user_app_configuration}')
+            self._user_application.set_configuration(user_app_configuration)
         self._increment_run_id()
         self._create_data_folder()
         self._log_file_handler_id = logger.add(self.log_file_path())

@@ -26,7 +26,7 @@ import loguru
 from loguru import logger
 
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-from baldaquin.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.config import ConfigurationParameter, ConfigurationBase, EmptyConfiguration
 from baldaquin._qt import QtCore, QtGui, QtWidgets
 from baldaquin.runctrl import FsmState, RunControlBase
 
@@ -272,11 +272,17 @@ class ConfigurationWidget(QtWidgets.QWidget):
     :class:`baldaquin.config.ConfigurationBase` subclass.
     """
 
-    def __init__(self, configuration : ConfigurationBase) -> None:
+    def __init__(self, configuration : ConfigurationBase = None) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
+        if configuration is not None:
+            self.display(configuration)
+
+    def display(self, configuration : ConfigurationBase) -> None:
+        """Display a given configuration.
+        """
         # Keep a reference to the input configuration class so that we can return
         # the current (possibly modified) configuration as an instance of the
         # proper class.
@@ -554,6 +560,10 @@ class MainWindow(QtWidgets.QMainWindow):
     MINIMUM_WIDTH = 500
     TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
+    #pylint: disable=c-extension-no-member
+    start_run = QtCore.Signal(ConfigurationBase)
+    stop_run = QtCore.Signal()
+
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
@@ -570,6 +580,11 @@ class MainWindow(QtWidgets.QMainWindow):
         #tab.setTabPosition(tab.TabPosition.West)
         self.tab_widget.setIconSize(self.TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
+        self.user_application_widget = ConfigurationWidget()
+        self.add_tab(self.user_application_widget, 'User application', 'sensors')
+        # Setup the internal GUI connections.
+        self.control_bar.started.connect(self.start_run_control)
+        self.control_bar.stopped.connect(self.stop_run_control)
 
     def add_widget(self, widget : QtWidgets.QWidget, row : int, col : int,
         row_span : int = 1, col_span : int = 1,
@@ -640,15 +655,31 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.run_control_card.set(RunControlCardField.STATE, state.value)
 
-    def set_user_application_name(self, name : str) -> None:
+    def setup_user_application_widgets(self, user_application) -> None:
+        """Set the user application name in the run control card.
         """
-        """
-        self.run_control_card.set(RunControlCardField.USER_APPLICATION, name)
+        self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
+        self.user_application_widget.display(user_application.configuration)
 
-    def set_uptime(self, value : float):
-        """
+    def set_uptime(self, value : float) -> None:
+        """Set the uptime in the run contro card.
         """
         self.run_control_card.set(RunControlCardField.UPTIME, value)
+
+    def start_run_control(self) -> None:
+        """Start the run control.
+
+        This is called when the start button on the control bar is pressed.
+        """
+        user_app_configuration = self.user_application_widget.current_configuration()
+        self.start_run.emit(user_app_configuration)
+
+    def stop_run_control(self) -> None:
+        """Stop the run control.
+
+        This is called when the stop button on the control bar is pressed.
+        """
+        self.stop_run.emit()
 
     def connect_to_run_control(self, run_control : RunControlBase) -> None:
         """Connect the window to a given run control.
@@ -656,12 +687,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.set_test_stand_id(run_control._test_stand_id)
         self.set_run_id(run_control._run_id)
         self.set_state(run_control.state())
-        run_control.user_application_loaded.connect(self.set_user_application_name)
+        run_control.user_application_loaded.connect(self.setup_user_application_widgets)
         run_control.state_changed.connect(self.set_state)
         run_control.run_id_changed.connect(self.set_run_id)
         run_control.uptime_updated.connect(self.set_uptime)
-        self.control_bar.started.connect(run_control.set_running)
-        self.control_bar.stopped.connect(run_control.set_stopped)
+        self.start_run.connect(run_control.set_running)
+        self.stop_run.connect(run_control.set_stopped)
 
 
 

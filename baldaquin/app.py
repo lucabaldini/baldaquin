@@ -16,10 +16,12 @@
 """User application framework.
 """
 
+from pathlib import Path
 from typing import Any
 
 from loguru import logger
 
+from baldaquin.config import ConfigurationBase
 from baldaquin._qt import QtCore
 
 
@@ -30,13 +32,34 @@ class UserApplicationBase:
     """
 
     #pylint: disable=c-extension-no-member
+    NAME = 'User application'
     EVENT_HANDLER_CLASS = None
+    CONFIGURATION_CLASS = None
+    CONFIGURATION_FILE_PATH = None
 
     def __init__(self) -> None:
         """Constructor.
         """
-        self.name = self.__class__.__name__
         self.event_handler = None
+        self.configuration = self.CONFIGURATION_CLASS()
+        if self.CONFIGURATION_FILE_PATH is not None:
+            if self.CONFIGURATION_FILE_PATH.exists():
+                self.configuration.update(self.CONFIGURATION_FILE_PATH)
+            else:
+                self.configuration.save(self.CONFIGURATION_FILE_PATH)
+
+    def set_configuration(self, configuration : ConfigurationBase):
+        """Set the configuration for the user application.
+        """
+        self.configuration = configuration
+        if self.CONFIGURATION_FILE_PATH is not None:
+            self.configuration.save(self.CONFIGURATION_FILE_PATH)
+        self.configure()
+
+    def configure(self):
+        """Apply a given configuration to the user application.
+        """
+        raise NotImplementedError
 
     def setup(self) -> None:
         """Function called when the run control transitions from RESET to STOPPED.
@@ -62,7 +85,7 @@ class UserApplicationBase:
            I am sure this deserves more study to make sure we are doing things
            correctly.
         """
-        logger.info(f'Starting application {self.__class__.__name__}')
+        logger.info(f'Starting {self.NAME} user application...')
         self.event_handler = self.EVENT_HANDLER_CLASS()
         self.event_handler.process_event = self.process_event
         self.event_handler.setup(file_path, **kwargs)
@@ -71,7 +94,7 @@ class UserApplicationBase:
     def stop(self) -> None:
         """Stop the event handler.
         """
-        logger.info(f'Stopping application {self.__class__.__name__}')
+        logger.info(f'Stopping {self.NAME} user application...')
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()

@@ -20,18 +20,13 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import random
-import struct
-import sys
 import time
 from typing import Any
 
-from loguru import logger
-
-from baldaquin.app import UserApplicationBase
-from baldaquin.gui import ConfigurationWidget, MainWindow, bootstrap_window
-from baldaquin.config import ConfigurationBase
+from baldaquin.gui import MainWindow
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME
+from baldaquin._qt import QtWidgets
 from baldaquin.runctrl import RunControlBase
 
 
@@ -52,7 +47,7 @@ class MockEvent(EventBase):
     pha : int
 
     @classmethod
-    def random(cls, trigger_id : int, start_time : float = 0., pha_mu : float = 1000.,
+    def random(cls, trigger_id : int, start_time : float = 0., pha_mean : float = 1000.,
                pha_sigma : float = 50.) -> MockEvent:
         """Create a random event object on the fly.
 
@@ -68,7 +63,7 @@ class MockEvent(EventBase):
         start_time : float
             Origin for the timestamp (will be subtracted from the system time).
 
-        pha_mu : float
+        pha_mean : float
             The mean of of the pha (gaussian) distribution.
 
         pha_sigma : float
@@ -77,7 +72,7 @@ class MockEvent(EventBase):
         timestamp = time.time() - start_time
         seconds = int(timestamp)
         microseconds = round((timestamp - seconds) * 1.e6)
-        pha = round(random.gauss(pha_mu, pha_sigma))
+        pha = round(random.gauss(pha_mean, pha_sigma))
         return cls(trigger_id, seconds, microseconds, pha)
 
 
@@ -101,11 +96,11 @@ class MockEventServer:
         The average event rate.
     """
 
-    def __init__(self, rate : float = 10., pha_mu : float = 1000., pha_sigma : float = 50.):
+    def __init__(self, rate : float = 10., pha_mean : float = 1000., pha_sigma : float = 50.):
         """Constructor.
         """
         self.rate = rate
-        self.pha_mu = pha_mu
+        self.pha_mean = pha_mean
         self.pha_sigma = pha_sigma
         self.trigger_id = -1
         self.start_time = time.time()
@@ -113,24 +108,10 @@ class MockEventServer:
     def next(self) -> Any:
         """Overloaded method.
         """
-        time.sleep(random.expovariate(self.rate))
-        event = MockEvent.random(self.trigger_id, self.start_time, self.pha_mu, self.pha_sigma)
         self.trigger_id += 1
+        time.sleep(random.expovariate(self.rate))
+        event = MockEvent.random(self.trigger_id, self.start_time, self.pha_mean, self.pha_sigma)
         return event.pack()
-
-
-
-class MockUserAppConfiguration(ConfigurationBase):
-
-    """Configuration structure for the mock uaser app.
-    """
-
-    TITLE = 'Mock application configuration'
-    PARAMETER_SPECS = (
-        ('rate', 'float', 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
-        ('pha_mu', 'float', 1000., 'Average pulse height', 'ADC counts', '.1f', dict(min=100.)),
-        ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
-    )
 
 
 
@@ -141,30 +122,9 @@ class MockEventHandler(EventHandlerBase):
 
 
 
-class MockUserApplication(UserApplicationBase):
-
-    """Simplest possible user application for testing purposes.
-    """
-
-    EVENT_HANDLER_CLASS = MockEventHandler
-
-    def __init__(self, rate : float = 10., pha_mu : float = 1000., pha_sigma : float = 50.):
-        """Constructor.
-        """
-        super().__init__()
-        self._event_server = MockEventServer(rate, pha_mu, pha_sigma)
-
-    def process_event(self):
-        """Overloaded method.
-        """
-        evt = self._event_server.next()
-        logger.debug(evt)
-        return evt
-
-
 class MockRunControl(RunControlBase):
 
-    """
+    """Mock run control for testing purposes.
     """
 
     PROJECT_NAME = MOCK_PROJECT_NAME
@@ -173,32 +133,14 @@ class MockRunControl(RunControlBase):
 
 class MockMainWindow(MainWindow):
 
-    """
+    """Mock main window for testing purposes.
     """
 
     PROJECT_NAME = MOCK_PROJECT_NAME
+    # pylint: disable=c-extension-no-member
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
         super().__init__()
-        self.config_widget = ConfigurationWidget(MockUserAppConfiguration())
-        self.add_tab(self.config_widget, 'Configuration', 'sensors')
         #self.add_logger_tab()
-
-
-
-
-
-if __name__ == '__main__':
-    app, window = bootstrap_window(MockMainWindow)
-    rc = MockRunControl()
-    window.connect_to_run_control(rc)
-    user_app = MockUserApplication()
-    rc.load_user_application(user_app)
-    window.show()
-    sys.exit(app.exec_())
-
-    #rc.set_running()
-    #time.sleep(5)
-    #rc.set_stopped()

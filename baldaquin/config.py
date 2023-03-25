@@ -210,7 +210,7 @@ class ConfigurationBase(dict):
     """
 
     TITLE = 'Configuration'
-    PARAMETER_SPECS = []
+    PARAMETER_SPECS = ()
 
     def __init__(self) -> None:
         """Constructor.
@@ -233,6 +233,9 @@ class ConfigurationBase(dict):
     def update_value(self, key, value) -> ParameterValidationError:
         """Update the value of a configuration parameter.
         """
+        if key not in self:
+            logger.warning(f'Unknow configuration parameter "{key}", skipping...')
+            return
         return self[key].set_value(value)
 
     def update(self, file_path : str) -> None:
@@ -283,6 +286,12 @@ class ConfigurationBase(dict):
         data = ''.join(f'{param}\n' for param in self.values())
         line = self.terminal_line()
         return f'{title}\n{data}{line}'
+
+
+
+class EmptyConfiguration(ConfigurationBase):
+
+    TITLE = 'Empty configuration'
 
 
 
