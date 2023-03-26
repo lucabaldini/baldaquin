@@ -116,7 +116,7 @@ class HistogramBase:
         """
         sumw = content.sum()
         mean = (bin_centers * content).sum() / sumw
-        rms = ((bin_centers - mean)**2. * content).sum() / sumw
+        rms = np.sqrt(((bin_centers - mean)**2. * content).sum() / sumw)
         return {'Sum of weights': sumw, 'Mean':  mean, 'RMS': rms}
 
     def _check_array_shape(self, data : np.array) -> None:

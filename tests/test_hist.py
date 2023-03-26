@@ -21,21 +21,26 @@ import numpy as np
 from baldaquin.hist import Histogram1d, Histogram2d
 from baldaquin.plt_ import plt
 
-plt.ion()
 
-
-def test_hist1d():
+def test_hist1d(size=1000000, mean=10., sigma=2.):
+    """A few tests for one-dimensional histograms.
     """
-    """
+    binning = np.linspace(mean - 5. * sigma, mean + 5. * sigma, 100)
+    x = np.random.normal(mean, sigma, size)
+    h = Histogram1d(binning, xlabel='x').fill(x)
+    # Test that the histogram statistics is providing sensible values.
+    # Note that the limits for the test, here, are purely heuristic---we should
+    # probably do something more sensible from the statistcal point of view.
+    hist_sumw, hist_mean, hist_rms = h.current_stats().values()
+    assert abs((hist_sumw - size) / size) < 1.e-5
+    assert abs(hist_mean - x.mean()) < 5.e-4
+    assert abs(hist_rms - x.std()) < 5.e-3
     plt.figure('Histogram 1d')
-    binning = np.linspace(-5., 5., 100)
-    h = Histogram1d(binning, xlabel='x').fill(np.random.normal(size=1000000))
-    print(h.current_stats())
     h.plot()
     h.stat_box()
 
 
 
 if __name__ == '__main__':
-    test_hist1d()
+    test_plot_hist1d()
     plt.show()
