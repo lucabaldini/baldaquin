@@ -69,6 +69,83 @@ MONOSPACE_FONTS = [
 
 
 
+class PlotCard(dict):
+
+    """Small class reperesenting a text card.
+
+    This is essentially a dictionary that is capable of plotting itself on
+    a matplotlib figure in the form of a multi-line graphic card.
+
+    Arguments
+    ---------
+    data : dict
+        A dictionary holding the lines to be displayed in the card.
+    """
+
+    KEY_KWARGS = dict(color='gray', size='x-small', ha='left', va='top')
+    VALUE_KWARGS = dict(color='black', size='small', ha='left', va='top')
+
+    def __init__(self, data : dict = None) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        if data is not None:
+            for key, value in data.items():
+                self.add_line(key, value)
+
+    def add_line(self, key : str, value : float, fmt : str = '%g', units : str = None) -> None:
+        """Set the value for a given key.
+
+        Arguments
+        ---------
+        key : str
+            The key, i.e., the explanatory text for a given value.
+
+        value : float, optional
+            The actual value (if None, a blank line will be added).
+
+        fmt : str
+            The string format to be used to render the value.
+
+        units : str
+            The measurement units for the value.
+        """
+        self[key] = (value, fmt, units)
+
+    def draw(self, x : float = 0.05, y : float = 0.95, line_spacing : float = 0.075,
+        spacing_ratio : float = 0.75) -> None:
+        """Draw the card.
+
+        Arguments
+        ---------
+        x0, y0 : float
+            The absolute coordinates of the top-left corner of the card.
+
+        line_spacing : float
+            The line spacing in units of the total height of the current axes.
+
+        spacing_ratio : float
+            The fractional line spacing assigned to the key label.
+        """
+        # pylint: disable=invalid-name
+        key_norm = spacing_ratio / (1. + spacing_ratio)
+        value_norm = 1. - key_norm
+        for kwargs in (self.KEY_KWARGS, self.VALUE_KWARGS):
+            kwargs['transform'] = plt.gca().transAxes
+        for key, (value, fmt, units) in self.items():
+            if value is None:
+                y -= 0.5 * line_spacing
+                continue
+            plt.text(x, y, key, **self.KEY_KWARGS)
+            y -= key_norm * line_spacing
+            value = fmt % value
+            if units is not None:
+                value = f'{value} {units}'
+            plt.text(x, y, value, **self.VALUE_KWARGS)
+            y -= value_norm * line_spacing
+
+
+
 def last_line_color(default : str = 'black'):
     """Return the color used to draw the last line
     """

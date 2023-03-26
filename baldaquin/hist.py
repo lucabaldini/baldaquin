@@ -16,11 +16,10 @@
 """Histogram facilities.
 """
 
-import numbers
-
 import numpy as np
 
-from baldaquin.plt_ import matplotlib, plt, setup_gca
+from baldaquin.plt_ import matplotlib, plt, setup_gca, PlotCard
+
 
 
 class InvalidShapeError(RuntimeError):
@@ -32,6 +31,7 @@ class InvalidShapeError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'Invalid array shape: {expected} expected, got {actual}')
+
 
 
 
@@ -89,10 +89,35 @@ class HistogramBase:
         self.entries = self._zeros()
         self._sumw2 = self._zeros()
 
+    def bin_centers(self, axis : int = 0) -> np.array:
+        """Return the bin centers for a specific axis.
+        """
+        return 0.5 * (self.binning[axis][1:] + self.binning[axis][:-1])
+
+    def bin_widths(self, axis : int = 0) -> np.array:
+        """Return the bin widths for a specific axis.
+        """
+        return np.diff(self.binning[axis])
+
     def errors(self) -> np.array:
         """Return the errors on the bin content.
         """
         return np.sqrt(self._sumw2)
+
+    def set_axis_label(self, axis : int, label : str) -> None:
+        """Set the label for a given axis.
+        """
+        self.labels[axis] = label
+
+    @staticmethod
+    def calculate_axis_statistics(bin_centers : np.array, content : np.array) -> dict:
+        """Calculate the basic statistics (normalization, mean and rms) for a
+        given set of binned data.
+        """
+        sumw = content.sum()
+        mean = (bin_centers * content).sum() / sumw
+        rms = ((bin_centers - mean)**2. * content).sum() / sumw
+        return {'Sum of weights': sumw, 'Mean':  mean, 'RMS': rms}
 
     def _check_array_shape(self, data : np.array) -> None:
         """Check the shape of a given array used to update the histogram.
@@ -116,8 +141,6 @@ class HistogramBase:
         # Add a check on the length of the values arrays>
         if weights is None:
             weights = np.ones(values[0].shape, dtype=float)
-        elif isinstance(weights, numbers.Number):
-            weights = np.full(values[0].shape, weights, dtype=float)
         values = np.vstack(values).T
         content, _ = np.histogramdd(values, bins=self.binning, weights=weights)
         entries, _ = np.histogramdd(values, bins=self.binning)
@@ -141,16 +164,6 @@ class HistogramBase:
         if errors is not None:
             self.set_errors(errors)
         return self
-
-    def bin_centers(self, axis : int = 0) -> np.array:
-        """Return the bin centers for a specific axis.
-        """
-        return 0.5 * (self.binning[axis][1:] + self.binning[axis][:-1])
-
-    def bin_widths(self, axis : int = 0) -> np.array:
-        """Return the bin widths for a specific axis.
-        """
-        return np.diff(self.binning[axis])
 
     @staticmethod
     def bisect(binning : np.array, values : np.array, side : str = 'left') -> np.array:
@@ -209,12 +222,6 @@ class HistogramBase:
 
     def __mul__(self, value):
         """Histogram multiplication by a scalar.
-
-        Args
-        ----
-        value : array_like
-            The scale factor for the multiplication---must be either a scalar
-            or an array of the same shape of the histogram content.
         """
         hist = self.empty_copy()
         hist.set_content(self.content * value, self.entries, self.errors() * value)
@@ -224,11 +231,6 @@ class HistogramBase:
         """Histogram multiplication by a scalar.
         """
         return self.__mul__(value)
-
-    def set_axis_label(self, axis : int, label : str) -> None:
-        """Set the label for a given axis.
-        """
-        self.labels[axis] = label
 
     def _plot(self, **kwargs) -> None:
         """No-op plot() method, to be overloaded by derived classes.
@@ -241,8 +243,7 @@ class HistogramBase:
         for key, value in self.PLOT_OPTIONS.items():
             kwargs.setdefault(key, value)
         self._plot(**kwargs)
-        setup_gca(xmin=self.binning[0][0], xmax=self.binning[0][-1],
-                  xlabel=self.labels[0], ylabel=self.labels[1])
+        setup_gca(xlabel=self.labels[0], ylabel=self.labels[1])
 
 
 
@@ -253,10 +254,20 @@ class Histogram1d(HistogramBase):
 
     PLOT_OPTIONS = dict(lw=1.25, alpha=0.4, histtype='stepfilled')
 
-    def __init__(self, xbins, xlabel='', ylabel='Entries/bin'):
+    def __init__(self, xbinning : np.array, xlabel : str = '', ylabel : str ='Entries/bin') -> None:
         """Constructor.
         """
-        HistogramBase.__init__(self, (xbins, ), [xlabel, ylabel])
+        HistogramBase.__init__(self, (xbinning, ), [xlabel, ylabel])
+
+    def current_stats(self) -> dict:
+        """Calculate the basic binned statistics for the histogram.
+        """
+        return self.calculate_axis_statistics(self.bin_centers(0), self.content)
+
+    def stat_box(self) -> None:
+        """Draw a stat box for the histogram.
+        """
+        PlotCard(self.current_stats()).draw()
 
     def _plot(self, **kwargs):
         """Overloaded make_plot() method.
@@ -273,11 +284,11 @@ class Histogram2d(HistogramBase):
     PLOT_OPTIONS = dict(cmap=plt.get_cmap('hot'))
     # pylint: disable=invalid-name
 
-    def __init__(self, xbins, ybins, xlabel='', ylabel='', zlabel='Entries/bin'):
+    def __init__(self, xbinning, ybinning, xlabel='', ylabel='', zlabel='Entries/bin'):
         """Constructor.
         """
         # pylint: disable=too-many-arguments
-        HistogramBase.__init__(self, (xbins, ybins), [xlabel, ylabel, zlabel])
+        HistogramBase.__init__(self, (xbinning, ybinning), [xlabel, ylabel, zlabel])
 
     def _plot(self, logz=False, **kwargs):
         """Overloaded make_plot() method.
@@ -339,11 +350,3 @@ class Histogram2d(HistogramBase):
         """Return the vertical slice corresponding to a given y value.
         """
         return self.vslice(self.bisect(self.binning[0], x))
-
-
-
-
-if __name__ == '__main__':
-    h = Histogram1d(np.linspace(-5., 5., 100), xlabel='x').fill(np.random.normal(size=1000000))
-    h.plot()
-    plt.show()
