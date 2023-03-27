@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2022--2023 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,11 +49,16 @@ class BufferBase:
         The maximum number of events the buffer can physically contain.
 
     flush_size : int
-        The maximum number of events before a flush_needed() call returns True.
+        The maximum number of events before a
+        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>`
+        call returns True (mind this should be smaller than ``max_size`` because
+        otherwise the buffer will generally drop events).
 
     flush_interval : float
-        The maximum time (in s) elapsed since the last flush() before a flush_needed()
-        call returns True.
+        The maximum time (in s) elapsed since the last
+        :meth:`flush() <baldaquin.buf.BufferBase.flush()>` before a
+        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>` call
+        returns True.
 
     mode : BufferWriteMode
         The file write mode.
