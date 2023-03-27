@@ -105,7 +105,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     BUFFER_KWARGS = {}
 
     #pylint: disable=c-extension-no-member
-    file_path_set = QtCore.Signal(str)
+    output_file_set = QtCore.Signal(str)
 
     def __init__(self) -> None:
         """Constructor.
@@ -139,7 +139,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         """
         self.buffer.set_output_file(file_path)
-        self.file_path_set.emit(f'{file_path}')
+        self.output_file_set.emit(f'{file_path}')
 
     def run(self):
         """Overloaded QRunnable method.
@@ -152,7 +152,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """Stop the event handler.
         """
         self.__running = False
-        self.file_path_set.emit(None)
+        self.output_file_set.emit(None)
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

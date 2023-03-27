@@ -579,7 +579,7 @@ class MainWindow(QtWidgets.QMainWindow):
     """
 
     PROJECT_NAME = None
-    MINIMUM_WIDTH = 500
+    MINIMUM_WIDTH = 1000
     TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
     #pylint: disable=c-extension-no-member
@@ -679,11 +679,17 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.run_control_card.set(RunControlCardField.STATE, state.value)
 
+    def set_output_file(self, file_path):
+        """
+        """
+        self.event_handler_card.set(EventHandlerField.FILE_PATH, file_path)
+
     def setup_user_application_widgets(self, user_application) -> None:
         """Set the user application name in the run control card.
         """
         self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
         self.user_application_widget.display(user_application.configuration)
+        user_application.event_handler.output_file_set.connect(self.set_output_file)
 
     def set_uptime(self, value : float) -> None:
         """Set the uptime in the run contro card.
