@@ -64,7 +64,12 @@ class BufferBase:
     def set_output_file(self, file_path):
         """Set the output file for flushing the buffer.
         """
+        if file_path is None:
+            logger.info(f'Disconnecting the event buffer from {self.file_path}...')
+            self.file_path = None
+            return
         self.file_path = file_path
+        logger.info(f'Directing the event buffer to {self.file_path}...')
         if os.path.exists(self.file_path):
             logger.warning(f'Output file {self.file_path} exists and will be overwritten')
         # pylint: disable=consider-using-with

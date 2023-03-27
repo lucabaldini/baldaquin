@@ -40,7 +40,8 @@ class UserApplicationBase:
     def __init__(self) -> None:
         """Constructor.
         """
-        self.event_handler = None
+        self.event_handler = self.EVENT_HANDLER_CLASS()
+        self.event_handler.process_event = self.process_event
         self.configuration = self.CONFIGURATION_CLASS()
         if self.CONFIGURATION_FILE_PATH is not None:
             if self.CONFIGURATION_FILE_PATH.exists():
@@ -71,24 +72,11 @@ class UserApplicationBase:
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def start(self, file_path, **kwargs) -> None:
+    def start(self, file_path) -> None:
         """Start the event handler.
-
-        .. warning::
-
-           Note that we create a new handler every time, as earlier attempts to
-           create the handler in the constructor and then start it multiple
-           times seemed to trigger an error along the lines of:
-
-           RuntimeError: Internal C++ object (MockEventHandler) already deleted.
-
-           I am sure this deserves more study to make sure we are doing things
-           correctly.
         """
         logger.info(f'Starting {self.NAME} user application...')
-        self.event_handler = self.EVENT_HANDLER_CLASS()
-        self.event_handler.process_event = self.process_event
-        self.event_handler.setup(file_path, **kwargs)
+        self.event_handler.set_output_file(file_path)
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
@@ -98,7 +86,7 @@ class UserApplicationBase:
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
-        self.event_handler = None
+        self.event_handler.set_output_file(None)
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

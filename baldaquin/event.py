@@ -99,20 +99,10 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     This is an abstract base class inheriting from ``QtCore.QRunnable``, owning
     a data buffer that can be used to cache data, and equipped with a binary flag
     that allows for syncronization.
-
-    Arguments
-    ---------
-    file_path : str
-        The path to the output file.
-
-    buffer_class : type
-        The class to be used to instantiate the event buffer object.
-
-    kwargs : dict
-        Keyword arguents for the data buffer creation.
     """
 
     BUFFER_CLASS = CircularBuffer
+    BUFFER_KWARGS = {}
 
     #pylint: disable=c-extension-no-member
     file_path_set = QtCore.Signal(str)
@@ -121,30 +111,35 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """Constructor.
 
         Note that, apparently, the order of inheritance is important when emitting
-        signals from a QRunnable---you want to call the QObject constructor first!
+        signals from a QRunnable---you want to call the QObject constructor first,
+        see the last comment at
+        https://forum.qt.io/topic/72818/how-can-i-emit-signal-from-qrunnable-or-call-callback
+
+        Also, in order for the event handler not to be automatically deleted
+        when `QtCore.QThreadPool.globalInstance().waitForDone()` is called,
+        we need to test the autoDelete flag to False, see
+        https://doc.qt.io/qtforpython/PySide6/QtCore/QRunnable.html
         """
+        # Make sure we call the QObject constructor first.
         QtCore.QObject.__init__(self)
         QtCore.QRunnable.__init__(self)
-        self.buffer = None
+        # Set the autoDelete flag to False so that we can restart the event
+        # handler multiple times.
+        self.setAutoDelete(False)
+        # Create the event buffer.
+        self.buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
         self.__running = False
 
-    def stop(self) -> None:
-        """Stop the event handler.
-        """
-        self.__running = False
-        self.file_path_set.emit(None)
-
-    def flush_buffer(self):
-        """
+    def flush_buffer(self) -> None:
+        """Write all the buffer data to disk.
         """
         logger.info('Flushing event buffer...')
         self.buffer.flush()
 
-    def setup(self, file_path : Path, **kwargs) -> None:
+    def set_output_file(self, file_path : Path) -> None:
         """
         """
-        self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
-        logger.info(f'{self.buffer.__class__.__name__} -> {file_path}')
+        self.buffer.set_output_file(file_path)
         self.file_path_set.emit(f'{file_path}')
 
     def run(self):
@@ -153,6 +148,12 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         self.__running = True
         while self.__running:
             self.buffer.put(self.process_event())
+
+    def stop(self) -> None:
+        """Stop the event handler.
+        """
+        self.__running = False
+        self.file_path_set.emit(None)
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).

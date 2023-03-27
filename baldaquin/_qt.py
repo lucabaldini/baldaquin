@@ -19,4 +19,4 @@ This is mainly to handle the possibility of switching from/to PyQy/PySide
 in the various available flavors.
 """
 
-from PySide2 import QtCore, QtGui, QtWidgets
+from PySide6 import QtCore, QtGui, QtWidgets
