@@ -39,4 +39,3 @@ List of modules
    :caption: GUI
 
    gui
-   widgets

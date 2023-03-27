@@ -24,7 +24,7 @@ from baldaquin import setup_project
 
 XMAPS_PROJECT_NAME = 'xmaps'
 
-XMAPS_CONFIG, XMAPS_DATA = setup_project(XMAPS_PROJECT_NAME)
+XMAPS_CONFIG, XMAPS_APP_CONFIG, XMAPS_DATA = setup_project(XMAPS_PROJECT_NAME)
 
 # Geometrical layout of the matrix.
 XMAPS_NUM_COLS = 32

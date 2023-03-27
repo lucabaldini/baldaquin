@@ -4,10 +4,7 @@
 ===========================================
 
 This module provides all the basic building blocks for the advanced GUI
-widgets. This, is for the last majority, stuff that the casual user will never
-have to instantiate directly, and if you are interested in setting up an
-actual user interface, you might want to look at the
-:ref:`advanced widget <widgets>` page, first.
+widgets.
 
 Particularly, the module define a generic :class:`DisplayWidget <baldaquin.gui.DisplayWidget>`
 to display a single piece of information in the form of a (label, value) pair,
