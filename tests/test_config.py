@@ -118,4 +118,4 @@ def test_configuration_display(port=9999):
 if __name__ == '__main__':
     qapp, widget = test_configuration_display()
     widget.show()
-    sys.exit(qapp.exec_())
+    sys.exit(qapp.exec())

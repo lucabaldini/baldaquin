@@ -44,4 +44,4 @@ def test_main_window():
 if __name__ == '__main__':
     qapp, window = test_main_window()
     window.show()
-    sys.exit(qapp.exec_())
+    sys.exit(qapp.exec())
