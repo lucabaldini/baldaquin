@@ -56,6 +56,12 @@ class UserApplication(UserApplicationBase):
         pha_sigma = self.configuration.value('pha_sigma')
         self.event_handler.setup_server(rate, pha_mean, pha_sigma)
 
+    def process_event_data(self):
+        """Dumb data processing routine---print out the actual event.
+        """
+        event = MockEvent.unpack(event_data)
+        logger.debug(f'{event} <- {event_data}')
+
 
 
 if __name__ == '__main__':

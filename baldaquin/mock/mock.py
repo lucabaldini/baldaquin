@@ -140,13 +140,10 @@ class MockEventHandler(EventHandlerBase):
         """
         self.event_server.setup(rate, pha_mean, pha_sigma)
 
-    def process_event(self):
+    def read_event_data(self):
         """Overloaded method.
         """
-        event_data = self.event_server.next()
-        event = MockEvent.unpack(event_data)
-        logger.debug(f'{event} <- {event_data}')
-        return event_data
+        return self.event_server.next()
 
 
 
