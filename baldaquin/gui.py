@@ -715,6 +715,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
         self.user_application_widget.display(user_application.configuration)
         user_application.event_handler.output_file_set.connect(self.set_output_file)
+        # We might want to connect the buffer_flushed signal, as well.
         buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
         self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
 

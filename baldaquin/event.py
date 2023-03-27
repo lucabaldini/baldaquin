@@ -106,6 +106,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
     #pylint: disable=c-extension-no-member
     output_file_set = QtCore.Signal(Path)
+    buffer_flushed = QtCore.Signal(int, int)
 
     def __init__(self) -> None:
         """Constructor.
@@ -145,18 +146,19 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         return self._num_events_processed, self._num_events_written, self._num_bytes_written
 
+    def set_output_file(self, file_path : Path) -> None:
+        """Set the path to the output file.
+        """
+        self.buffer.set_output_file(file_path)
+        self.output_file_set.emit(file_path)
+
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
         num_events, num_bytes = self.buffer.flush()
         self._num_events_written += num_events
         self._num_bytes_written += num_bytes
-
-    def set_output_file(self, file_path : Path) -> None:
-        """Set the path to the output file.
-        """
-        self.buffer.set_output_file(file_path)
-        self.output_file_set.emit(file_path)
+        self.buffer_flushed.emit(num_events, num_events)
 
     def run(self):
         """Overloaded QRunnable method.
@@ -173,6 +175,8 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         while self.__running:
             self.buffer.put(self.process_event())
             self._num_events_processed += 1
+            if self.buffer.flush_needed():
+                self.flush_buffer()
 
     def stop(self) -> None:
         """Stop the event handler.

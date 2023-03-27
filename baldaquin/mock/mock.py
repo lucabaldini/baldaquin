@@ -23,6 +23,7 @@ import random
 import time
 from typing import Any
 
+from baldaquin.buf import CircularBuffer
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME
@@ -119,6 +120,9 @@ class MockEventHandler(EventHandlerBase):
 
     """Mock event handler for testing purpose.
     """
+
+    BUFFER_CLASS = CircularBuffer
+    BUFFER_KWARGS = dict(max_size=10)
 
 
 
