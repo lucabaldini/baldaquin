@@ -457,7 +457,7 @@ class RunControlBase(FiniteStateMachine):
         self._check_user_application()
         if user_app_configuration is not None:
             logger.info(f'Configuring user application...\n{user_app_configuration}')
-            self._user_application.set_configuration(user_app_configuration)
+            self._user_application.apply_configuration(user_app_configuration)
         self._increment_run_id()
         self._create_data_folder()
         self._log_file_handler_id = logger.add(self.log_file_path())

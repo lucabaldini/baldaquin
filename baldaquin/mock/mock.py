@@ -23,6 +23,8 @@ import random
 import time
 from typing import Any
 
+from loguru import logger
+
 from baldaquin.buf import CircularBuffer
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventBase, EventHandlerBase
@@ -48,8 +50,7 @@ class MockEvent(EventBase):
     pha : int
 
     @classmethod
-    def random(cls, trigger_id : int, start_time : float = 0., pha_mean : float = 1000.,
-               pha_sigma : float = 50.) -> MockEvent:
+    def random(cls, trigger_id : int, start_time, pha_mean : float, pha_sigma) -> MockEvent:
         """Create a random event object on the fly.
 
         Note that the trigger identifier must be passed externally as this function
@@ -87,18 +88,22 @@ class MockEventServer:
     ``time.sleep()``, and it goes without saying that the time distribution
     of the events is not guaranteed to be accurate, especially at high
     input rates.)
-
-    Arguments
-    ---------
-    file_path : str
-        The path to the output file.
-
-    rate : float
-        The average event rate.
     """
 
-    def __init__(self, rate : float = 10., pha_mean : float = 1000., pha_sigma : float = 50.):
+    def __init__(self, rate : float = 1., pha_mean : float = 1000.,
+        pha_sigma : float = 50.) -> None:
         """Constructor.
+        """
+        self.rate = rate
+        self.pha_mean = pha_mean
+        self.pha_sigma = pha_sigma
+        self.trigger_id = -1
+        self.start_time = time.time()
+
+    def setup(self, rate : float, pha_mean : float, pha_sigma : float) -> None:
+        """Setup the mock event server.
+
+        This is setting all the class members that are relevant for the next() method.
         """
         self.rate = rate
         self.pha_mean = pha_mean
@@ -122,7 +127,26 @@ class MockEventHandler(EventHandlerBase):
     """
 
     BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=10)
+    BUFFER_KWARGS = dict(max_size=20, flush_size=10, flush_interval=2.)
+
+    def __init__(self):
+        """Constructor.
+        """
+        super().__init__()
+        self.event_server = MockEventServer()
+
+    def setup_server(self, rate : float, pha_mean : float, pha_sigma : float) -> None:
+        """Setup the event server.
+        """
+        self.event_server.setup(rate, pha_mean, pha_sigma)
+
+    def process_event(self):
+        """Overloaded method.
+        """
+        event_data = self.event_server.next()
+        event = MockEvent.unpack(event_data)
+        logger.debug(f'{event} <- {event_data}')
+        return event_data
 
 
 

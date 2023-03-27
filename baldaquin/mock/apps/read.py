@@ -18,15 +18,11 @@
 
 import sys
 
-from loguru import logger
-
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window
 from baldaquin.mock import MOCK_APP_CONFIG
-from baldaquin.mock.mock import MockRunControl, MockEventHandler, MockMainWindow,\
-    MockEventServer, MockEvent
-
+from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEventHandler
 
 
 class Configuration(ConfigurationBase):
@@ -37,7 +33,7 @@ class Configuration(ConfigurationBase):
     TITLE = 'Configuration'
     PARAMETER_SPECS = (
         ('rate', 'float', 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
-        ('pha_mean', 'float', 1000., 'Average pulse height', 'ADC counts', '.1f', dict(min=500., max=10000.)),
+        ('pha_mean', 'float', 1000., 'Mean pulse height', 'ADC counts', '.1f', dict(min=500., max=10000.)),
         ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
     )
 
@@ -52,27 +48,13 @@ class UserApplication(UserApplicationBase):
     CONFIGURATION_CLASS = Configuration
     CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
 
-    def __init__(self):
-        """Constructor.
-        """
-        super().__init__()
-        self._event_server = None
-
     def configure(self):
         """Overloaded method.
         """
         rate = self.configuration.value('rate')
         pha_mean = self.configuration.value('pha_mean')
         pha_sigma = self.configuration.value('pha_sigma')
-        self._event_server = MockEventServer(rate, pha_mean, pha_sigma)
-
-    def process_event(self):
-        """Overloaded method.
-        """
-        event_data = self._event_server.next()
-        event = MockEvent.unpack(event_data)
-        logger.debug(f'{event} <- {event_data}')
-        return event_data
+        self.event_handler.setup_server(rate, pha_mean, pha_sigma)
 
 
 

@@ -106,7 +106,6 @@ class BufferBase:
         if os.path.exists(self._current_file_path):
             logger.warning(f'Output file {self._current_file_path} exists and will be overwritten')
         # pylint: disable=consider-using-with, unspecified-encoding
-        print(self._file_open_kwargs())
         open(self._current_file_path, **self._file_open_kwargs()).close()
 
     def almost_full(self) -> bool:

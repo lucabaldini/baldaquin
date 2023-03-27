@@ -41,7 +41,6 @@ class UserApplicationBase:
         """Constructor.
         """
         self.event_handler = self.EVENT_HANDLER_CLASS()
-        self.event_handler.process_event = self.process_event
         self.configuration = self.CONFIGURATION_CLASS()
         if self.CONFIGURATION_FILE_PATH is not None:
             if self.CONFIGURATION_FILE_PATH.exists():
@@ -49,7 +48,7 @@ class UserApplicationBase:
             else:
                 self.configuration.save(self.CONFIGURATION_FILE_PATH)
 
-    def set_configuration(self, configuration : ConfigurationBase):
+    def apply_configuration(self, configuration : ConfigurationBase):
         """Set the configuration for the user application.
         """
         self.configuration = configuration
@@ -87,8 +86,3 @@ class UserApplicationBase:
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
         self.event_handler.set_output_file(None)
-
-    def process_event(self) -> Any:
-        """Process a single event (must be overloaded in derived classes).
-        """
-        raise NotImplementedError

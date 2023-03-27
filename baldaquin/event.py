@@ -141,8 +141,10 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         self._num_events_written = 0
         self._num_bytes_written = 0
 
-    def stats(self):
-        """
+    def stats(self) -> tuple[int, int, int]:
+        """Return the event handler statistics in the form a three-element tuple
+        of integers (number of events processed and written to disk and number of
+        bytes written to disk).
         """
         return self._num_events_processed, self._num_events_written, self._num_bytes_written
 
@@ -185,5 +187,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
+
+        This is the actual blocking function that gets a single event from the hardware.
         """
         raise NotImplementedError
