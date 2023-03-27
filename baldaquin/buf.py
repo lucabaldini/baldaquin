@@ -103,7 +103,7 @@ class BufferBase:
         raise NotImplementedError
 
     @timing
-    def flush(self) -> None:
+    def flush(self) -> tuple[int, int]:
         """Write the content of the buffer to file and returns the number of
         objects written to disk.
 
@@ -114,17 +114,18 @@ class BufferBase:
         """
         if self.file_path is None:
             raise RuntimeError('Output file not set, cannot flush buffer.')
-        size = self.size()
-        if not size:
-            return
-        logger.info(f'Writing {size} items to {self.file_path}...')
-        total_size = 0
+        num_bytes = 0
+        num_events = self.size()
+        if num_events == 0:
+            return (num_events, num_bytes)
+        logger.info(f'Writing {num_events} events to {self.file_path}...')
         with open(self.file_path, f'a{self._mode.value}') as output_file:
-            for _ in range(size):
+            for _ in range(num_events):
                 item = self.pop()
-                total_size += len(item)
+                num_bytes += len(item)
                 output_file.write(item)
-        logger.info(f'Done, {total_size} Bytes written to disk.')
+        logger.info(f'Done, {num_bytes} Bytes written to disk.')
+        return (num_events, num_bytes)
 
 
 

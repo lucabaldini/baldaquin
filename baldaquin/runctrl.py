@@ -237,6 +237,7 @@ class RunControlBase(FiniteStateMachine):
     run_id_changed = QtCore.Signal(int)
     user_application_loaded = QtCore.Signal(UserApplicationBase)
     uptime_updated = QtCore.Signal(float)
+    event_handler_stats_updated = QtCore.Signal(int, int, int, float)
 
     def __init__(self):
         """Constructor.
@@ -409,7 +410,16 @@ class RunControlBase(FiniteStateMachine):
     def update_stats(self):
         """Signal the proper updates to the run statistics.
         """
-        self.uptime_updated.emit(self.elapsed_time())
+        elapsed_time = self.elapsed_time()
+        num_events_processed, num_events_written, num_bytes_written = \
+            self._user_application.event_handler.stats()
+        try:
+            average_event_rate = num_events_processed / elapsed_time
+        except TypeError:
+            average_event_rate = 0.
+        self.uptime_updated.emit(elapsed_time)
+        self.event_handler_stats_updated.emit(num_events_processed, num_events_written,
+            num_bytes_written, average_event_rate)
 
     def load_user_application(self, user_application : UserApplicationBase) -> None:
         """Set the user application to be run.

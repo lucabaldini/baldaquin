@@ -515,6 +515,8 @@ class CardWidget(QtWidgets.QFrame):
         """
         if isinstance(name, Enum):
             name = name.value
+        if value is None:
+            value = DataWidgetBase.MISSING_VALUE_LABEL
         self._widget_dict[name].set_value(value)
 
     def sizeHint(self) -> QtCore.QSize:
@@ -546,22 +548,26 @@ class RunControlCard(CardWidget):
     """Specialized card to display the run control information.
     """
     _FIELD_ENUM = RunControlCardField
-    _VALUE_DICT = {RunControlCardField.UPTIME: 0.}
-    _KWARGS_DICT = {RunControlCardField.UPTIME: dict(units='s', fmt='.3f')}
+    _VALUE_DICT = {
+        RunControlCardField.UPTIME: 0.
+        }
+    _KWARGS_DICT = {
+        RunControlCardField.UPTIME: dict(units='s', fmt='.3f')
+        }
 
 
 
-class EventHandlerField(Enum):
+class EventHandlerCardField(Enum):
 
     """
     """
 
     FILE_PATH = 'Path to the output file'
     BUFFER_CLASS = 'Data buffer type'
-    NUM_EVENTS = 'Number of events acquired'
-    EVENT_RATE = 'Average event rate'
-    NUM_FLUSH = 'Number of write-to-disk operations'
-    BYTES_WRITTEN = 'Number of bytes written to disk'
+    NUM_EVENTS_PROCESSED = 'Number of events processed'
+    AVERAGE_EVENT_RATE = 'Average event rate'
+    NUM_EVENTS_WRITTEN = 'Number events written to disk'
+    NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
 
 
 class EventHandlerCard(CardWidget):
@@ -569,7 +575,17 @@ class EventHandlerCard(CardWidget):
     """
     """
 
-    _FIELD_ENUM = EventHandlerField
+    _FIELD_ENUM = EventHandlerCardField
+    _VALUE_DICT = {
+        EventHandlerCardField.NUM_EVENTS_PROCESSED: 0,
+        EventHandlerCardField.AVERAGE_EVENT_RATE: 0.,
+        EventHandlerCardField.NUM_EVENTS_WRITTEN: 0,
+        EventHandlerCardField.NUM_BYTES_WRITTEN: 0
+        }
+    _KWARGS_DICT = {
+        EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
+        }
+
 
 
 
@@ -682,7 +698,16 @@ class MainWindow(QtWidgets.QMainWindow):
     def set_output_file(self, file_path):
         """
         """
-        self.event_handler_card.set(EventHandlerField.FILE_PATH, file_path)
+        self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
+
+    def set_event_handler_stats(self, num_events_processed : int, num_events_written : int,
+        num_bytes_written : int, average_event_rate : float) -> None:
+        """
+        """
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, num_events_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, num_events_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, num_bytes_written)
+        self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, average_event_rate)
 
     def setup_user_application_widgets(self, user_application) -> None:
         """Set the user application name in the run control card.
@@ -690,6 +715,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
         self.user_application_widget.display(user_application.configuration)
         user_application.event_handler.output_file_set.connect(self.set_output_file)
+        buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
+        self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
 
     def set_uptime(self, value : float) -> None:
         """Set the uptime in the run contro card.
@@ -721,6 +748,7 @@ class MainWindow(QtWidgets.QMainWindow):
         run_control.state_changed.connect(self.set_state)
         run_control.run_id_changed.connect(self.set_run_id)
         run_control.uptime_updated.connect(self.set_uptime)
+        run_control.event_handler_stats_updated.connect(self.set_event_handler_stats)
         self.start_run.connect(run_control.set_running)
         self.stop_run.connect(run_control.set_stopped)
 

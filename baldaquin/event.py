@@ -105,7 +105,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     BUFFER_KWARGS = {}
 
     #pylint: disable=c-extension-no-member
-    output_file_set = QtCore.Signal(str)
+    output_file_set = QtCore.Signal(Path)
 
     def __init__(self) -> None:
         """Constructor.
@@ -129,30 +129,55 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         # Create the event buffer.
         self.buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
         self.__running = False
+        self._num_events_processed = 0
+        self._num_events_written = 0
+        self._num_bytes_written = 0
+
+    def reset_stats(self):
+        """Reset the event handler.
+        """
+        self._num_events_processed = 0
+        self._num_events_written = 0
+        self._num_bytes_written = 0
+
+    def stats(self):
+        """
+        """
+        return self._num_events_processed, self._num_events_written, self._num_bytes_written
 
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
-        self.buffer.flush()
+        num_events, num_bytes = self.buffer.flush()
+        self._num_events_written += num_events
+        self._num_bytes_written += num_bytes
 
     def set_output_file(self, file_path : Path) -> None:
-        """
+        """Set the path to the output file.
         """
         self.buffer.set_output_file(file_path)
-        self.output_file_set.emit(f'{file_path}')
+        self.output_file_set.emit(file_path)
 
     def run(self):
         """Overloaded QRunnable method.
         """
+        # At this point the buffer should be empty, as we should have hd a flush()
+        # call at the stop of the previous run.
+        if self.buffer.size() > 0:
+            logger.warning('Event buffer is not empty at the start run, clearing it...')
+            self.buffer.clear()
+        # Reset the underlying statistics of the event handler.
+        self.reset_stats()
+        # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:
             self.buffer.put(self.process_event())
+            self._num_events_processed += 1
 
     def stop(self) -> None:
         """Stop the event handler.
         """
         self.__running = False
-        self.output_file_set.emit(None)
 
     def process_event(self) -> Any:
         """Process a single event (must be overloaded in derived classes).
