@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import dataclasses
 from dataclasses import dataclass
+from pathlib import Path
 import struct
 from typing import Any
 
@@ -89,7 +90,7 @@ class EventBase:
 
 
 
-class EventHandlerBase(QtCore.QRunnable):
+class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
     # pylint: disable=c-extension-no-member
 
@@ -113,10 +114,17 @@ class EventHandlerBase(QtCore.QRunnable):
 
     BUFFER_CLASS = CircularBuffer
 
+    #pylint: disable=c-extension-no-member
+    file_path_set = QtCore.Signal(str)
+
     def __init__(self) -> None:
         """Constructor.
+
+        Note that, apparently, the order of inheritance is important when emitting
+        signals from a QRunnable---you want to call the QObject constructor first!
         """
-        super().__init__()
+        QtCore.QObject.__init__(self)
+        QtCore.QRunnable.__init__(self)
         self.buffer = None
         self.__running = False
 
@@ -124,6 +132,7 @@ class EventHandlerBase(QtCore.QRunnable):
         """Stop the event handler.
         """
         self.__running = False
+        self.file_path_set.emit(None)
 
     def flush_buffer(self):
         """
@@ -131,11 +140,12 @@ class EventHandlerBase(QtCore.QRunnable):
         logger.info('Flushing event buffer...')
         self.buffer.flush()
 
-    def setup(self, file_path : str, **kwargs) -> None:
+    def setup(self, file_path : Path, **kwargs) -> None:
         """
         """
         self.buffer = self.BUFFER_CLASS(file_path, **kwargs)
         logger.info(f'{self.buffer.__class__.__name__} -> {file_path}')
+        self.file_path_set.emit(f'{file_path}')
 
     def run(self):
         """Overloaded QRunnable method.

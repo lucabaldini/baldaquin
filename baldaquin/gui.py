@@ -551,6 +551,28 @@ class RunControlCard(CardWidget):
 
 
 
+class EventHandlerField(Enum):
+
+    """
+    """
+
+    FILE_PATH = 'Path to the output file'
+    BUFFER_CLASS = 'Data buffer type'
+    NUM_EVENTS = 'Number of events acquired'
+    EVENT_RATE = 'Average event rate'
+    NUM_FLUSH = 'Number of write-to-disk operations'
+    BYTES_WRITTEN = 'Number of bytes written to disk'
+
+
+class EventHandlerCard(CardWidget):
+
+    """
+    """
+
+    _FIELD_ENUM = EventHandlerField
+
+
+
 class MainWindow(QtWidgets.QMainWindow):
 
     """Base class for a DAQ main window.
@@ -580,6 +602,8 @@ class MainWindow(QtWidgets.QMainWindow):
         #tab.setTabPosition(tab.TabPosition.West)
         self.tab_widget.setIconSize(self.TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
+        self.event_handler_card = EventHandlerCard()
+        self.add_tab(self.event_handler_card, 'Event handler', 'share')
         self.user_application_widget = ConfigurationWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         # Setup the internal GUI connections.
