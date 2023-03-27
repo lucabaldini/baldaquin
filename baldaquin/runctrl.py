@@ -233,7 +233,7 @@ class RunControlBase(FiniteStateMachine):
     PROJECT_NAME = None
     UPDATE_TIMER_INTERVAL = 750
 
-    #pylint: disable=c-extension-no-member
+    # pylint: disable=c-extension-no-member
     run_id_changed = QtCore.Signal(int)
     user_application_loaded = QtCore.Signal(UserApplicationBase)
     uptime_updated = QtCore.Signal(float)

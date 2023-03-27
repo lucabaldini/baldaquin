@@ -16,9 +16,6 @@
 """User application framework.
 """
 
-from pathlib import Path
-from typing import Any
-
 from loguru import logger
 
 from baldaquin.config import ConfigurationBase
@@ -40,7 +37,12 @@ class UserApplicationBase:
     def __init__(self) -> None:
         """Constructor.
         """
+        #pylint: disable=not-callable
         self.event_handler = self.EVENT_HANDLER_CLASS()
+        # We should think about whether there is a more elegant way to do this.
+        # Pass the user application to the child event handler? Use inheritance
+        # rather than composition?
+        self.event_handler.process_event_data = self.process_event_data
         self.configuration = self.CONFIGURATION_CLASS()
         if self.CONFIGURATION_FILE_PATH is not None:
             if self.CONFIGURATION_FILE_PATH.exists():
@@ -86,3 +88,7 @@ class UserApplicationBase:
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
         self.event_handler.set_output_file(None)
+
+    def process_event_data(self, event_data):
+        """Optional hook for a user application to do something with the event data.
+        """

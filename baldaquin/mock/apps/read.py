@@ -18,45 +18,37 @@
 
 import sys
 
-from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationBase
+from loguru import logger
+
 from baldaquin.gui import bootstrap_window
 from baldaquin.mock import MOCK_APP_CONFIG
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEventHandler
+from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
+    MockUserApplicationBase, MockEventServerConfiguration
 
 
-class Configuration(ConfigurationBase):
+class Configuration(MockEventServerConfiguration):
 
-    """Configuration structure for the mock uaser app.
+    """User application configuration.
     """
 
-    TITLE = 'Configuration'
-    PARAMETER_SPECS = (
-        ('rate', 'float', 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
-        ('pha_mean', 'float', 1000., 'Mean pulse height', 'ADC counts', '.1f', dict(min=500., max=10000.)),
-        ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
-    )
 
 
-class UserApplication(UserApplicationBase):
+class UserApplication(MockUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
     NAME = 'Simplest readout'
-    EVENT_HANDLER_CLASS = MockEventHandler
     CONFIGURATION_CLASS = Configuration
     CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
 
     def configure(self):
         """Overloaded method.
         """
-        rate = self.configuration.value('rate')
-        pha_mean = self.configuration.value('pha_mean')
-        pha_sigma = self.configuration.value('pha_sigma')
-        self.event_handler.setup_server(rate, pha_mean, pha_sigma)
+        #pylint: disable=useless-super-delegation
+        super().configure()
 
-    def process_event_data(self):
+    def process_event_data(self, event_data):
         """Dumb data processing routine---print out the actual event.
         """
         event = MockEvent.unpack(event_data)

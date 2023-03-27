@@ -23,9 +23,9 @@ import random
 import time
 from typing import Any
 
-from loguru import logger
-
+from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
+from baldaquin.config import ConfigurationBase
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME
@@ -76,6 +76,21 @@ class MockEvent(EventBase):
         microseconds = round((timestamp - seconds) * 1.e6)
         pha = round(random.gauss(pha_mean, pha_sigma))
         return cls(trigger_id, seconds, microseconds, pha)
+
+
+
+class MockEventServerConfiguration(ConfigurationBase):
+
+    """Configuration structure for the mock uaser app.
+    """
+
+    TITLE = 'Mock server configuration'
+    PARAMETER_SPECS = (
+        ('rate', 'float', 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
+        ('pha_mean', 'float', 1000., 'Mean pulse height', 'ADC counts', '.1f',
+            dict(min=500., max=10000.)),
+        ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
+    )
 
 
 
@@ -144,6 +159,23 @@ class MockEventHandler(EventHandlerBase):
         """Overloaded method.
         """
         return self.event_server.next()
+
+
+
+class MockUserApplicationBase(UserApplicationBase):
+
+    """Base class for a mock user application.
+    """
+
+    EVENT_HANDLER_CLASS = MockEventHandler
+
+    def configure(self):
+        """Overloaded method.
+        """
+        rate = self.configuration.value('rate')
+        pha_mean = self.configuration.value('pha_mean')
+        pha_sigma = self.configuration.value('pha_sigma')
+        self.event_handler.setup_server(rate, pha_mean, pha_sigma)
 
 
 

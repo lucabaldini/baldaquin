@@ -180,6 +180,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
             self._num_events_processed += 1
             if self.buffer.flush_needed():
                 self.flush_buffer()
+            self.process_event_data(event_data)
 
     def stop(self) -> None:
         """Stop the event handler.
