@@ -133,7 +133,6 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
-        logger.info('Flushing event buffer...')
         self.buffer.flush()
 
     def set_output_file(self, file_path : Path) -> None:
