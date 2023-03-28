@@ -31,11 +31,13 @@ the exec keyword, freeing the name up to be used. As a result from PyQt6 .exec()
 calls are named just as in Qt. At the time of writing, PySide6 still supports
 the exec_() form of things, but PySide6 version 6.4.3 emits a deprecation warning
 along the lines of "'exec_' will be removed in the future. Use 'exec' instead."
+We handle this by wrapping the call into a small exec_qapp() helper function, and
+we use that consistently throughout the code.
 
 There is a rather oscure bug in matplotlib triggered by specific combinations of
 matplotlib and PySide6, see
 https://github.com/matplotlib/matplotlib/issues/24315
-
+that needs some monkeypatching in matplotlib versions earlier than 3.6.2
 """
 
 import operator
