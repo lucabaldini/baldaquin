@@ -22,10 +22,10 @@ from pathlib import Path
 
 from loguru import logger
 
+from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
-from baldaquin._qt import QtCore
 from baldaquin.timeline import Timeline
 
 

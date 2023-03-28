@@ -41,6 +41,11 @@ BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
 BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 
 
+# Global flag to handle the Qt bindings in a consistent fashion.
+BALDAQUIN_QT_WRAPPERS = 'PySide6'
+#if 'BALDA'
+
+
 def _create_folder(folder_path : Path) -> None:
     """Create a given folder if it does not exist.
 

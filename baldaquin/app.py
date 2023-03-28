@@ -18,9 +18,8 @@
 
 from loguru import logger
 
+from baldaquin.__qt__ import QtCore
 from baldaquin.config import ConfigurationBase
-from baldaquin._qt import QtCore
-
 
 
 class UserApplicationBase:

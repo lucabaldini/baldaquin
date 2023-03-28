@@ -26,8 +26,8 @@ from typing import Any
 
 from loguru import logger
 
+from baldaquin.__qt__ import QtCore
 from baldaquin.buf import CircularBuffer
-from baldaquin._qt import QtCore
 
 
 

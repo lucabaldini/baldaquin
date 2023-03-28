@@ -23,13 +23,13 @@ import random
 import time
 from typing import Any
 
+from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME
-from baldaquin._qt import QtWidgets
 from baldaquin.runctrl import RunControlBase
 
 

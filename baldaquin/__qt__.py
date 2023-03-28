@@ -16,7 +16,10 @@
 """Convenience module handling the Qt-related import.
 
 This is mainly to handle the possibility of switching from/to PyQy/PySide
-in the various available flavors.
+in the various available flavors. At the time the baldaquin project was started
+there were basically four, slightly different sensible possibilities floating
+around (PySide2/6 and PyQt5/6), each with subtle differences in semantics, PySide6
+probably being the preferred choice.
 """
 
 from PySide6 import QtCore, QtGui, QtWidgets
