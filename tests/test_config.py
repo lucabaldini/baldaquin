@@ -17,9 +17,9 @@
 """
 
 import os
-import sys
 
 from baldaquin import BALDAQUIN_DATA
+from baldaquin.__qt__ import exec_qapp
 from baldaquin.config import ConfigurationParameter, ConfigurationBase, SampleConfiguration
 from baldaquin.gui import ConfigurationWidget, bootstrap_qapplication
 
@@ -118,4 +118,4 @@ def test_configuration_display(port=9999):
 if __name__ == '__main__':
     qapp, widget = test_configuration_display()
     widget.show()
-    sys.exit(qapp.exec())
+    exec_qapp(qapp)

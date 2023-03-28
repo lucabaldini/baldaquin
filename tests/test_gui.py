@@ -16,10 +16,9 @@
 """Test suite for widgets.py
 """
 
-import sys
-
 from loguru import logger
 
+from baldaquin.__qt__ import exec_qapp
 from baldaquin.config import SampleConfiguration
 from baldaquin._qt import QtGui, QtCore, QtWidgets
 from baldaquin.gui import ConfigurationWidget, RunControlCardField, MainWindow, bootstrap_window
@@ -44,4 +43,4 @@ def test_main_window():
 if __name__ == '__main__':
     qapp, window = test_main_window()
     window.show()
-    sys.exit(qapp.exec())
+    exec_qapp(qapp)

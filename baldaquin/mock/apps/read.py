@@ -16,10 +16,9 @@
 """Simplest possible mock application.
 """
 
-import sys
-
 from loguru import logger
 
+from baldaquin.__qt__ import exec_qapp
 from baldaquin.gui import bootstrap_window
 from baldaquin.mock import MOCK_APP_CONFIG
 from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
@@ -62,4 +61,4 @@ if __name__ == '__main__':
     window.connect_to_run_control(run_control)
     run_control.load_user_application(UserApplication())
     window.show()
-    sys.exit(qapp.exec())
+    exec_qapp(qapp)

@@ -41,9 +41,19 @@ BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
 BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 
 
-# Global flag to handle the Qt bindings in a consistent fashion.
-BALDAQUIN_QT_WRAPPERS = 'PySide6'
-#if 'BALDA'
+# Global flag to handle the Qt bindings in a consistent fashion, see the
+# __qt__ module for more context about this.
+AVAILABLE_BALDAQUIN_QT_WRAPPERS = ('PySide2', 'PySide6', 'PyQt5', 'PyQt6')
+DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide6'
+try:
+    BALDAQUIN_QT_WRAPPER = os.environ['BALDAQUIN_QT_WRAPPER']
+    logger.info(f'$BALDAQUIN_QT_WRAPPER environmental variable set to {BALDAQUIN_QT_WRAPPER}')
+except KeyError:
+    BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
+if not BALDAQUIN_QT_WRAPPER in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
+    logger.error(f'{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available')
+    BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
+logger.info(f'Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}')
 
 
 def _create_folder(folder_path : Path) -> None:
