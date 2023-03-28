@@ -45,6 +45,7 @@ from loguru import logger
 
 from baldaquin import BALDAQUIN_QT_WRAPPER
 
+# pylint: disable=unused-import, import-error
 
 def _exec_qapp_old_style(qapp):
     """Old-style QApplication bootstrap call (with the final underscore).
@@ -59,6 +60,7 @@ def _exec_qapp_new_style(qapp):
 
 
 if BALDAQUIN_QT_WRAPPER == 'PySide6':
+    # pylint: disable=invalid-name, protected-access, no-name-in-module
     from PySide6 import QtCore, QtGui, QtWidgets
     exec_qapp = _exec_qapp_new_style
     # Horrible workaround for https://github.com/matplotlib/matplotlib/issues/24315
