@@ -18,7 +18,6 @@
 
 from loguru import logger
 
-from baldaquin.__qt__ import exec_qapp
 from baldaquin.gui import bootstrap_window
 from baldaquin.mock import MOCK_APP_CONFIG
 from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
@@ -41,12 +40,6 @@ class UserApplication(MockUserApplicationBase):
     CONFIGURATION_CLASS = Configuration
     CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
 
-    def configure(self):
-        """Overloaded method.
-        """
-        #pylint: disable=useless-super-delegation
-        super().configure()
-
     def process_event_data(self, event_data):
         """Dumb data processing routine---print out the actual event.
         """
@@ -56,9 +49,4 @@ class UserApplication(MockUserApplicationBase):
 
 
 if __name__ == '__main__':
-    qapp, window = bootstrap_window(MockMainWindow)
-    run_control = MockRunControl()
-    window.connect_to_run_control(run_control)
-    run_control.load_user_application(UserApplication())
-    window.show()
-    exec_qapp(qapp)
+    bootstrap_window(MockMainWindow, MockRunControl(), UserApplication())
