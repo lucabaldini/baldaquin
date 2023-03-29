@@ -668,7 +668,7 @@ class PlotCanvasWidget(FigureCanvas):
         """
         if clear:
             self.clear()
-            histogram.plot(self.axes, **kwargs)
+        histogram.plot(self.axes, **kwargs)
         if stat_box:
             histogram.stat_box(self.axes)
         self.axes.figure.canvas.draw()
