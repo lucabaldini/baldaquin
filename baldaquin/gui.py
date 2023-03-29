@@ -24,11 +24,18 @@ from typing import Any
 
 import loguru
 from loguru import logger
+from matplotlib.figure import Figure
 
+from baldaquin.__qt__ import QtCore, QtGui, QtWidgets
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.config import ConfigurationParameter, ConfigurationBase, EmptyConfiguration
-from baldaquin.__qt__ import QtCore, QtGui, QtWidgets
+from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, RunControlBase
+
+# This needs to stay *after* the from baldaquin.__qt__ import, in order for the
+# matplotlib monkeypatching to happen in time.
+from matplotlib.backends.backend_qtagg import FigureCanvas
+
 
 
 _DEFAULT_ICON_CATALOG = 'material3'
@@ -572,7 +579,7 @@ class EventHandlerCardField(Enum):
 
 class EventHandlerCard(CardWidget):
 
-    """
+    """Specialized card widget for the event handler.
     """
 
     _FIELD_ENUM = EventHandlerCardField
@@ -586,6 +593,85 @@ class EventHandlerCard(CardWidget):
         EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
         }
 
+
+
+class PlotCanvasWidget(FigureCanvas):
+
+    """Custom widget to display a matplotlib canvas.
+
+    See https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_qt_sgskip.html
+    for more information about embedding matplotlib in Qt.
+
+    This specific widget is equipped with a QTimer object that can be used
+    to manage the updating of the object.
+
+    Arguments
+    ---------
+    kwrgs : dict
+        The keyword arguments to be passed to the subplot() call.
+    """
+
+    UPDATE_TIMER_INTERVAL = 750
+
+    update_started = QtCore.Signal()
+    update_stopped = QtCore.Signal()
+
+    def __init__(self, **kwargs) -> None:
+        """Constructor.
+        """
+        super().__init__(Figure())
+        self.axes = self.figure.subplots(**kwargs)
+        self._update_timer = QtCore.QTimer()
+        self._update_timer.setInterval(self.UPDATE_TIMER_INTERVAL)
+
+    def start_updating(self) -> None:
+        """Start the update timer.
+        """
+        self._update_timer.start()
+        self.update_started.emit()
+
+    def stop_updating(self) -> None:
+        """Stop the update timer.
+        """
+        self._update_timer.stop()
+        self.update_stopped.emit()
+
+    def connect_slot(self, slot) -> None:
+        """Connect a slot to the underlying timer managing the canvas update.
+
+        Note that we connect the slot to the update_stopped signal from the
+        widget, so that we trigger one last update when the data acquisition is
+        stopped.
+        """
+        self._update_timer.timeout.connect(slot)
+        self.update_stopped.connect(slot)
+
+    def clear(self) -> None:
+        """Clear the canvas.
+        """
+        self.axes.clear()
+
+    def draw_histogram(self, histogram : HistogramBase, stat_box : bool = True,
+        clear : bool = True, **kwargs):
+        """Draw a histogram on the canvas.
+
+        Arguments
+        ---------
+        histogram : HistogramBase
+            The histogram object to be plotted.
+
+        clear : bool
+            If True, clear the canvas before the object is plotted.
+
+        kwargs : dict
+            The keyword arguments to be passed to the histogram.plot() call.
+        """
+        if clear:
+            self.clear()
+            histogram.plot(self.axes, **kwargs)
+        if stat_box:
+            histogram.stat_box(self.axes)
+        self.axes.figure.canvas.draw()
 
 
 
@@ -657,7 +743,7 @@ class MainWindow(QtWidgets.QMainWindow):
         #pylint: disable=too-many-arguments
         self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
 
-    def add_tab(self, page : QtWidgets.QWidget, label : str, icon_name : str = None) -> None:
+    def add_tab(self, page : QtWidgets.QWidget, label : str, icon_name : str = None) -> QtWidgets.QWidget:
         """Add a page to the tab widget.
 
         Arguments
@@ -674,11 +760,35 @@ class MainWindow(QtWidgets.QMainWindow):
         pos = self.tab_widget.addTab(page, label)
         if icon_name is not None:
             self.tab_widget.setTabIcon(pos, load_icon(icon_name))
+        return page
 
-    def add_logger_tab(self) -> None:
+    def add_plot_canvas_tab(self, label : str, icon_name : str = None, **kwargs):
+        """Add a page to the tab widget holding a matplotlib plot.
+
+        Note that the start_run and stop_run signals of the parent main window are
+        automatically connected to the start_updating and stop_updating slots
+        of the PlotCanvasWidget object that is added to the tab.
+
+        Arguments
+        ---------
+        label : str
+            The text label to be displayed on the tab.
+
+        icon_name : str, optional
+            The name of the icon to be displayed on the tab (if None, non icon is shown).
+
+        kwargs : dict
+            All the keyword arguments to be passed to the matplotlib subplots() call.
+        """
+        widget = PlotCanvasWidget(**kwargs)
+        self.start_run.connect(widget.start_updating)
+        self.stop_run.connect(widget.stop_updating)
+        return self.add_tab(widget, label)
+
+    def add_logger_tab(self) -> LoggerDisplay:
         """Add the default logger tab.
         """
-        self.add_tab(LoggerDisplay(), 'Logger', 'chat')
+        return self.add_tab(LoggerDisplay(), 'Logger', 'chat')
 
     def set_test_stand_id(self, test_stand_id : int) -> None:
         """Set the test stand ID in the run control card.

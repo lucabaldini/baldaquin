@@ -42,5 +42,5 @@ def test_hist1d(size=1000000, mean=10., sigma=2.):
 
 
 if __name__ == '__main__':
-    test_plot_hist1d()
+    test_hist1d()
     plt.show()

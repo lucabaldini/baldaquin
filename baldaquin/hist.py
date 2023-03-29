@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from baldaquin.plt_ import matplotlib, plt, setup_gca, PlotCard
+from baldaquin.plt_ import matplotlib, plt, setup_gca, setup_axes, PlotCard
 
 
 
@@ -115,8 +115,12 @@ class HistogramBase:
         given set of binned data.
         """
         sumw = content.sum()
-        mean = (bin_centers * content).sum() / sumw
-        rms = np.sqrt(((bin_centers - mean)**2. * content).sum() / sumw)
+        if sumw == 0:
+            mean = np.nan
+            rms = np.nan
+        else:
+            mean = (bin_centers * content).sum() / sumw
+            rms = np.sqrt(((bin_centers - mean)**2. * content).sum() / sumw)
         return {'Sum of weights': sumw, 'Mean':  mean, 'RMS': rms}
 
     def _check_array_shape(self, data : np.array) -> None:
@@ -138,16 +142,18 @@ class HistogramBase:
         Note this method is returning the histogram instance, so that the function
         call can be chained.
         """
-        # Add a check on the length of the values arrays>
-        if weights is None:
-            weights = np.ones(values[0].shape, dtype=float)
         values = np.vstack(values).T
-        content, _ = np.histogramdd(values, bins=self.binning, weights=weights)
-        entries, _ = np.histogramdd(values, bins=self.binning)
-        _sumw2, _ = np.histogramdd(values, bins=self.binning, weights=weights**2.)
+        if weights is None:
+            content, _ = np.histogramdd(values, bins=self.binning)
+            entries = content
+            sumw2 = content
+        else:
+            content, _ = np.histogramdd(values, bins=self.binning, weights=weights)
+            entries, _ = np.histogramdd(values, bins=self.binning)
+            sumw2, _ = np.histogramdd(values, bins=self.binning, weights=weights**2.)
         self.content += content
         self.entries += entries
-        self._sumw2 += _sumw2
+        self._sumw2 += sumw2
         return self
 
     def set_content(self, content : np.array, entries : np.array = None, errors : np.array = None):
@@ -237,13 +243,15 @@ class HistogramBase:
         """
         raise NotImplementedError(f'_plot() not implemented for {self.__class__.__name__}')
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, axes=None, **kwargs) -> None:
         """Plot the histogram.
         """
+        if axes is None:
+            axes = plt.gca()
         for key, value in self.PLOT_OPTIONS.items():
             kwargs.setdefault(key, value)
-        self._plot(**kwargs)
-        setup_gca(xlabel=self.labels[0], ylabel=self.labels[1])
+        self._plot(axes, **kwargs)
+        setup_axes(axes, xlabel=self.labels[0], ylabel=self.labels[1])
 
 
 
@@ -264,15 +272,15 @@ class Histogram1d(HistogramBase):
         """
         return self.calculate_axis_statistics(self.bin_centers(0), self.content)
 
-    def stat_box(self) -> None:
+    def stat_box(self, axes=None) -> None:
         """Draw a stat box for the histogram.
         """
-        PlotCard(self.current_stats()).draw()
+        PlotCard(self.current_stats()).draw(axes)
 
-    def _plot(self, **kwargs):
+    def _plot(self, axes, **kwargs) -> None:
         """Overloaded make_plot() method.
         """
-        plt.hist(self.bin_centers(0), self.binning[0], weights=self.content, **kwargs)
+        axes.hist(self.bin_centers(0), self.binning[0], weights=self.content, **kwargs)
 
 
 
@@ -290,7 +298,7 @@ class Histogram2d(HistogramBase):
         # pylint: disable=too-many-arguments
         HistogramBase.__init__(self, (xbinning, ybinning), [xlabel, ylabel, zlabel])
 
-    def _plot(self, logz=False, **kwargs):
+    def _plot(self, axes, logz=False, **kwargs):
         """Overloaded make_plot() method.
         """
         x, y = (v.flatten() for v in np.meshgrid(self.bin_centers(0), self.bin_centers(1)))
@@ -304,8 +312,8 @@ class Histogram2d(HistogramBase):
             vmin = kwargs.pop('vmin', None)
             vmax = kwargs.pop('vmax', None)
             kwargs.setdefault('norm', matplotlib.colors.LogNorm(vmin, vmax))
-        plt.hist2d(x, y, bins, weights=w, **kwargs)
-        color_bar = plt.colorbar()
+        axes.hist2d(x, y, bins, weights=w, **kwargs)
+        color_bar = axes.colorbar()
         if self.labels[2] is not None:
             color_bar.set_label(self.labels[2])
 

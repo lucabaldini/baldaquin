@@ -112,7 +112,7 @@ class PlotCard(dict):
         """
         self[key] = (value, fmt, units)
 
-    def draw(self, x : float = 0.05, y : float = 0.95, line_spacing : float = 0.075,
+    def draw(self, axes = None, x : float = 0.05, y : float = 0.95, line_spacing : float = 0.075,
         spacing_ratio : float = 0.75) -> None:
         """Draw the card.
 
@@ -128,20 +128,22 @@ class PlotCard(dict):
             The fractional line spacing assigned to the key label.
         """
         # pylint: disable=invalid-name
+        if axes is None:
+            axes = plt.gca()
         key_norm = spacing_ratio / (1. + spacing_ratio)
         value_norm = 1. - key_norm
         for kwargs in (self.KEY_KWARGS, self.VALUE_KWARGS):
-            kwargs['transform'] = plt.gca().transAxes
+            kwargs['transform'] = axes.transAxes
         for key, (value, fmt, units) in self.items():
             if value is None:
                 y -= 0.5 * line_spacing
                 continue
-            plt.text(x, y, key, **self.KEY_KWARGS)
+            axes.text(x, y, key, **self.KEY_KWARGS)
             y -= key_norm * line_spacing
             value = fmt % value
             if units is not None:
                 value = f'{value} {units}'
-            plt.text(x, y, value, **self.VALUE_KWARGS)
+            axes.text(x, y, value, **self.VALUE_KWARGS)
             y -= value_norm * line_spacing
 
 
@@ -155,34 +157,40 @@ def last_line_color(default : str = 'black'):
         return default
 
 
-def setup_gca(**kwargs):
-    """Setup the axes for the current plot.
+def setup_axes(axes, **kwargs):
+    """Setup a generic axes object.
     """
     if kwargs.get('logx'):
-        plt.xscale('log')
+        axes.set_xscale('log')
     if kwargs.get('logx'):
-        plt.yscale('log')
+        axes.set_yscale('log')
     xticks = kwargs.get('xticks')
     if xticks is not None:
-        plt.gca().set_xticks(xticks)
+        axes.set_xticks(xticks)
     yticks = kwargs.get('yticks')
     if yticks is not None:
-        plt.gca().set_yticks(yticks)
+        axes.set_yticks(yticks)
     xlabel = kwargs.get('xlabel')
     if xlabel is not None:
-        plt.xlabel(xlabel)
+        axes.set_xlabel(xlabel)
     ylabel = kwargs.get('ylabel')
     if ylabel is not None:
-        plt.ylabel(ylabel)
+        axes.set_ylabel(ylabel)
     xmin, xmax, ymin, ymax = [kwargs.get(key) for key in ('xmin', 'xmax', 'ymin', 'ymax')]
     if xmin is None and xmax is None and ymin is None and ymax is None:
         pass
     else:
-        plt.axis([xmin, xmax, ymin, ymax])
+        axes.axis([xmin, xmax, ymin, ymax])
     if kwargs.get('grids'):
-        plt.grid(which='both')
+        axes.grid(which='both')
     if kwargs.get('legend'):
-        plt.legend()
+        axes.legend()
+
+
+def setup_gca(**kwargs):
+    """Setup the axes for the current plot.
+    """
+    setup_axes(plt.gca())
 
 
 def _set_rc_param(key : str, value : Any):
