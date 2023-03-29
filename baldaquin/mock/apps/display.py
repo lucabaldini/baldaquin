@@ -16,16 +16,14 @@
 """Mock application with data display.
 """
 
-from loguru import logger
 import numpy as np
 
-from baldaquin.__qt__ import QtCore, QtWidgets, exec_qapp
+from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.hist import Histogram1d
-from baldaquin.plt_ import plt
 from baldaquin.mock import MOCK_APP_CONFIG, MOCK_PROJECT_NAME
 from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
-    MockUserApplicationBase, MockEventServerConfiguration, MockMainWindow
+    MockUserApplicationBase, MockEventServerConfiguration
 
 
 
@@ -89,11 +87,5 @@ class UserApplication(MockUserApplicationBase):
 
 
 
-
 if __name__ == '__main__':
-    qapp, window = bootstrap_window(MainWindow)
-    run_control = MockRunControl()
-    window.connect_to_run_control(run_control)
-    run_control.load_user_application(UserApplication())
-    window.show()
-    exec_qapp(qapp)
+    bootstrap_window(MainWindow, MockRunControl(), UserApplication())

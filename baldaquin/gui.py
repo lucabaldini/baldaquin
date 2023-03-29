@@ -26,8 +26,9 @@ import loguru
 from loguru import logger
 from matplotlib.figure import Figure
 
-from baldaquin.__qt__ import QtCore, QtGui, QtWidgets
+from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationParameter, ConfigurationBase, EmptyConfiguration
 from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, RunControlBase
@@ -875,7 +876,8 @@ def bootstrap_qapplication():
     return qapp
 
 
-def bootstrap_window(window_class):
+def bootstrap_window(window_class, run_control : RunControlBase = None,
+    user_application : UserApplicationBase = None) -> None:
     """Bootstrap a main window.
 
     This is creating a QApplication, applying the relevant stylesheet, and
@@ -883,4 +885,9 @@ def bootstrap_window(window_class):
     """
     qapp = bootstrap_qapplication()
     window = window_class()
-    return qapp, window
+    if run_control is not None:
+        window.connect_to_run_control(run_control)
+        if user_application is not None:
+            run_control.load_user_application(user_application)
+    window.show()
+    exec_qapp(qapp)
