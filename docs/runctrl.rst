@@ -149,8 +149,22 @@ determined by the ``PROJECT_NAME`` class attribute, and they boil down to:
 Loading a user application
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Although in real life the run control will typically be controlled by a
+graphical user interface, the basic semantic for starting a data acquisition
+programmatically, with a given run control and user application, reads:
 
+.. code::
 
+   run_control = MyRunControl()
+   user_app = MyUserApplication()
+   run_control.load_user_application(user_application)
+   run_control.set_running()
+
+.. seealso:: :ref:`gui`, :ref:`app`.
+
+Note that the run control will emit an :class:`AppNotLoadedError <baldaquin.runctrl.AppNotLoadedError>`
+exception upon any attempt to change the underlying state of the FSM without
+an actual user application being properly loaded.
 
 
 Module documentation
