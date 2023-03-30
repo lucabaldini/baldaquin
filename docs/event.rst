@@ -1,3 +1,5 @@
+.. _event:
+
 :mod:`baldaquin.event` --- Event handler
 ========================================
 

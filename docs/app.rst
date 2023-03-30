@@ -1,3 +1,5 @@
+.. _app:
+
 :mod:`baldaquin.app` --- User applications
 ==========================================
 

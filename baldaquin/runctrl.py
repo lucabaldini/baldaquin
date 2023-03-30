@@ -53,7 +53,7 @@ class InvalidFsmTransitionError(RuntimeError):
 
 
 
-class FiniteStateMachine(QtCore.QObject):
+class FiniteStateMachineBase(QtCore.QObject):
 
     """Definition of the finite-state machine (FSM) underlying the run control.
     """
@@ -212,13 +212,22 @@ class AppNotLoadedError(RuntimeError):
 
 
 
-class RunControlBase(FiniteStateMachine):
+class RunControlBase(FiniteStateMachineBase):
 
     """Run control class.
+
+    Derived classes need to set the ``PROJECT_NAME`` class member and, optionally
+    ``DEFAULT_REFRESH_INTERVAL`` as well.
+
+    Arguments
+    ---------
+    refresh_interval : int
+        The timeout interval (in ms) for the underlying refresh QTimer object
+        updating the information on the control GUI as the data taking proceeds.
     """
 
-    #PROJECT_NAME = None
-    UPDATE_TIMER_INTERVAL = 750
+    PROJECT_NAME = None
+    DEFAULT_REFRESH_INTERVAL = 750
 
     # pylint: disable=c-extension-no-member
     run_id_changed = QtCore.Signal(int)
@@ -226,9 +235,12 @@ class RunControlBase(FiniteStateMachine):
     uptime_updated = QtCore.Signal(float)
     event_handler_stats_updated = QtCore.Signal(int, int, int, float)
 
-    def __init__(self):
+    def __init__(self, refresh_interval : int = DEFAULT_REFRESH_INTERVAL) -> None:
         """Constructor.
         """
+        if self.PROJECT_NAME is None:
+            msg = f'{self.__class__.__name__} needs to be subclassed, and PROJECT_NAME set.'
+            raise RuntimeError(msg)
         super().__init__()
         self._test_stand_id = self._read_test_stand_id()
         self._run_id = self._read_run_id()
@@ -238,8 +250,18 @@ class RunControlBase(FiniteStateMachine):
         self._user_application = None
         self._log_file_handler_id = None
         self._update_timer = QtCore.QTimer()
-        self._update_timer.setInterval(self.UPDATE_TIMER_INTERVAL)
+        self.set_refresh_interval(refresh_interval)
         self._update_timer.timeout.connect(self.update_stats)
+
+    def set_refresh_interval(self, refresh_interval : int) -> None:
+        """Set the timeout for the underlying refresh QTimer object.
+
+        Arguments
+        ---------
+        refresh_interval : int
+            The refresh interval in ms.
+        """
+        self._update_timer.setInterval(refresh_interval)
 
     def _config_file_path(self, file_name : str) -> Path:
         """Return the path to a generic configuration file.
@@ -427,19 +449,19 @@ class RunControlBase(FiniteStateMachine):
             raise AppNotLoadedError
 
     def setup(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
         self._user_application.setup()
 
     def teardown(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
         self._user_application.teardown()
 
     def start_run(self, user_app_configuration : ConfigurationBase = None) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
         if user_app_configuration is not None:
@@ -456,7 +478,7 @@ class RunControlBase(FiniteStateMachine):
         self.update_stats()
 
     def stop_run(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
         self._update_timer.stop()
@@ -469,16 +491,16 @@ class RunControlBase(FiniteStateMachine):
         self.update_stats()
 
     def pause(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
 
     def resume(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self._check_user_application()
 
     def stop(self) -> None:
-        """Overloaded FiniteStateMachine method.
+        """Overloaded method.
         """
         self.stop_run()
