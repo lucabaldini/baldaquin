@@ -56,32 +56,6 @@ class InvalidFsmTransitionError(RuntimeError):
 class FiniteStateMachine(QtCore.QObject):
 
     """Definition of the finite-state machine (FSM) underlying the run control.
-
-    The finite state machine has a unique _state class member, and all the logic
-    embedded to manage the transitions between its different values.
-
-    This is an abstract class, and subclasses are ultimately responsible for
-    reimplementing all the virtual methods, i.e.,
-
-    * setup(), called in the RESET -> STOPPED transition;
-    * teardown(), called in the STOPPED -> RESET transition;
-    * start_run(), called in the STOPPED -> RUNNING transition;
-    * stop_run(), called in the RUNNING -> STOPPED transition;
-    * pause(), called in the RUNNING -> PAUSED transition;
-    * resume(), called in the PAUSED -> RUNNING transition;
-    * stop(), called in the PAUSED -> STOPPED transition.
-
-    The interaction with concrete instances of subclasses happens through the
-    four methods that set the FSM state, calling the proper hook:
-
-    * set_reset();
-    * set_stopped();
-    * set_running();
-    * set_paused().
-
-    The finite-state machine emits a state_changed() signal whenever the underlying
-    state changes. (Note that, for this to work, it needs to inherit from QObject
-    and, in addition to that, properly call the constructor of the base class.)
     """
 
     #pylint: disable=c-extension-no-member
@@ -99,7 +73,7 @@ class FiniteStateMachine(QtCore.QObject):
         return self.__state
 
     def _set_state(self, state : FsmState) -> None:
-        """Set the state of the FSM and emit a state_changed() signal with the
+        """Set the state of the FSM and emit a ``state_changed()`` signal with the
         proper state after the change.
 
         Note this hook is intended to be restricted (hence the leading underscore)
@@ -131,66 +105,76 @@ class FiniteStateMachine(QtCore.QObject):
         return self.__state == FsmState.PAUSED
 
     def setup(self) -> None:
-        """Method called in the RESET -> STOPPED transition.
+        """Method called in the ``RESET`` -> ``STOPPED`` transition.
         """
         raise NotImplementedError
 
     def teardown(self) -> None:
-        """Method called in the STOPPED -> RESET transition.
+        """Method called in the ``STOPPED`` -> ``RESET`` transition.
         """
         raise NotImplementedError
 
     def start_run(self) -> None:
-        """Method called in the STOPPED -> RUNNING transition.
+        """Method called in the ``STOPPED`` -> ``RUNNING`` transition.
         """
         raise NotImplementedError
 
     def stop_run(self) -> None:
-        """Method called in the RUNNING -> STOPPED transition.
+        """Method called in the ``RUNNING`` -> ``STOPPED`` transition.
         """
         raise NotImplementedError
 
     def pause(self) -> None:
-        """Method called in the RUNNING -> PAUSED transition.
+        """Method called in the ``RUNNING`` -> ``PAUSED`` transition.
         """
         raise NotImplementedError
 
     def resume(self) -> None:
-        """Method called in the PAUSED -> RUNNING transition.
+        """Method called in the ``PAUSED -> ``RUNNING`` transition.
         """
         raise NotImplementedError
 
     def stop(self) -> None:
-        """Method called in the PAUSED -> STOPPED transition.
+        """Method called in the ``PAUSED`` -> ``STOPPED`` transition.
         """
         raise NotImplementedError
 
-    def set_reset(self) -> None:
-        """Set the FST in the RESET state.
+    def set_reset(self, *args, **kwargs) -> None:
+        """Set the FSM in the ``RESET`` state.
+
+        An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
+        exception is raised if the FSM is not in the ``STOPPED`` state.
         """
         target_state = FsmState.RESET
         if self.is_stopped():
-            self.teardown()
+            self.teardown(*args, **kwargs)
         else:
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
 
-    def set_stopped(self) -> None:
-        """Set the FST in the STOPPED state.
+    def set_stopped(self, *args, **kwargs) -> None:
+        """Set the FSM in the ``STOPPED`` state.
+
+        An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
+        exception is raised if the FSM is not in either the ``RESET``, ``RUNNING``
+        or ``PAUSED`` state.
         """
         target_state = FsmState.STOPPED
         if self.is_reset():
-            self.setup()
+            self.setup(*args, **kwargs)
         elif self.is_running():
-            self.stop_run()
+            self.stop_run(*args, **kwargs)
         elif self.is_paused():
-            self.stop()
+            self.stop(*args, **kwargs)
         else:
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
 
     def set_running(self, *args, **kwargs) -> None:
-        """Set the FST in the RUNNING state.
+        """Set the FST in the ``RUNNING`` state.
+
+        An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
+        exception is raised if the FSM is not in either the ``STOPPED`` or ``PAUSED`` state.
         """
         target_state = FsmState.RUNNING
         if self.is_stopped():
@@ -201,11 +185,14 @@ class FiniteStateMachine(QtCore.QObject):
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
 
-    def set_paused(self) -> None:
-        """Set the FST in the PAUSED state.
+    def set_paused(self, *args, **kwargs) -> None:
+        """Set the FSM in the ``PAUSED`` state.
+
+        An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
+        exception is raised if the FSM is not in either the ``RUNNING`` state.
         """
         target_state = FsmState.PAUSED
-        if self.is_running():
+        if self.is_running(*args, **kwargs):
             self.pause()
         else:
             raise InvalidFsmTransitionError(self.__state, target_state)
@@ -230,7 +217,7 @@ class RunControlBase(FiniteStateMachine):
     """Run control class.
     """
 
-    PROJECT_NAME = None
+    #PROJECT_NAME = None
     UPDATE_TIMER_INTERVAL = 750
 
     # pylint: disable=c-extension-no-member
@@ -494,4 +481,4 @@ class RunControlBase(FiniteStateMachine):
     def stop(self) -> None:
         """Overloaded FiniteStateMachine method.
         """
-        self._check_user_application()
+        self.stop_run()
