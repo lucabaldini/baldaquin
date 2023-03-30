@@ -7,8 +7,8 @@ This module provides all the basic facilities to control the data acquisition at
 an abstract level.
 
 
-Finite-state machine
---------------------
+The finite-state machine
+------------------------
 
 The :class:`FiniteStateMachine <baldaquin.runctrl.FiniteStateMachine>` class
 represents a basic finite-state machine (FSM) with four states, defined in
@@ -32,6 +32,10 @@ reimplementing all the virtual methods, i.e.,
 * :meth:`stop() <baldaquin.runctrl.FiniteStateMachine.stop()>`,
   called in the ``PAUSED`` -> ``STOPPED`` transition.
 
+
+.. figure:: figures/baldaquin_fsm.png
+
+
 These virtual methods are actually never called directly, and all the interactions
 with concrete instances of subclasses typically happen through four methods, mapping
 to the typical buttons of a transport bar, that call the proper hook to set the FSM
@@ -50,6 +54,9 @@ error is raised.
 The finite-state machine emits a ``state_changed()`` signal whenever the underlying
 state changes, signaling the state `after` the transition.
 
+
+The run control
+---------------
 
 
 
