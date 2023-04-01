@@ -18,7 +18,6 @@ in the overall look and feel of the interface and minimizing boilerplate code:
   an icon, and is used in the :class:`ControlBar <baldaquin.gui.ControlBar>`;
 
 
-
 The control bar
 ---------------
 
