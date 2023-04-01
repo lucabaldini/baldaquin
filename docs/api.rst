@@ -22,6 +22,7 @@ List of modules
    buf
    config
    event
+   hist
    runctrl
    timeline
 
