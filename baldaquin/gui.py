@@ -541,8 +541,6 @@ class PlotCanvasWidget(FigureCanvas):
 
     UPDATE_TIMER_INTERVAL = 750
 
-    update_stopped = QtCore.Signal()
-
     def __init__(self, **kwargs) -> None:
         """Constructor.
         """
@@ -557,21 +555,18 @@ class PlotCanvasWidget(FigureCanvas):
         self._update_timer.start()
 
     def stop_updating(self) -> None:
-        """Stop the update timer.
+        """Stop the update timer and trigger one last, single-shot timeout()
+        to capture the events collected after the stop.
         """
         self._update_timer.stop()
-        #self._update_timer.singleShot(self.UPDATE_TIMER_INTERVAL)
-        self.update_stopped.emit()
+        self._update_timer.setSingleShot(True)
+        self._update_timer.start()
+        self._update_timer.setSingleShot(False)
 
     def connect_slot(self, slot) -> None:
         """Connect a slot to the underlying timer managing the canvas update.
-
-        Note that we connect the slot to the update_stopped signal from the
-        widget, so that we trigger one last update when the data acquisition is
-        stopped.
         """
         self._update_timer.timeout.connect(slot)
-        self.update_stopped.connect(slot)
 
     def clear(self) -> None:
         """Clear the canvas.
