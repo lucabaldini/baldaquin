@@ -83,7 +83,7 @@ class UserApplicationBase:
         """Start the event handler.
         """
         logger.info(f'Starting {self.NAME} user application...')
-        self.event_handler.reset_stats()
+        self.event_handler.reset_statistics()
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop_run(self) -> None:

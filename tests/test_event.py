@@ -23,14 +23,15 @@ from loguru import logger
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.buf import CircularBuffer
-from baldaquin.mock import MockEvent, MockEventHandler
-from baldaquin._qt import QtCore
+from baldaquin.event import EventStatistics
+from baldaquin.mock.mock import MockEvent, MockEventHandler
+from baldaquin.__qt__ import QtCore
 
 
 def test_mock_event():
     """Create a mock event and make sure that pack() and unpack() roundtrip.
     """
-    evt1 = MockEvent.random(0)
+    evt1 = MockEvent.random(0, 0., 1000., 50.)
     logger.info(evt1)
     data = evt1.pack()
     logger.info(data)
@@ -49,7 +50,7 @@ def test_mock_event_io(num_events : int = 10):
     # Write random events to file...
     with open(file_path, 'wb') as output_file:
         for i in range(num_events):
-            event = MockEvent.random(i, start_time)
+            event = MockEvent.random(i, start_time, 1000., 50.)
             logger.info(event)
             output_file.write(event.pack())
     # ... and read them back.
@@ -59,22 +60,10 @@ def test_mock_event_io(num_events : int = 10):
             logger.info(event)
             assert event.trigger_id == i
 
-def test_mock_event_buffer(num_events : int = 10):
-    """Create an event buffer filled with mock events, and test the file I/O.
+def test_events_statistics():
     """
-    file_path = os.path.join(BALDAQUIN_DATA, 'test_mock_event_buffer.bin')
-    start_time = time.time()
-    # Create a circular buffer and fill it.
-    buffer = CircularBuffer(file_path)
-    for i in range(num_events):
-        event = MockEvent.random(i, start_time)
-        logger.info(event)
-        buffer.put(event.pack())
-    # Write the events to file...
-    buffer.flush()
-    # ... and read them back.
-    with open(file_path, 'rb') as input_file:
-        for i in range(num_events):
-            event = MockEvent.read_from_file(input_file)
-            logger.info(event)
-            assert event.trigger_id == i
+    """
+    stats = EventStatistics()
+    logger.info(stats)
+    stats.update(3, 3, 10)
+    logger.info(stats)

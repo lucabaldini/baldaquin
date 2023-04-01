@@ -89,6 +89,31 @@ class EventBase:
 
 
 
+@dataclass
+class EventStatistics:
+
+    """Small container class helping with the event handler bookkeeping.
+    """
+
+    events_processed : int = 0
+    events_written : int = 0
+    bytes_written : int = 0
+
+    def reset(self) -> None:
+        """Reset the statistics.
+        """
+        self.events_processed = 0
+        self.events_written = 0
+        self.bytes_written = 0
+
+    def update(self, events_processed, events_written, bytes_written) -> None:
+        """Update the event statistics.
+        """
+        self.events_processed += events_processed
+        self.events_written += events_written
+        self.bytes_written += bytes_written
+
+
 
 class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
@@ -106,7 +131,6 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
     #pylint: disable=c-extension-no-member
     output_file_set = QtCore.Signal(Path)
-    buffer_flushed = QtCore.Signal(int, int)
 
     def __init__(self) -> None:
         """Constructor.
@@ -128,55 +152,47 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         # handler multiple times.
         self.setAutoDelete(False)
         # Create the event buffer.
-        self.buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
+        self._buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
+        self._statistics = EventStatistics()
         self.__running = False
-        self._num_events_processed = 0
-        self._num_events_written = 0
-        self._num_bytes_written = 0
 
-    def reset_stats(self):
-        """Reset the event handler.
+    def statistics(self) -> EventStatistics:
+        """Return the underlying EventStatistics object.
         """
-        self._num_events_processed = 0
-        self._num_events_written = 0
-        self._num_bytes_written = 0
+        return self._statistics
 
-    def stats(self) -> tuple[int, int, int]:
-        """Return the event handler statistics in the form a three-element tuple
-        of integers (number of events processed and written to disk and number of
-        bytes written to disk).
+    def reset_statistics(self) -> None:
+        """Reset the underlying statistics.
         """
-        return self._num_events_processed, self._num_events_written, self._num_bytes_written
+        self._statistics.reset()
 
     def set_output_file(self, file_path : Path) -> None:
         """Set the path to the output file.
         """
-        self.buffer.set_output_file(file_path)
+        self._buffer.set_output_file(file_path)
         self.output_file_set.emit(file_path)
 
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
-        num_events, num_bytes = self.buffer.flush()
-        self._num_events_written += num_events
-        self._num_bytes_written += num_bytes
-        self.buffer_flushed.emit(num_events, num_events)
+        events_written, bytes_written = self._buffer.flush()
+        self._statistics.update(0, events_written, bytes_written)
 
     def run(self):
         """Overloaded QRunnable method.
         """
         # At this point the buffer should be empty, as we should have hd a flush()
         # call at the stop of the previous run.
-        if self.buffer.size() > 0:
+        if self._buffer.size() > 0:
             logger.warning('Event buffer is not empty at the start run, clearing it...')
-            self.buffer.clear()
+            self._buffer.clear()
         # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:
             event_data = self.read_event_data()
-            self.buffer.put(event_data)
-            self._num_events_processed += 1
-            if self.buffer.flush_needed():
+            self._buffer.put(event_data)
+            self._statistics.update(1, 0, 0)
+            if self._buffer.flush_needed():
                 self.flush_buffer()
             self.process_event_data(event_data)
 

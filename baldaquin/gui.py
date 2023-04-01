@@ -30,6 +30,7 @@ from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.event import EventStatistics
 from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -916,14 +917,13 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
 
-    def update_event_handler_stats(self, events_processed : int, events_written : int,
-        bytes_written : int, average_event_rate : float) -> None:
+    def update_event_handler_stats(self, statistics : EventStatistics, event_rate : float) -> None:
         """Update the data taking statistics in the event handler card.
         """
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, events_processed)
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, events_written)
-        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, bytes_written)
-        self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, average_event_rate)
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, statistics.events_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, statistics.events_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, statistics.bytes_written)
+        self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, event_rate)
 
     def set_run_control(self, run_control : RunControlBase) -> None:
         """Set the child run control that the GUI should manage.
