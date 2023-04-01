@@ -61,42 +61,37 @@ class FiniteStateMachineLogic:
     def __init__(self) -> None:
         """Constructor.
         """
-        self.__state = FsmState.RESET
+        self._state = FsmState.RESET
 
     def state(self) -> FsmState:
         """Return the state of the FSM.
         """
-        return self.__state
+        return self._state
 
-    def _set_state(self, state : FsmState) -> None:
+    def set_state(self, state : FsmState) -> None:
         """Set the state of the FSM.
-
-        Note this hook is intended to be restricted (hence the leading underscore)
-        because all the interaction with concrete instances is supposed to happen
-        via the four "public" methods. This is used internally to dispatch the
-        state_changed() signal consistently when the FSM state is changed.
         """
-        self.__state = state
+        self._state = state
 
     def is_reset(self) -> bool:
         """Return True if the run control is reset.
         """
-        return self.__state == FsmState.RESET
+        return self._state == FsmState.RESET
 
     def is_stopped(self) -> bool:
         """Return True if the run control is stopped.
         """
-        return self.__state == FsmState.STOPPED
+        return self._state == FsmState.STOPPED
 
     def is_running(self) -> bool:
         """Return True if the run control is running.
         """
-        return self.__state == FsmState.RUNNING
+        return self._state == FsmState.RUNNING
 
     def is_paused(self) -> bool:
         """Return True if the run control is paused.
         """
-        return self.__state == FsmState.PAUSED
+        return self._state == FsmState.PAUSED
 
     def setup(self) -> None:
         """Method called in the ``RESET`` -> ``STOPPED`` transition.
@@ -133,7 +128,7 @@ class FiniteStateMachineLogic:
         """
         raise NotImplementedError
 
-    def set_reset(self, *args, **kwargs) -> None:
+    def set_reset(self) -> None:
         """Set the FSM in the ``RESET`` state.
 
         An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
@@ -141,12 +136,12 @@ class FiniteStateMachineLogic:
         """
         target_state = FsmState.RESET
         if self.is_stopped():
-            self.teardown(*args, **kwargs)
+            self.teardown()
         else:
-            raise InvalidFsmTransitionError(self.__state, target_state)
-        self._set_state(target_state)
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self.set_state(target_state)
 
-    def set_stopped(self, *args, **kwargs) -> None:
+    def set_stopped(self) -> None:
         """Set the FSM in the ``STOPPED`` state.
 
         An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
@@ -155,42 +150,42 @@ class FiniteStateMachineLogic:
         """
         target_state = FsmState.STOPPED
         if self.is_reset():
-            self.setup(*args, **kwargs)
+            self.setup()
         elif self.is_running():
-            self.stop_run(*args, **kwargs)
+            self.stop_run()
         elif self.is_paused():
-            self.stop(*args, **kwargs)
+            self.stop()
         else:
-            raise InvalidFsmTransitionError(self.__state, target_state)
-        self._set_state(target_state)
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self.set_state(target_state)
 
-    def set_running(self, *args, **kwargs) -> None:
-        """Set the FST in the ``RUNNING`` state.
+    def set_running(self) -> None:
+        """Set the FSM in the ``RUNNING`` state.
 
         An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
         exception is raised if the FSM is not in either the ``STOPPED`` or ``PAUSED`` state.
         """
         target_state = FsmState.RUNNING
         if self.is_stopped():
-            self.start_run(*args, **kwargs)
+            self.start_run()
         elif self.is_paused():
-            self.resume(*args, **kwargs)
+            self.resume()
         else:
-            raise InvalidFsmTransitionError(self.__state, target_state)
-        self._set_state(target_state)
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self.set_state(target_state)
 
-    def set_paused(self, *args, **kwargs) -> None:
+    def set_paused(self) -> None:
         """Set the FSM in the ``PAUSED`` state.
 
         An :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
         exception is raised if the FSM is not in either the ``RUNNING`` state.
         """
         target_state = FsmState.PAUSED
-        if self.is_running(*args, **kwargs):
+        if self.is_running():
             self.pause()
         else:
-            raise InvalidFsmTransitionError(self.__state, target_state)
-        self._set_state(target_state)
+            raise InvalidFsmTransitionError(self._state, target_state)
+        self.set_state(target_state)
 
 
 
@@ -198,13 +193,13 @@ class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
 
     """Definition of the finite-state machine (FSM) underlying the run control.
 
-    This is inheriting from FiniteStateMachineLogic and overloading the _set_state()
+    This is inheriting from FiniteStateMachineLogic and overloading the set_state()
     hook, so that a state_changed signal is emitted whenever the state is changed.
     (Note that, in order to do this, we also have to overload the constructor in
     order for the underlying QObject structure to be properly initialized.)
     """
 
-    #pylint: disable=c-extension-no-member
+    #pylint: disable=c-extension-no-member, abstract-method
     state_changed = QtCore.Signal(FsmState)
 
     def __init__(self) -> None:
@@ -213,17 +208,12 @@ class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
         QtCore.QObject.__init__(self)
         FiniteStateMachineLogic.__init__(self)
 
-    def _set_state(self, state : FsmState) -> None:
+    def set_state(self, state : FsmState) -> None:
         """Set the state of the FSM and emit a ``state_changed()`` signal with the
         proper state after the change.
-
-        Note this hook is intended to be restricted (hence the leading underscore)
-        because all the interaction with concrete instances is supposed to happen
-        via the four "public" methods. This is used internally to dispatch the
-        state_changed() signal consistently when the FSM state is changed.
         """
-        self.__state = state
-        self.state_changed.emit(self.__state)
+        self._state = state
+        self.state_changed.emit(self._state)
 
 
 
@@ -256,7 +246,7 @@ class RunControlBase(FiniteStateMachineBase):
     PROJECT_NAME = None
     DEFAULT_REFRESH_INTERVAL = 750
 
-    # pylint: disable=c-extension-no-member
+    # pylint: disable=c-extension-no-member, too-many-instance-attributes
     run_id_changed = QtCore.Signal(int)
     user_application_loaded = QtCore.Signal(UserApplicationBase)
     uptime_updated = QtCore.Signal(float)
@@ -279,6 +269,16 @@ class RunControlBase(FiniteStateMachineBase):
         self._update_timer = QtCore.QTimer()
         self.set_refresh_interval(refresh_interval)
         self._update_timer.timeout.connect(self.update_stats)
+
+    def test_stand_id(self) -> int:
+        """Return the test-stand ID.
+        """
+        return self._test_stand_id
+
+    def run_id(self) -> int:
+        """Return the current run ID.
+        """
+        return self._run_id
 
     def set_refresh_interval(self, refresh_interval : int) -> None:
         """Set the timeout for the underlying refresh QTimer object.
@@ -460,13 +460,16 @@ class RunControlBase(FiniteStateMachineBase):
     def load_user_application(self, user_application : UserApplicationBase) -> None:
         """Set the user application to be run.
         """
+        logger.info('Loading user application...')
         if not self.is_reset():
             raise RuntimeError(f'Cannot load a user application in the {self.state().name} state')
         if not isinstance(user_application, UserApplicationBase):
             raise RuntimeError(f'Invalid user application of type {type(user_application)}')
         self._user_application = user_application
-        self.user_application_loaded.emit(user_application)
+        # Mind we want to set the state to STOPPED before we emit the user_application_loaded()
+        # signal, in order to avoid triggering invalid transtions downstream.
         self.set_stopped()
+        self.user_application_loaded.emit(user_application)
 
     def _check_user_application(self) -> None:
         """Make sure we have a valid use application loaded, and raise an
@@ -474,6 +477,13 @@ class RunControlBase(FiniteStateMachineBase):
         """
         if self._user_application is None:
             raise AppNotLoadedError
+
+    def configure_user_application(self, configuration : ConfigurationBase) -> None:
+        """Apply a given configuration to the current user application.
+        """
+        self._check_user_application()
+        logger.info(f'Configuring user application...\n{configuration}')
+        self._user_application.apply_configuration(configuration)
 
     def setup(self) -> None:
         """Overloaded method.
@@ -487,20 +497,18 @@ class RunControlBase(FiniteStateMachineBase):
         self._check_user_application()
         self._user_application.teardown()
 
-    def start_run(self, user_app_configuration : ConfigurationBase = None) -> None:
+    def start_run(self) -> None:
         """Overloaded method.
         """
         self._check_user_application()
-        if user_app_configuration is not None:
-            logger.info(f'Configuring user application...\n{user_app_configuration}')
-            self._user_application.apply_configuration(user_app_configuration)
         self._increment_run_id()
         self._create_data_folder()
         self._log_file_handler_id = logger.add(self.log_file_path())
         self.start_timestamp = self.timeline.latch()
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
-        self._user_application.start(self.data_file_path())
+        self._user_application.set_data_file_path(self.data_file_path())
+        self._user_application.start()
         self._update_timer.start()
         self.update_stats()
 
@@ -521,11 +529,13 @@ class RunControlBase(FiniteStateMachineBase):
         """Overloaded method.
         """
         self._check_user_application()
+        self._user_application.pause()
 
     def resume(self) -> None:
         """Overloaded method.
         """
         self._check_user_application()
+        self._user_application.resume()
 
     def stop(self) -> None:
         """Overloaded method.

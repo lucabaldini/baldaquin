@@ -29,14 +29,16 @@ from matplotlib.figure import Figure
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, ConfigurationBase, EmptyConfiguration
+from baldaquin.config import ConfigurationParameter, ConfigurationBase
 from baldaquin.hist import HistogramBase
-from baldaquin.runctrl import FsmState, RunControlBase
+from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
 # This needs to stay *after* the from baldaquin.__qt__ import, in order for the
 # matplotlib monkeypatching to happen in time.
+# pylint: disable=no-name-in-module, wrong-import-order, ungrouped-imports
 from matplotlib.backends.backend_qtagg import FigureCanvas
 
+# pylint: disable=too-many-lines
 
 
 _DEFAULT_ICON_CATALOG = 'material3'
@@ -72,23 +74,181 @@ def stylesheet_file_path(name : str = 'default') -> Path:
 class Button(QtWidgets.QPushButton):
 
     """Small wrapper aroung the QtWidgets.QPushButton class.
+
+    Arguments
+    ---------
+    icon_name : str
+        The name of the icon to be associated to the button.
+
+    size : int
+        The button size.
+
+    icon_size : int
+        The icon  size.
+
+    tooltip : str, optional
+        An optional tooltip to be associated to the button.
     """
 
+    DEFAULT_SIZE : int = 40
+    DEFAULT_ICON_SIZE : int = 25
     #pylint: disable=too-few-public-methods
 
-    def __init__(self, icon_name : str, size : int = 40, icon_size : int = 25) -> None:
+    def __init__(self, icon_name : str, tooltip : str = None, size : int = DEFAULT_SIZE,
+        icon_size : int = DEFAULT_ICON_SIZE) -> None:
         """Constructor.
         """
         super().__init__()
         self.setFixedSize(size, size)
         self.setFocusPolicy(QtCore.Qt.NoFocus)
         self.set_icon(icon_name, icon_size)
+        if tooltip:
+            self.setToolTip(tooltip)
 
-    def set_icon(self, icon_name : str, icon_size : int = 25) -> None:
+    def set_icon(self, icon_name : str, icon_size : int = DEFAULT_ICON_SIZE) -> None:
         """Set the button icon.
+
+        Note that when icon_name is an Enum instance we automatically get the
+        Enum value.
         """
+        if isinstance(icon_name, Enum):
+            icon_name = icon_name.value
         self.setIcon(load_icon(icon_name))
         self.setIconSize(QtCore.QSize(icon_size, icon_size))
+
+
+
+class ControlBarIcon(Enum):
+
+    """Small enum for the icon of the control bar buttons.
+    """
+
+    TEARDOWN = 'file_download'
+    SETUP = 'file_upload'
+    START = 'play_arrow'
+    PAUSE = 'pause'
+    STOP = 'stop'
+
+
+
+class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
+
+    """Control bar managing the run control.
+    """
+
+    #pylint: disable=c-extension-no-member
+    set_reset_triggered = QtCore.Signal()
+    set_stopped_triggered = QtCore.Signal()
+    set_running_triggered = QtCore.Signal()
+    set_paused_triggered = QtCore.Signal()
+
+    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        FiniteStateMachineLogic.__init__(self)
+        QtWidgets.QFrame.__init__(self, parent)
+        self.setLayout(QtWidgets.QHBoxLayout())
+        # Create the necessary buttons.
+        self.reset_button = self._add_button(ControlBarIcon.SETUP, 'Setup/teardown')
+        self.start_button = self._add_button(ControlBarIcon.START, 'Start/pause')
+        self.stop_button = self._add_button(ControlBarIcon.STOP, 'Start/pause')
+        # We start in the RESET state, where the start and stop buttons are disabled.
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(False)
+        # Now: setup the connections.
+        self.reset_button.clicked.connect(self.toggle_reset_button)
+        self.start_button.clicked.connect(self.toggle_start_button)
+        self.stop_button.clicked.connect(self.set_stopped)
+
+    def _add_button(self, icon_name : ControlBarIcon, tooltip : str = None) -> Button:
+        """Add a button to the control bar and return the Button object.
+        """
+        button = Button(icon_name, tooltip)
+        self.layout().addWidget(button)
+        return button
+
+    def toggle_reset_button(self):
+        """Toggle the reset button.
+        """
+        if self.is_reset():
+            self.set_stopped()
+        elif self.is_stopped():
+            self.set_reset()
+
+    def toggle_start_button(self):
+        """Toggle the start button.
+        """
+        if self.is_running():
+            self.set_paused()
+        elif self.is_paused() or self.is_stopped():
+            self.set_running()
+
+    def setup(self) -> None:
+        """Method called in the ``RESET`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.set_icon(ControlBarIcon.TEARDOWN)
+        self.start_button.setEnabled(True)
+
+    def teardown(self) -> None:
+        """Method called in the ``STOPPED`` -> ``RESET`` transition.
+        """
+        self.reset_button.set_icon(ControlBarIcon.SETUP)
+        self.start_button.setEnabled(False)
+
+    def start_run(self) -> None:
+        """Method called in the ``STOPPED`` -> ``RUNNING`` transition.
+        """
+        self.reset_button.setEnabled(False)
+        self.start_button.set_icon(ControlBarIcon.PAUSE)
+        self.stop_button.setEnabled(True)
+
+    def stop_run(self) -> None:
+        """Method called in the ``RUNNING`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.setEnabled(True)
+        self.start_button.set_icon(ControlBarIcon.START)
+        self.stop_button.setEnabled(False)
+
+    def pause(self) -> None:
+        """Method called in the ``RUNNING`` -> ``PAUSED`` transition.
+        """
+        self.start_button.set_icon(ControlBarIcon.START)
+
+    def resume(self) -> None:
+        """Method called in the ``PAUSED -> ``RUNNING`` transition.
+        """
+        self.start_button.set_icon(ControlBarIcon.PAUSE)
+
+    def stop(self) -> None:
+        """Method called in the ``PAUSED`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.setEnabled(True)
+        self.start_button.set_icon(ControlBarIcon.START)
+        self.stop_button.setEnabled(False)
+
+    def set_reset(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_reset(self)
+        self.set_reset_triggered.emit()
+
+    def set_stopped(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_stopped(self)
+        self.set_stopped_triggered.emit()
+
+    def set_running(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_running(self)
+        self.set_running_triggered.emit()
+
+    def set_paused(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_paused(self)
+        self.set_paused_triggered.emit()
 
 
 
@@ -338,9 +498,11 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         self._widget_dict[name].set_value(value)
 
-    def sizeHint(self) -> QtCore.QSize:
+    @staticmethod
+    def sizeHint() -> QtCore.QSize:
         """Overloaded method defining the default size.
         """
+        # pylint: disable=invalid-name
         return QtCore.QSize(400, 400)
 
     def current_configuration(self) -> ConfigurationBase:
@@ -375,77 +537,12 @@ class LoggerDisplay(QtWidgets.QTextEdit):
         text = f'[{record["time"]}] {record["message"]}\n'
         self.insertPlainText(text)
 
-    def sizeHint(self) -> QtCore.QSize:
+    @staticmethod
+    def sizeHint() -> QtCore.QSize:
         """Overloaded method defining the default size.
         """
+        # pylint: disable=invalid-name
         return QtCore.QSize(800, 400)
-
-
-
-class ControlBar(QtWidgets.QFrame):
-
-    """Class describing a control bar, that is, a series of QPushButton objects
-    arranged horizontally that can be used to control the Run control
-    """
-
-    #pylint: disable=c-extension-no-member
-    started = QtCore.Signal()
-    stopped = QtCore.Signal()
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        layout = QtWidgets.QHBoxLayout()
-        self.teardown_button = Button('file_download')
-        self.teardown_button.setToolTip('Teardown the run control')
-        self.setup_button = Button('file_upload')
-        self.setup_button.setToolTip('Setup the run control')
-        self.run_button = Button('play_arrow')
-        self.run_button.setToolTip('Start/stop the data acquisition')
-        layout.addWidget(self.teardown_button)
-        layout.addWidget(self.setup_button)
-        layout.addWidget(self.run_button)
-        self.setLayout(layout)
-        self.__running = None
-        self.set_stopped()
-        self.run_button.clicked.connect(self.toggle_run_button)
-
-    def toggle_run_button(self) -> None:
-        """Toggle between the running and stopped states.
-        """
-        if self.__running:
-            self.set_stopped()
-        else:
-            self.set_running()
-
-    def reset(self) -> None:
-        """Set the bar in the reset state.
-        """
-        self.teardown_button.setEnabled(False)
-        self.setup_button.setEnabled(True)
-        self.run_button.setEnabled(False)
-        self.run_button = Button('play_arrow')
-
-    def set_running(self):
-        """Set the bar in the running state.
-        """
-        self.teardown_button.setEnabled(False)
-        self.setup_button.setEnabled(False)
-        self.run_button.setEnabled(True)
-        self.run_button.set_icon('stop')
-        self.__running = True
-        self.started.emit()
-
-    def set_stopped(self):
-        """Set the bar in the stopped state.
-        """
-        self.teardown_button.setEnabled(True)
-        self.setup_button.setEnabled(False)
-        self.run_button.setEnabled(True)
-        self.run_button.set_icon('play_arrow')
-        self.__running = False
-        self.stopped.emit()
 
 
 
@@ -456,11 +553,16 @@ class DisplayWidget(DataWidgetBase):
 
     VALUE_WIDGET_CLASS = QtWidgets.QLabel
 
-    def set_value(self, value) -> None:
+    def set_value(self, value : Any) -> None:
         """Overloaded method.
         """
         text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
         self.value_widget.setText(text)
+
+    def current_value(self) -> Any:
+        """Return the value of the widget.
+        """
+        return self.text()
 
 
 
@@ -527,9 +629,11 @@ class CardWidget(QtWidgets.QFrame):
             value = DataWidgetBase.MISSING_VALUE_LABEL
         self._widget_dict[name].set_value(value)
 
-    def sizeHint(self) -> QtCore.QSize:
+    @staticmethod
+    def sizeHint() -> QtCore.QSize:
         """Overloaded method defining the default size.
         """
+        # pylint: disable=invalid-name
         return QtCore.QSize(200, 400)
 
 
@@ -567,7 +671,7 @@ class RunControlCard(CardWidget):
 
 class EventHandlerCardField(Enum):
 
-    """
+    """Specialized card for the event handler.
     """
 
     FILE_PATH = 'Path to the output file'
@@ -614,7 +718,7 @@ class PlotCanvasWidget(FigureCanvas):
 
     UPDATE_TIMER_INTERVAL = 750
 
-    update_started = QtCore.Signal()
+    #update_started = QtCore.Signal()
     update_stopped = QtCore.Signal()
 
     def __init__(self, **kwargs) -> None:
@@ -629,12 +733,13 @@ class PlotCanvasWidget(FigureCanvas):
         """Start the update timer.
         """
         self._update_timer.start()
-        self.update_started.emit()
+        #self.update_started.emit()
 
     def stop_updating(self) -> None:
         """Stop the update timer.
         """
         self._update_timer.stop()
+        #self._update_timer.singleShot(self.UPDATE_TIMER_INTERVAL)
         self.update_stopped.emit()
 
     def connect_slot(self, slot) -> None:
@@ -685,10 +790,6 @@ class MainWindow(QtWidgets.QMainWindow):
     MINIMUM_WIDTH = 1000
     TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
-    #pylint: disable=c-extension-no-member
-    start_run = QtCore.Signal(ConfigurationBase)
-    stop_run = QtCore.Signal()
-
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
@@ -696,7 +797,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(QtWidgets.QWidget())
         self.centralWidget().setLayout(QtWidgets.QGridLayout())
         self.centralWidget().setMinimumWidth(self.MINIMUM_WIDTH)
-        self.control_bar = ControlBar()
+        self.control_bar = ControlBar(self)
         self.add_widget(self.control_bar, 1, 0)
         self.run_control_card = RunControlCard()
         self.run_control_card.set(RunControlCardField.PROJECT_NAME, self.PROJECT_NAME)
@@ -709,9 +810,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
         self.user_application_widget = ConfigurationWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
-        # Setup the internal GUI connections.
-        self.control_bar.started.connect(self.start_run_control)
-        self.control_bar.stopped.connect(self.stop_run_control)
+        self.run_control = None
 
     def add_widget(self, widget : QtWidgets.QWidget, row : int, col : int,
         row_span : int = 1, col_span : int = 1,
@@ -744,7 +843,8 @@ class MainWindow(QtWidgets.QMainWindow):
         #pylint: disable=too-many-arguments
         self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
 
-    def add_tab(self, page : QtWidgets.QWidget, label : str, icon_name : str = None) -> QtWidgets.QWidget:
+    def add_tab(self, page : QtWidgets.QWidget, label : str,
+        icon_name : str = None) -> QtWidgets.QWidget:
         """Add a page to the tab widget.
 
         Arguments
@@ -766,9 +866,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def add_plot_canvas_tab(self, label : str, icon_name : str = None, **kwargs):
         """Add a page to the tab widget holding a matplotlib plot.
 
-        Note that the start_run and stop_run signals of the parent main window are
-        automatically connected to the start_updating and stop_updating slots
-        of the PlotCanvasWidget object that is added to the tab.
+        Note that the proper signals of the control bar are automatically connected
+        to the start_updating and stop_updating slots of the PlotCanvasWidget object
+        that is being added to the tab.
 
         Arguments
         ---------
@@ -782,87 +882,103 @@ class MainWindow(QtWidgets.QMainWindow):
             All the keyword arguments to be passed to the matplotlib subplots() call.
         """
         widget = PlotCanvasWidget(**kwargs)
-        self.start_run.connect(widget.start_updating)
-        self.stop_run.connect(widget.stop_updating)
-        return self.add_tab(widget, label)
+        self.control_bar.set_running_triggered.connect(widget.start_updating)
+        self.control_bar.set_stopped_triggered.connect(widget.stop_updating)
+        return self.add_tab(widget, label, icon_name)
 
     def add_logger_tab(self) -> LoggerDisplay:
         """Add the default logger tab.
         """
         return self.add_tab(LoggerDisplay(), 'Logger', 'chat')
 
-    def set_test_stand_id(self, test_stand_id : int) -> None:
-        """Set the test stand ID in the run control card.
+    def update_run_control_test_stand_id(self, test_stand_id : int) -> None:
+        """Update the test stand ID in the run control card.
         """
         self.run_control_card.set(RunControlCardField.TEST_STAND_ID, test_stand_id)
 
-    def set_run_id(self, run_id : int) -> None:
-        """Set the test run ID in the run control card.
+    def update_run_control_run_id(self, run_id : int) -> None:
+        """Update the test run ID in the run control card.
         """
         self.run_control_card.set(RunControlCardField.RUN_ID, run_id)
 
-    def set_state(self, state : FsmState) -> None:
-        """Set the test run control state in the run control card.
+    def update_run_control_state(self, state : FsmState) -> None:
+        """Update the test run control state in the run control card.
         """
         self.run_control_card.set(RunControlCardField.STATE, state.value)
 
-    def set_output_file(self, file_path):
-        """
-        """
-        self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
-
-    def set_event_handler_stats(self, num_events_processed : int, num_events_written : int,
-        num_bytes_written : int, average_event_rate : float) -> None:
-        """
-        """
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, num_events_processed)
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, num_events_written)
-        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, num_bytes_written)
-        self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, average_event_rate)
-
-    def setup_user_application_widgets(self, user_application) -> None:
-        """Set the user application name in the run control card.
-        """
-        self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
-        self.user_application_widget.display(user_application.configuration)
-        user_application.event_handler.output_file_set.connect(self.set_output_file)
-        # We might want to connect the buffer_flushed signal, as well.
-        buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
-        self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
-
-    def set_uptime(self, value : float) -> None:
-        """Set the uptime in the run contro card.
+    def update_run_control_uptime(self, value : float) -> None:
+        """Update the uptime in the run contro card.
         """
         self.run_control_card.set(RunControlCardField.UPTIME, value)
 
-    def start_run_control(self) -> None:
-        """Start the run control.
-
-        This is called when the start button on the control bar is pressed.
+    def update_event_handler_output_file(self, file_path : Path):
+        """Update the output file path in the event handler card.
         """
-        user_app_configuration = self.user_application_widget.current_configuration()
-        self.start_run.emit(user_app_configuration)
+        self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
 
-    def stop_run_control(self) -> None:
-        """Stop the run control.
-
-        This is called when the stop button on the control bar is pressed.
+    def update_event_handler_stats(self, events_processed : int, events_written : int,
+        bytes_written : int, average_event_rate : float) -> None:
+        """Update the data taking statistics in the event handler card.
         """
-        self.stop_run.emit()
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, events_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, events_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, bytes_written)
+        self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, average_event_rate)
 
-    def connect_to_run_control(self, run_control : RunControlBase) -> None:
-        """Connect the window to a given run control.
+    def set_run_control(self, run_control : RunControlBase) -> None:
+        """Set the child run control that the GUI should manage.
         """
-        self.set_test_stand_id(run_control._test_stand_id)
-        self.set_run_id(run_control._run_id)
-        self.set_state(run_control.state())
-        run_control.user_application_loaded.connect(self.setup_user_application_widgets)
-        run_control.state_changed.connect(self.set_state)
-        run_control.run_id_changed.connect(self.set_run_id)
-        run_control.uptime_updated.connect(self.set_uptime)
-        run_control.event_handler_stats_updated.connect(self.set_event_handler_stats)
-        self.start_run.connect(run_control.set_running)
-        self.stop_run.connect(run_control.set_stopped)
+        self.run_control = run_control
+        # Run a first update of the GUI elements that need to be set...
+        self.update_run_control_test_stand_id(self.run_control.test_stand_id())
+        self.update_run_control_run_id(self.run_control.run_id())
+        self.update_run_control_state(self.run_control.state())
+        # ... and setup the connections that guarantee that these elemnts remain up to date.
+        self.run_control.run_id_changed.connect(self.update_run_control_run_id)
+        self.run_control.state_changed.connect(self.update_run_control_state)
+        self.run_control.uptime_updated.connect(self.update_run_control_uptime)
+        self.run_control.event_handler_stats_updated.connect(self.update_event_handler_stats)
+        # Fully connect the control bar to the run control. Note that, while for
+        # most of the transitions we can map the control bar signals and the
+        # run control slots directly, we need a custom slot for the start run
+        # because, depending on whether we go through the start_run() or the resume()
+        # FSM hooks, we need to apply the configuration that is stored in the GUI.
+        self.control_bar.set_reset_triggered.connect(self.run_control.set_reset)
+        self.control_bar.set_stopped_triggered.connect(self.run_control.set_stopped)
+        self.control_bar.set_running_triggered.connect(self.set_run_control_running)
+        self.control_bar.set_paused_triggered.connect(self.run_control.set_paused)
+        # Be prepared for when a user application is loaded on the run control.
+        self.run_control.user_application_loaded.connect(self.setup_user_application)
+
+    def setup_user_application(self, user_application : UserApplicationBase) -> None:
+        """Setup the user application.
+        """
+        # Update the proper (static) GUI elements.
+        self.run_control_card.set(RunControlCardField.USER_APPLICATION, user_application.NAME)
+        buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
+        self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
+        # Display the application configuration.
+        self.user_application_widget.display(user_application.configuration)
+        # Connect the necessary signal for keeping the thing in synch.
+        user_application.event_handler.output_file_set.connect(
+            self.update_event_handler_output_file)
+        # Setup the control bar in the STOPPED state---note that we are not calling
+        # the set_stopped() hook, here, as we don't want to trigger another set_stopped()
+        # action on the run control side.
+        self.control_bar.set_state(FsmState.STOPPED)
+        self.control_bar.setup()
+
+    def set_run_control_running(self) -> None:
+        """Custom slot to set the run control in the RUNNING state.
+
+        The important bit, here, is that, when we start the run control from the
+        STOPPED state, we apply the user application configuration currently displayed
+        in the GUI.
+        """
+        if self.run_control.is_stopped():
+            configuration = self.user_application_widget.current_configuration()
+            self.run_control.configure_user_application(configuration)
+        self.run_control.set_running()
 
 
 
@@ -886,7 +1002,7 @@ def bootstrap_window(window_class, run_control : RunControlBase = None,
     qapp = bootstrap_qapplication()
     window = window_class()
     if run_control is not None:
-        window.connect_to_run_control(run_control)
+        window.set_run_control(run_control)
         if user_application is not None:
             run_control.load_user_application(user_application)
     window.show()

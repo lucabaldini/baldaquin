@@ -41,10 +41,10 @@ class MainWindow(MockMainWindow):
         super().__init__()
         self.pha_tab = self.add_plot_canvas_tab('PHA distribution')
 
-    def setup_user_application_widgets(self, user_application):
+    def setup_user_application(self, user_application):
         """Overloaded method.
         """
-        super().setup_user_application_widgets(user_application)
+        super().setup_user_application(user_application)
         plot_pha_hist = lambda : self.pha_tab.draw_histogram(user_application.pha_hist)
         plot_pha_hist()
         self.pha_tab.connect_slot(plot_pha_hist)

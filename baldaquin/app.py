@@ -16,6 +16,8 @@
 """User application framework.
 """
 
+from pathlib import Path
+
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
@@ -57,6 +59,11 @@ class UserApplicationBase:
             self.configuration.save(self.CONFIGURATION_FILE_PATH)
         self.configure()
 
+    def set_data_file_path(self, file_path : Path) -> None:
+        """Set the file path for the event handler.
+        """
+        self.event_handler.set_output_file(file_path)
+
     def configure(self):
         """Apply a given configuration to the user application.
         """
@@ -72,11 +79,10 @@ class UserApplicationBase:
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def start(self, file_path) -> None:
+    def start(self) -> None:
         """Start the event handler.
         """
         logger.info(f'Starting {self.NAME} user application...')
-        self.event_handler.set_output_file(file_path)
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
@@ -87,6 +93,20 @@ class UserApplicationBase:
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
         self.event_handler.set_output_file(None)
+
+    def pause(self) -> None:
+        """
+        """
+        logger.info(f'Pausing {self.NAME} user application...')
+        self.event_handler.stop()
+        QtCore.QThreadPool.globalInstance().waitForDone()
+        self.event_handler.flush_buffer()
+
+    def resume(self) -> None:
+        """
+        """
+        logger.info(f'Resuming {self.NAME} user application...')
+        QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def process_event_data(self, event_data):
         """Optional hook for a user application to do something with the event data.
