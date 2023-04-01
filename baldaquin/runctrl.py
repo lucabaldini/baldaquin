@@ -310,13 +310,7 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return self._config_file_path('run.cfg')
 
-    def data_folder_path(self) -> Path:
-        """Return the path to the data folder for the current run.
-        """
-        folder_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
-        return data_folder_path(self.PROJECT_NAME) / folder_name
-
-    def _file_name_base(self, label : str, extension : str) -> str:
+    def _file_name_base(self, label : str = None, extension : str = None) -> str:
         """Generic function implementing a file name factory, given the
         test stand and the run ID.
 
@@ -328,7 +322,17 @@ class RunControlBase(FiniteStateMachineBase):
         extension : str
             The file extension
         """
-        return f'{self._test_stand_id:04d}_{self._run_id:05d}_{label}.{extension}'
+        file_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
+        if label is not None:
+            file_name = f'{file_name}_{label}'
+        if extension is not None:
+            file_name = f'{file_name}.{extension}'
+        return file_name
+
+    def data_folder_path(self) -> Path:
+        """Return the path to the data folder for the current run.
+        """
+        return data_folder_path(self.PROJECT_NAME) / self._file_name_base()
 
     def data_file_name(self) -> str:
         """Return the current data file name.
