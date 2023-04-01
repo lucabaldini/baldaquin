@@ -170,8 +170,6 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         if self.buffer.size() > 0:
             logger.warning('Event buffer is not empty at the start run, clearing it...')
             self.buffer.clear()
-        # Reset the underlying statistics of the event handler.
-        self.reset_stats()
         # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:

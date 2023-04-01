@@ -508,7 +508,7 @@ class RunControlBase(FiniteStateMachineBase):
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.set_data_file_path(self.data_file_path())
-        self._user_application.start()
+        self._user_application.start_run()
         self._update_timer.start()
         self.update_stats()
 
@@ -517,7 +517,7 @@ class RunControlBase(FiniteStateMachineBase):
         """
         self._check_user_application()
         self._update_timer.stop()
-        self._user_application.stop()
+        self._user_application.stop_run()
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')

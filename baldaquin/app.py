@@ -79,13 +79,14 @@ class UserApplicationBase:
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def start(self) -> None:
+    def start_run(self) -> None:
         """Start the event handler.
         """
         logger.info(f'Starting {self.NAME} user application...')
+        self.event_handler.reset_stats()
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
-    def stop(self) -> None:
+    def stop_run(self) -> None:
         """Stop the event handler.
         """
         logger.info(f'Stopping {self.NAME} user application...')
@@ -107,6 +108,11 @@ class UserApplicationBase:
         """
         logger.info(f'Resuming {self.NAME} user application...')
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
+
+    def stop(self) -> None:
+        """
+        """
+        self.stop_run()
 
     def process_event_data(self, event_data):
         """Optional hook for a user application to do something with the event data.
