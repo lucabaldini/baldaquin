@@ -53,18 +53,14 @@ class InvalidFsmTransitionError(RuntimeError):
 
 
 
-class FiniteStateMachineBase(QtCore.QObject):
+class FiniteStateMachineLogic:
 
-    """Definition of the finite-state machine (FSM) underlying the run control.
+    """Class encapsulating the basic logic of the run control finite-state machine.
     """
-
-    #pylint: disable=c-extension-no-member
-    state_changed = QtCore.Signal(FsmState)
 
     def __init__(self) -> None:
         """Constructor.
         """
-        super().__init__()
         self.__state = FsmState.RESET
 
     def state(self) -> FsmState:
@@ -73,8 +69,7 @@ class FiniteStateMachineBase(QtCore.QObject):
         return self.__state
 
     def _set_state(self, state : FsmState) -> None:
-        """Set the state of the FSM and emit a ``state_changed()`` signal with the
-        proper state after the change.
+        """Set the state of the FSM.
 
         Note this hook is intended to be restricted (hence the leading underscore)
         because all the interaction with concrete instances is supposed to happen
@@ -82,7 +77,6 @@ class FiniteStateMachineBase(QtCore.QObject):
         state_changed() signal consistently when the FSM state is changed.
         """
         self.__state = state
-        self.state_changed.emit(self.__state)
 
     def is_reset(self) -> bool:
         """Return True if the run control is reset.
@@ -197,6 +191,39 @@ class FiniteStateMachineBase(QtCore.QObject):
         else:
             raise InvalidFsmTransitionError(self.__state, target_state)
         self._set_state(target_state)
+
+
+
+class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
+
+    """Definition of the finite-state machine (FSM) underlying the run control.
+
+    This is inheriting from FiniteStateMachineLogic and overloading the _set_state()
+    hook, so that a state_changed signal is emitted whenever the state is changed.
+    (Note that, in order to do this, we also have to overload the constructor in
+    order for the underlying QObject structure to be properly initialized.)
+    """
+
+    #pylint: disable=c-extension-no-member
+    state_changed = QtCore.Signal(FsmState)
+
+    def __init__(self) -> None:
+        """Overloaded constructor.
+        """
+        QtCore.QObject.__init__(self)
+        FiniteStateMachineLogic.__init__(self)
+
+    def _set_state(self, state : FsmState) -> None:
+        """Set the state of the FSM and emit a ``state_changed()`` signal with the
+        proper state after the change.
+
+        Note this hook is intended to be restricted (hence the leading underscore)
+        because all the interaction with concrete instances is supposed to happen
+        via the four "public" methods. This is used internally to dispatch the
+        state_changed() signal consistently when the FSM state is changed.
+        """
+        self.__state = state
+        self.state_changed.emit(self.__state)
 
 
 

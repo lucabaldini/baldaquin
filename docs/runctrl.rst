@@ -10,12 +10,12 @@ an abstract level.
 The finite-state machine
 ------------------------
 
-The :class:`FiniteStateMachineBase <baldaquin.runctrl.FiniteStateMachineBase>` class
-represents a basic finite-state machine (FSM) with four states, defined in
+The :class:`FiniteStateMachineLogic <baldaquin.runctrl.FiniteStateMachineLogic>` class
+represents the basic logic of a finite-state machine (FSM) with four states, defined in
 the :class:`FsmState <baldaquin.runctrl.FsmState>` enum class
 (``RESET``, ``STOPPED``, ``RUNNING`` and ``PAUSED``).
 This is an abstract class, and subclasses are ultimately responsible for
-reimplementing all the virtual methods, i.e.,
+re-implementing all the virtual methods, i.e.,
 
 * :meth:`setup() <baldaquin.runctrl.FiniteStateMachineBase.setup()>`,
   called in the ``RESET`` -> ``STOPPED`` transition;
@@ -51,8 +51,14 @@ current state, and if that is not the case, an
 :class:`InvalidFsmTransitionError <baldaquin.runctrl.InvalidFsmTransitionError>`
 error is raised.
 
-The finite-state machine emits a ``state_changed`` (:class:`FsmState <baldaquin.runctrl.FsmState>`)
+
+The :class:`FiniteStateMachineBase <baldaquin.runctrl.FiniteStateMachineBase>` class
+is a subclass of :class:`FiniteStateMachineLogic <baldaquin.runctrl.FiniteStateMachineLogic>`
+that, in addition to all the functionality of the base class, emits a
+``state_changed`` (:class:`FsmState <baldaquin.runctrl.FsmState>`)
 signal whenever the underlying state changes, signaling the state `after` the transition.
+This is still an abstract class, and subclasses are ultimately responsible for
+re-implementing all the relevant virtual methods.
 
 
 The run control
