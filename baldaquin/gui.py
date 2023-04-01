@@ -119,140 +119,6 @@ class Button(QtWidgets.QPushButton):
 
 
 
-class ControlBarIcon(Enum):
-
-    """Small enum for the icon of the control bar buttons.
-    """
-
-    TEARDOWN = 'file_download'
-    SETUP = 'file_upload'
-    START = 'play_arrow'
-    PAUSE = 'pause'
-    STOP = 'stop'
-
-
-
-class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
-
-    """Control bar managing the run control.
-    """
-
-    #pylint: disable=c-extension-no-member
-    set_reset_triggered = QtCore.Signal()
-    set_stopped_triggered = QtCore.Signal()
-    set_running_triggered = QtCore.Signal()
-    set_paused_triggered = QtCore.Signal()
-
-    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
-        """Constructor.
-        """
-        FiniteStateMachineLogic.__init__(self)
-        QtWidgets.QFrame.__init__(self, parent)
-        self.setLayout(QtWidgets.QHBoxLayout())
-        # Create the necessary buttons.
-        self.reset_button = self._add_button(ControlBarIcon.SETUP, 'Setup/teardown')
-        self.start_button = self._add_button(ControlBarIcon.START, 'Start/pause')
-        self.stop_button = self._add_button(ControlBarIcon.STOP, 'Start/pause')
-        # We start in the RESET state, where the start and stop buttons are disabled.
-        self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(False)
-        # Now: setup the connections.
-        self.reset_button.clicked.connect(self.toggle_reset_button)
-        self.start_button.clicked.connect(self.toggle_start_button)
-        self.stop_button.clicked.connect(self.set_stopped)
-
-    def _add_button(self, icon_name : ControlBarIcon, tooltip : str = None) -> Button:
-        """Add a button to the control bar and return the Button object.
-        """
-        button = Button(icon_name, tooltip)
-        self.layout().addWidget(button)
-        return button
-
-    def toggle_reset_button(self):
-        """Toggle the reset button.
-        """
-        if self.is_reset():
-            self.set_stopped()
-        elif self.is_stopped():
-            self.set_reset()
-
-    def toggle_start_button(self):
-        """Toggle the start button.
-        """
-        if self.is_running():
-            self.set_paused()
-        elif self.is_paused() or self.is_stopped():
-            self.set_running()
-
-    def setup(self) -> None:
-        """Method called in the ``RESET`` -> ``STOPPED`` transition.
-        """
-        self.reset_button.set_icon(ControlBarIcon.TEARDOWN)
-        self.start_button.setEnabled(True)
-
-    def teardown(self) -> None:
-        """Method called in the ``STOPPED`` -> ``RESET`` transition.
-        """
-        self.reset_button.set_icon(ControlBarIcon.SETUP)
-        self.start_button.setEnabled(False)
-
-    def start_run(self) -> None:
-        """Method called in the ``STOPPED`` -> ``RUNNING`` transition.
-        """
-        self.reset_button.setEnabled(False)
-        self.start_button.set_icon(ControlBarIcon.PAUSE)
-        self.stop_button.setEnabled(True)
-
-    def stop_run(self) -> None:
-        """Method called in the ``RUNNING`` -> ``STOPPED`` transition.
-        """
-        self.reset_button.setEnabled(True)
-        self.start_button.set_icon(ControlBarIcon.START)
-        self.stop_button.setEnabled(False)
-
-    def pause(self) -> None:
-        """Method called in the ``RUNNING`` -> ``PAUSED`` transition.
-        """
-        self.start_button.set_icon(ControlBarIcon.START)
-
-    def resume(self) -> None:
-        """Method called in the ``PAUSED -> ``RUNNING`` transition.
-        """
-        self.start_button.set_icon(ControlBarIcon.PAUSE)
-
-    def stop(self) -> None:
-        """Method called in the ``PAUSED`` -> ``STOPPED`` transition.
-        """
-        self.reset_button.setEnabled(True)
-        self.start_button.set_icon(ControlBarIcon.START)
-        self.stop_button.setEnabled(False)
-
-    def set_reset(self) -> None:
-        """Overloaded method.
-        """
-        FiniteStateMachineLogic.set_reset(self)
-        self.set_reset_triggered.emit()
-
-    def set_stopped(self) -> None:
-        """Overloaded method.
-        """
-        FiniteStateMachineLogic.set_stopped(self)
-        self.set_stopped_triggered.emit()
-
-    def set_running(self) -> None:
-        """Overloaded method.
-        """
-        FiniteStateMachineLogic.set_running(self)
-        self.set_running_triggered.emit()
-
-    def set_paused(self) -> None:
-        """Overloaded method.
-        """
-        FiniteStateMachineLogic.set_paused(self)
-        self.set_paused_triggered.emit()
-
-
-
 class DataWidgetBase(QtWidgets.QWidget):
 
     """Base class for a widget holding a single piece of information.
@@ -325,9 +191,156 @@ class DataWidgetBase(QtWidgets.QWidget):
 
 
 
+class DisplayWidget(DataWidgetBase):
+
+    """Simple widget to display a single piece of information in a read-only fashion.
+    """
+
+    VALUE_WIDGET_CLASS = QtWidgets.QLabel
+
+    def set_value(self, value : Any) -> None:
+        """Overloaded method.
+        """
+        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
+        self.value_widget.setText(text)
+
+    def current_value(self) -> Any:
+        """Return the value of the widget.
+        """
+        return self.text()
+
+
+
+class CardWidget(QtWidgets.QFrame):
+
+    """Small class implementing a (read-only) card.
+    """
+
+    _FIELD_ENUM : Enum = ()
+    _VALUE_DICT = {}
+    _KWARGS_DICT = {}
+
+    def __init__(self, add_bottom_stretch : bool = True) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        self._widget_dict = {}
+        for field in self._FIELD_ENUM:
+            value = self._VALUE_DICT.get(field)
+            kwargs = self._KWARGS_DICT.get(field, {})
+            self.add(field.value, None, value, **kwargs)
+        if add_bottom_stretch:
+            self.add_bottom_stretch()
+
+    def add_bottom_stretch(self) -> None:
+        """Add a vertical stretch at the bottom of the layout.
+
+        This is to ensure that the card item are "floating" in the card container
+        without being expanded, and the net effect is that the items appear
+        aligned to the top in the card. There might be a clever way to achieve
+        this automatically in the loop filling the card, but I could not make it
+        work, of not manually.
+        """
+        self.layout().addStretch()
+
+    def add(self, *args, **kwargs) -> None:
+        """Add an item to the card.
+
+        Note the signature, here, is designed to match exactly that of the
+        :class:`DisplayWidget <baldaquin.widget.DisplayWidget>` constructor.
+        """
+        widget = DisplayWidget(*args, **kwargs)
+        if widget.name in self._widget_dict:
+            raise RuntimeError(f'Duplicated card item name "{widget.name}"')
+        self._widget_dict[widget.name] = widget
+        self.layout().addWidget(widget)
+
+    def set(self, name : str, value : Any):
+        """Set the value for a specific card item (addressed by name).
+
+        This will raise a KeyError if the card item does not exist.
+        """
+        if isinstance(name, Enum):
+            name = name.value
+        if value is None:
+            value = DataWidgetBase.MISSING_VALUE_LABEL
+        self._widget_dict[name].set_value(value)
+
+    @staticmethod
+    def sizeHint() -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        # pylint: disable=invalid-name
+        return QtCore.QSize(200, 400)
+
+
+
+class RunControlCardField(Enum):
+
+    """Definition of the relevant fields for the run control card.
+
+    This is done with the intent of making the process of updating the values of
+    the card less error-prone.
+    """
+
+    PROJECT_NAME = 'Project'
+    USER_APPLICATION = 'User application'
+    TEST_STAND_ID = 'Test stand'
+    RUN_ID = 'Run ID'
+    STATE = 'State'
+    UPTIME = 'Uptime'
+
+
+
+class RunControlCard(CardWidget):
+
+    """Specialized card to display the run control information.
+    """
+    _FIELD_ENUM = RunControlCardField
+    _VALUE_DICT = {
+        RunControlCardField.UPTIME: 0.
+        }
+    _KWARGS_DICT = {
+        RunControlCardField.UPTIME: dict(units='s', fmt='.3f')
+        }
+
+
+
+class EventHandlerCardField(Enum):
+
+    """Specialized card for the event handler.
+    """
+
+    FILE_PATH = 'Path to the output file'
+    BUFFER_CLASS = 'Data buffer type'
+    NUM_EVENTS_PROCESSED = 'Number of events processed'
+    AVERAGE_EVENT_RATE = 'Average event rate'
+    NUM_EVENTS_WRITTEN = 'Number events written to disk'
+    NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
+
+
+class EventHandlerCard(CardWidget):
+
+    """Specialized card widget for the event handler.
+    """
+
+    _FIELD_ENUM = EventHandlerCardField
+    _VALUE_DICT = {
+        EventHandlerCardField.NUM_EVENTS_PROCESSED: 0,
+        EventHandlerCardField.AVERAGE_EVENT_RATE: 0.,
+        EventHandlerCardField.NUM_EVENTS_WRITTEN: 0,
+        EventHandlerCardField.NUM_BYTES_WRITTEN: 0
+        }
+    _KWARGS_DICT = {
+        EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
+        }
+
+
+
 class ParameterCheckBox(DataWidgetBase):
 
-    """Check box data widget, mapipng ``bool`` input parameters.
+    """Check box data widget, mapping ``bool`` input parameters.
     """
 
     VALUE_WIDGET_CLASS = QtWidgets.QCheckBox
@@ -516,200 +529,9 @@ class ConfigurationWidget(QtWidgets.QWidget):
 
 
 
-class LoggerDisplay(QtWidgets.QTextEdit):
-
-    """Simple widget to display records from the application logger.
-
-    This is simply connecting a QTextEdit as a sink of the application-wide
-    logger, which is made possible by the aweseome loguru library.
-    """
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        logger.add(self.display)
-
-    def display(self, message : loguru._handler.Message) -> None:
-        """Display a single message.
-        """
-        record = message.record
-        #icon = record["level"].icon
-        text = f'[{record["time"]}] {record["message"]}\n'
-        self.insertPlainText(text)
-
-    @staticmethod
-    def sizeHint() -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        # pylint: disable=invalid-name
-        return QtCore.QSize(800, 400)
-
-
-
-class DisplayWidget(DataWidgetBase):
-
-    """Simple widget to display a single piece of information in a read-only fashion.
-    """
-
-    VALUE_WIDGET_CLASS = QtWidgets.QLabel
-
-    def set_value(self, value : Any) -> None:
-        """Overloaded method.
-        """
-        text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
-        self.value_widget.setText(text)
-
-    def current_value(self) -> Any:
-        """Return the value of the widget.
-        """
-        return self.text()
-
-
-
-class CardWidget(QtWidgets.QFrame):
-
-    """Small class implementing a (read-only) card.
-
-    According to the material design guidelines
-    https://material.io/components/cards
-    cards are surfaces that display content and actions on a single topic.
-    For our purposes, cards are basically QFrame objects holding a vertical layout
-    to which we attach :class:`DisplayWidget <baldaquin.widget.DisplayWidget>`
-    instances.
-    """
-
-    _FIELD_ENUM : Enum = ()
-    _VALUE_DICT = {}
-    _KWARGS_DICT = {}
-
-    def __init__(self, add_bottom_stretch : bool = True) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        self._widget_dict = {}
-        for field in self._FIELD_ENUM:
-            value = self._VALUE_DICT.get(field)
-            kwargs = self._KWARGS_DICT.get(field, {})
-            self.add(field.value, None, value, **kwargs)
-        if add_bottom_stretch:
-            self.add_bottom_stretch()
-
-    def add_bottom_stretch(self) -> None:
-        """Add a vertical stretch at the bottom of the layout.
-
-        This is to ensure that the card item are "floating" in the card container
-        without being expanded, and the net effect is that the items appear
-        aligned to the top in the card. There might be a clever way to achieve
-        this automatically in the loop filling the card, but I could not make it
-        work, of not manually.
-        """
-        self.layout().addStretch()
-
-    def add(self, *args, **kwargs) -> None:
-        """Add an item to the card.
-
-        Note the signature, here, is designed to match exactly that of the
-        :class:`DisplayWidget <baldaquin.widget.DisplayWidget>` constructor.
-        """
-        widget = DisplayWidget(*args, **kwargs)
-        if widget.name in self._widget_dict:
-            raise RuntimeError(f'Duplicated card item name "{widget.name}"')
-        self._widget_dict[widget.name] = widget
-        self.layout().addWidget(widget)
-
-    def set(self, name : str, value : Any):
-        """Set the value for a specific card item (addressed by name).
-
-        This will raise a KeyError if the card item does not exist.
-        """
-        if isinstance(name, Enum):
-            name = name.value
-        if value is None:
-            value = DataWidgetBase.MISSING_VALUE_LABEL
-        self._widget_dict[name].set_value(value)
-
-    @staticmethod
-    def sizeHint() -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        # pylint: disable=invalid-name
-        return QtCore.QSize(200, 400)
-
-
-
-class RunControlCardField(Enum):
-
-    """Definition of the relevant fields for the run control card.
-
-    This is done with the intent of making the process of updating the values of
-    the card less error-prone.
-    """
-
-    PROJECT_NAME = 'Project'
-    USER_APPLICATION = 'User application'
-    TEST_STAND_ID = 'Test stand'
-    RUN_ID = 'Run ID'
-    STATE = 'State'
-    UPTIME = 'Uptime'
-
-
-
-class RunControlCard(CardWidget):
-
-    """Specialized card to display the run control information.
-    """
-    _FIELD_ENUM = RunControlCardField
-    _VALUE_DICT = {
-        RunControlCardField.UPTIME: 0.
-        }
-    _KWARGS_DICT = {
-        RunControlCardField.UPTIME: dict(units='s', fmt='.3f')
-        }
-
-
-
-class EventHandlerCardField(Enum):
-
-    """Specialized card for the event handler.
-    """
-
-    FILE_PATH = 'Path to the output file'
-    BUFFER_CLASS = 'Data buffer type'
-    NUM_EVENTS_PROCESSED = 'Number of events processed'
-    AVERAGE_EVENT_RATE = 'Average event rate'
-    NUM_EVENTS_WRITTEN = 'Number events written to disk'
-    NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
-
-
-class EventHandlerCard(CardWidget):
-
-    """Specialized card widget for the event handler.
-    """
-
-    _FIELD_ENUM = EventHandlerCardField
-    _VALUE_DICT = {
-        EventHandlerCardField.NUM_EVENTS_PROCESSED: 0,
-        EventHandlerCardField.AVERAGE_EVENT_RATE: 0.,
-        EventHandlerCardField.NUM_EVENTS_WRITTEN: 0,
-        EventHandlerCardField.NUM_BYTES_WRITTEN: 0
-        }
-    _KWARGS_DICT = {
-        EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
-        }
-
-
-
 class PlotCanvasWidget(FigureCanvas):
 
     """Custom widget to display a matplotlib canvas.
-
-    See https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_qt_sgskip.html
-    for more information about embedding matplotlib in Qt.
-
-    This specific widget is equipped with a QTimer object that can be used
-    to manage the updating of the object.
 
     Arguments
     ---------
@@ -719,7 +541,6 @@ class PlotCanvasWidget(FigureCanvas):
 
     UPDATE_TIMER_INTERVAL = 750
 
-    #update_started = QtCore.Signal()
     update_stopped = QtCore.Signal()
 
     def __init__(self, **kwargs) -> None:
@@ -734,7 +555,6 @@ class PlotCanvasWidget(FigureCanvas):
         """Start the update timer.
         """
         self._update_timer.start()
-        #self.update_started.emit()
 
     def stop_updating(self) -> None:
         """Stop the update timer.
@@ -779,6 +599,171 @@ class PlotCanvasWidget(FigureCanvas):
         if stat_box:
             histogram.stat_box(self.axes)
         self.axes.figure.canvas.draw()
+
+
+
+class LoggerDisplay(QtWidgets.QTextEdit):
+
+    """Simple widget to display records from the application logger.
+
+    This is simply connecting a QTextEdit as a sink of the application-wide
+    logger, which is made possible by the aweseome loguru library.
+    """
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        logger.add(self.display)
+
+    def display(self, message : loguru._handler.Message) -> None:
+        """Display a single message.
+        """
+        record = message.record
+        #icon = record["level"].icon
+        text = f'[{record["time"]}] {record["message"]}\n'
+        self.insertPlainText(text)
+
+    @staticmethod
+    def sizeHint() -> QtCore.QSize:
+        """Overloaded method defining the default size.
+        """
+        # pylint: disable=invalid-name
+        return QtCore.QSize(800, 400)
+
+
+
+class ControlBarIcon(Enum):
+
+    """Small enum for the icon of the control bar buttons.
+    """
+
+    TEARDOWN = 'file_download'
+    SETUP = 'file_upload'
+    START = 'play_arrow'
+    PAUSE = 'pause'
+    STOP = 'stop'
+
+
+
+class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
+
+    """Control bar managing the run control.
+    """
+
+    #pylint: disable=c-extension-no-member
+    set_reset_triggered = QtCore.Signal()
+    set_stopped_triggered = QtCore.Signal()
+    set_running_triggered = QtCore.Signal()
+    set_paused_triggered = QtCore.Signal()
+
+    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        FiniteStateMachineLogic.__init__(self)
+        QtWidgets.QFrame.__init__(self, parent)
+        self.setLayout(QtWidgets.QHBoxLayout())
+        # Create the necessary buttons.
+        self.reset_button = self._add_button(ControlBarIcon.SETUP, 'Setup/teardown')
+        self.start_button = self._add_button(ControlBarIcon.START, 'Start/pause')
+        self.stop_button = self._add_button(ControlBarIcon.STOP, 'Start/pause')
+        # We start in the RESET state, where the start and stop buttons are disabled.
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(False)
+        # Now: setup the connections.
+        self.reset_button.clicked.connect(self.toggle_reset_button)
+        self.start_button.clicked.connect(self.toggle_start_button)
+        self.stop_button.clicked.connect(self.set_stopped)
+
+    def _add_button(self, icon_name : ControlBarIcon, tooltip : str = None) -> Button:
+        """Add a button to the control bar and return the Button object.
+        """
+        button = Button(icon_name, tooltip)
+        self.layout().addWidget(button)
+        return button
+
+    def toggle_reset_button(self):
+        """Toggle the reset button.
+        """
+        if self.is_reset():
+            self.set_stopped()
+        elif self.is_stopped():
+            self.set_reset()
+
+    def toggle_start_button(self):
+        """Toggle the start button.
+        """
+        if self.is_running():
+            self.set_paused()
+        elif self.is_paused() or self.is_stopped():
+            self.set_running()
+
+    def setup(self) -> None:
+        """Method called in the ``RESET`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.set_icon(ControlBarIcon.TEARDOWN)
+        self.start_button.setEnabled(True)
+
+    def teardown(self) -> None:
+        """Method called in the ``STOPPED`` -> ``RESET`` transition.
+        """
+        self.reset_button.set_icon(ControlBarIcon.SETUP)
+        self.start_button.setEnabled(False)
+
+    def start_run(self) -> None:
+        """Method called in the ``STOPPED`` -> ``RUNNING`` transition.
+        """
+        self.reset_button.setEnabled(False)
+        self.start_button.set_icon(ControlBarIcon.PAUSE)
+        self.stop_button.setEnabled(True)
+
+    def stop_run(self) -> None:
+        """Method called in the ``RUNNING`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.setEnabled(True)
+        self.start_button.set_icon(ControlBarIcon.START)
+        self.stop_button.setEnabled(False)
+
+    def pause(self) -> None:
+        """Method called in the ``RUNNING`` -> ``PAUSED`` transition.
+        """
+        self.start_button.set_icon(ControlBarIcon.START)
+
+    def resume(self) -> None:
+        """Method called in the ``PAUSED -> ``RUNNING`` transition.
+        """
+        self.start_button.set_icon(ControlBarIcon.PAUSE)
+
+    def stop(self) -> None:
+        """Method called in the ``PAUSED`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.setEnabled(True)
+        self.start_button.set_icon(ControlBarIcon.START)
+        self.stop_button.setEnabled(False)
+
+    def set_reset(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_reset(self)
+        self.set_reset_triggered.emit()
+
+    def set_stopped(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_stopped(self)
+        self.set_stopped_triggered.emit()
+
+    def set_running(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_running(self)
+        self.set_running_triggered.emit()
+
+    def set_paused(self) -> None:
+        """Overloaded method.
+        """
+        FiniteStateMachineLogic.set_paused(self)
+        self.set_paused_triggered.emit()
 
 
 

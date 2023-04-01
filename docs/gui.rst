@@ -16,21 +16,56 @@ in the overall look and feel of the interface and minimizing boilerplate code:
 
 * :class:`Button <baldaquin.gui.Button>` represents a simple button equipped with
   an icon, and is used in the :class:`ControlBar <baldaquin.gui.ControlBar>`;
-
-
-The control bar
----------------
+* :class:`DataWidgetBase <baldaquin.gui.DataWidgetBase>` is the basic (abstract)
+  building block for mapping key-value pairs: it is nothing more than a pair of
+  widget---a ``QLabel`` holding a title and a generic widget holding some data---arranged
+  in a vertical layout.
 
 
 Displaying data
 ---------------
 
-Particularly, the module define a generic :class:`DisplayWidget <baldaquin.gui.DisplayWidget>`
-to display a single piece of information in the form of a (label, value) pair,
-which is useful to build slick card-time widgets, along with a series of
-specific input widgets, for different data types, designed to interact natively
-with instances of the :class:`ConfigurationBase <baldaquin.config.ConfigurationBase>`
-abstract class. These are :
+The :class:`DisplayWidget <baldaquin.gui.DisplayWidget>` is the simplest
+:class:`DataWidgetBase <baldaquin.gui.DataWidgetBase>` subclass, and also the
+basic building block for displaying data in a read-only fashion. The specific
+widget holding the value is a ``QLabel``.
+
+:class:`DisplayWidget <baldaquin.gui.DisplayWidget>` object are seldom instantiated
+directly, and their most common incarnation, by far, is the
+:class:`CardWidget <baldaquin.gui.CardWidget>`, inspired to the material design
+guidelines at https://material.io/components/cards.
+Cards are surfaces that display content and actions on a single topic and, for
+our purposes, cards are basically ``QFrame`` objects holding a vertical layout
+to which we attach :class:`DisplayWidget <baldaquin.gui.DisplayWidget>`
+instances. Cards are typically driven by ``Enum`` objects, along the lines of
+
+.. code:: python
+
+  class MyCardField(Enum):
+
+      EGGS = 'Eggs'
+      SPAM = 'Spam'
+
+  class MyCard(CardWidget):
+
+      _FIELD_ENUM = MyCardField
+
+
+Among the specific sub-classes that the module provides (and that can be a good
+source of inspiration as to what is the level of flexibility of this approach) are:
+
+* :class:`RunControlCard <baldaquin.gui.RunControlCard>`;
+* :class:`EventHandlerCard <baldaquin.gui.EventHandlerCard>`.
+
+.. seealso:: :ref:`runctrl`, :ref:`event`.
+
+
+Displaying configurations
+-------------------------
+
+The module provides a series of custom widgets for the purpose of displaying
+configuration parameters, designed to interact natively with instances of the
+:class:`ConfigurationBase <baldaquin.config.ConfigurationBase>` abstract class:
 
 * :class:`ParameterCheckBox <baldaquin.gui.ParameterCheckBox>`,
   mapping to ``bool`` parameters;
@@ -41,8 +76,46 @@ abstract class. These are :
 * :class:`ParameterLineEdit <baldaquin.gui.ParameterLineEdit>`,
   mapping to ``str`` parameters with no ``choices`` constraints;
 * :class:`ParameterComboBox <baldaquin.gui.ParameterComboBox>`,
-  mapping to ``str`` parameters with ``choices`` constraints;
+  mapping to ``str`` parameters with ``choices`` constraints.
 
+These widgets, too, are seldom instantiated directly, and live more commonly
+within :class:`ConfigurationWidget <baldaquin.gui.ConfigurationWidget>` objects,
+where they are dinamically mapped to the proper parameter types within a given
+configuration object.
+
+.. seealso:: :ref:`config`.
+
+
+Embedding matplotlib
+--------------------
+
+The :class:`PlotCanvasWidget <baldaquin.gui.PlotCanvasWidget>` is the main
+resource to embed a matplotlib figure, along the lines of the documentation at
+https://matplotlib.org/stable/gallery/user_interfaces/embedding_in_qt_sgskip.html.
+
+This specific widget is equipped with a ``QTimer`` object that can be used
+to manage the updating of the underlying plot within an event loop.
+
+
+The control bar
+---------------
+
+The :class:`ControlBar <baldaquin.gui.ControlBar>` is deigned to manage the
+run control from a GUI environment and implements the same exact semantics of the
+finite-state machine upon which the latter is based. It emits four different
+signals
+
+* ``set_reset_triggered`` ()
+* ``set_stopped_triggered`` ()
+* ``set_running_triggered`` ()
+* ``set_paused_triggered`` ()
+
+and each one is connected at runtime to the proper change of state in the run control.
+
+
+
+The main window
+---------------
 
 
 
