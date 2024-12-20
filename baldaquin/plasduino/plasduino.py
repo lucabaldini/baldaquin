@@ -45,6 +45,19 @@ class PlasduinoRunControl(RunControlBase):
         sketch_version = self.interface.read_uint8()
         logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
 
+    def start_run(self):
+        """
+        """
+        self.interface.setup_analog_sampling_sketch((0, 1), 500)
+        self.interface.write_start_run()
+
+    def stop_run(self):
+        """
+        """
+        self.interface.write_stop_run()
+        logger.info('Flushing the serial port...')
+        data = self.interface.flush()
+
 
 
 class PlasduinoMainWindow(MainWindow):

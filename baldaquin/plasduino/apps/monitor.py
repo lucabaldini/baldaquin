@@ -67,7 +67,9 @@ class EventHandler(EventHandlerBase):
     def read_event_data(self):
         """Read a single event.
         """
-        print('Reading...')
+        #event = AnalogReadout.unpack(self.interface.read(8))
+        #print(event)
+
 
 
 class UserApplication(UserApplicationBase):
@@ -88,7 +90,7 @@ class UserApplication(UserApplicationBase):
     def configure(self):
         """Overloaded method.
         """
-        
+
 
     def process_event_data(self, event_data):
         """Dumb data processing routine---print out the actual event.
