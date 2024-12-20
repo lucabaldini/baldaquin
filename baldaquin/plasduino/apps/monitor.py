@@ -90,13 +90,12 @@ class UserApplication(UserApplicationBase):
     def configure(self):
         """Overloaded method.
         """
-
+        pass
 
     def process_event_data(self, event_data):
         """Dumb data processing routine---print out the actual event.
         """
-        #event = MockEvent.unpack(event_data)
-        #self.pha_hist.fill(event.pha)
+        #event = AnalogReadout.unpack(interface.read(8))
 
 
 
