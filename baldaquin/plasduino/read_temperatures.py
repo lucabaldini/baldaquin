@@ -18,33 +18,24 @@ import struct
 import serial
 
 from baldaquin import logger
-from baldaquin.plasduino.__arduino__ import pulse_dtr
+from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
 from baldaquin.plasduino.__serial__ import arduino_info
 
-BAUD_RATE = 115200
 
 port, model, vid, pid = arduino_info()
-pulse_dtr(port) # Move to serial interface.
-logger.info(f'Opening connection to port {port} at {BAUD_RATE} baud rate...')
-interface = serial.Serial()
-interface.port = port
-interface.baudrate = BAUD_RATE
-interface.open()
-logger.info('Connection established.')
-
-def sread(size = 1):
-    """ Read a given number of bytes from the serial interface.
-
-    Mind the return value is not casted to a python type and None is
-    returned upon timeout.
-    """
-    return interface.read(size)
-
-def sreaduint8():
-    """ Read an 8-bit unsigned unsigned integer from the serial port.
-    """
-    return struct.unpack('>B', sread(1))[0]
-
-
-a = sreaduint8()
-print(a)
+interface = PlasduinoSerialInterface(port)
+interface.pulse_dtr()
+logger.info('Hand-shaking with the arduino board...')
+sketch_id = interface.read_uint8()
+sketch_version = interface.read_uint8()
+logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+logger.info('Starting run...')
+interface.setup_analog_sampling_sketch((0, 1), 500)
+interface.write_start_run()
+for i in range(5):
+    event = AnalogReadout.unpack(interface.read(8))
+    print(event)
+interface.write_stop_run()
+logger.info('Flushing the serial port...')
+data = interface.flush()
+print(data)

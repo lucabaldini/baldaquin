@@ -16,7 +16,26 @@
 """Basic definition of the plasduino communication protocol.
 """
 
+from dataclasses import dataclass
 from enum import Enum
+
+from baldaquin import logger
+from baldaquin.event import EventBase
+from baldaquin.sport import SerialInterface
+
+
+
+class Marker(Enum):
+
+    """Useful protocol markers.
+    """
+
+    NO_OP_HEADER = 0xA0
+    DIGITAL_TRANSITION_HEADER = 0xA1
+    ANALOG_READOUT_HEADER = 0xA2
+    GPS_MEASSGE_HEADER = 0xA3
+    RUN_END_MARKER = 0xB0
+
 
 
 class OpCode(Enum):
@@ -25,11 +44,6 @@ class OpCode(Enum):
     https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol_h.py
     """
 
-    NO_OP_HEADER = 0xA0
-    DIGITAL_TRANSITION_HEADER = 0xA1
-    ANALOG_READOUT_HEADER = 0xA2
-    GPS_MEASSGE_HEADER = 0xA3
-    RUN_END_MARKER = 0xB0
     OP_CODE_NO_OP = 0x00
     OP_CODE_START_RUN = 0x01
     OP_CODE_STOP_RUN = 0x02
@@ -47,5 +61,75 @@ class OpCode(Enum):
 
 
 
-if __name__ == '__main__':
-    print(OpCode.NO_OP_HEADER.value)
+@dataclass
+class AnalogReadout(EventBase):
+
+    """An arduino analog readout is a 8-bit binary array containing,
+    from the MSB to the LSB:
+    * byte(s) 0  : the structure header (Marker.ANALOG_READOUT_HEADER.value);
+    * byte(s) 1  : the analog pin number;
+    * byte(s) 2-5: the timestamp of the readout from millis();
+    * byte(s) 6-7: the actual adc value.
+    """
+
+    FORMAT_STRING = '>BBLH'
+
+    header: int
+    pin_id : int
+    timestamp : float
+    adc : int
+
+    def __post_init__(self):
+        """Post initiazation.
+        """
+        if self.header != Marker.ANALOG_READOUT_HEADER.value:
+            raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
+        self.timestamp /= 1000.
+
+
+
+class PlasduinoSerialInterface(SerialInterface):
+
+    """Specialized serial interface.
+    """
+
+    def write_opcode(self, opcode):
+        """
+        """
+        logger.debug(f'Writing {opcode} to the serial port...')
+        self.write_uint8(opcode.value)
+
+    def write_start_run(self):
+        """ Write a start run command to the serial port.
+        """
+        self.write_opcode(OpCode.OP_CODE_START_RUN)
+
+    def write_stop_run(self):
+        """ Write a stop run command to the serial port.
+        """
+        self.write_opcode(OpCode.OP_CODE_STOP_RUN)
+
+    def write_cmd(self, opcode: OpCode, value, fmt: str):
+        """ Write a command to the arduino board.
+
+        This implies writing the opcode to the serial port, writing the actual
+        payload and, finally, reading back the arduino response and making
+        sure the communication went fine.
+        """
+        self.write_opcode(opcode)
+        logger.debug(f'Writing configuration value {value} to the serial port')
+        self.pack_and_write(value, fmt)
+        logger.info('Waiting for arduino to close the loop...')
+        target_opcode = self.read_uint8()
+        actual_opcode = self.read_uint8()
+        actual_value = self.read_and_unpack(fmt)
+        if actual_opcode != target_opcode or actual_value != value:
+            raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
+
+    def setup_analog_sampling_sketch(self, pin_list: tuple, sampling_interval: int):
+        """ Setup the sktchAnalogSampling sketch.
+        """
+        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pin_list), 'B')
+        for pin in pin_list:
+            self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
+        self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
