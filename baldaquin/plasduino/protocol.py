@@ -61,30 +61,70 @@ class OpCode(Enum):
 
 
 
+class Polarity(Enum):
+
+    """Polarity of a digital transition on the serial port.
+    """
+
+    RISING = 1
+    FALLING = 0
+
+
+
+@dataclass
+class DigitalTransition(EventBase):
+
+    """A plasduino digital transition is a 6-bit binary array containing:
+
+    * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
+    * byte(s) 1  : the transition information (pin number and polarity);
+    * byte(s) 2-5: the timestamp of the readout from micros().
+    """
+
+    FORMAT = '>BBL'
+    SIZE = EventBase.calculate_size(FORMAT)
+
+    header: int
+    _info: int
+    timestamp: float
+    pin_number: int = 0
+    polarity: Polarity = Polarity.RISING
+
+    def __post_init__(self):
+        """Post initialization.
+        """
+        if self.header != Marker.DIGITAL_TRANSITION_HEADER.value:
+            raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
+        self.pin_number = self._info & 0x7F
+        self.polarity = (self._info >> 7) & 0x1
+        self.timestamp /= 1000000.
+
+
+
 @dataclass
 class AnalogReadout(EventBase):
 
-    """An arduino analog readout is a 8-bit binary array containing,
-    from the MSB to the LSB:
-    * byte(s) 0  : the structure header (Marker.ANALOG_READOUT_HEADER.value);
+    """A plasduino analog readout is a 8-bit binary array containing:
+
+    * byte(s) 0  : the array header (``Marker.ANALOG_READOUT_HEADER.value``);
     * byte(s) 1  : the analog pin number;
     * byte(s) 2-5: the timestamp of the readout from millis();
     * byte(s) 6-7: the actual adc value.
-
-    We need to understand if, for simple cases like this, the length can be
-    calculated automatically.
     """
 
     FORMAT = '>BBLH'
     SIZE = EventBase.calculate_size(FORMAT)
 
     header: int
-    pin_id : int
-    timestamp : float
-    adc_value : int
+    pin_number: int
+    timestamp: float
+    adc_value: int
 
     def __post_init__(self):
-        """Post initiazation.
+        """Post initialization.
+
+        We basically make sure that the header is correct, and we convert the timestamp
+        from ms to s.
         """
         if self.header != Marker.ANALOG_READOUT_HEADER.value:
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
