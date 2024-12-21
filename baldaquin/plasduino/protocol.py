@@ -76,7 +76,7 @@ class AnalogReadout(EventBase):
     """
 
     FORMAT = '>BBLH'
-    LENGTH = 8
+    SIZE = EventBase.calculate_size(FORMAT)
 
     header: int
     pin_id : int
@@ -89,11 +89,6 @@ class AnalogReadout(EventBase):
         if self.header != Marker.ANALOG_READOUT_HEADER.value:
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
         self.timestamp /= 1000.
-
-    def __len__(self) -> int:
-        """
-        """
-        return self.LENGTH
 
 
 

@@ -91,7 +91,7 @@ class AppEventHandler(EventHandlerBase):
     def read_event_data(self):
         """Read a single event.
         """
-        return self.serial_interface.read(AnalogReadout.LENGTH)
+        return self.serial_interface.read(AnalogReadout.SIZE)
 
 
 

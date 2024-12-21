@@ -57,6 +57,22 @@ class EventBase:
 
     # pylint: disable=invalid-name
     FORMAT = None
+    SIZE = None
+
+    @staticmethod
+    def calculate_size(fmt: str) -> int:
+        """Calculate the size of a structure in bytes, given a format string.
+
+        This is provided as a usefull shortcut for simple cases when the event structure
+        is simply defined as a format string, and the size can be calculated by
+        the Python struct module.
+        """
+        return struct.calcsize(fmt)
+
+    def __len__(self) -> int:
+        """Default dunder method for indicating the size of the event in bytes.
+        """
+        return self.SIZE
 
     def attribute_values(self) -> tuple:
         """Return the values for all the attributes, to be used, e.g., in the
