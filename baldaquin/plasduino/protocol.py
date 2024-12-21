@@ -75,7 +75,7 @@ class AnalogReadout(EventBase):
     calculated automatically.
     """
 
-    FORMAT_STRING = '>BBLH'
+    FORMAT = '>BBLH'
     LENGTH = 8
 
     header: int

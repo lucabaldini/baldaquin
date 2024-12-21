@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,11 +37,11 @@ class EventBase:
     """Virtual base class with possible event structure.
 
     Concrete subclasses should define the relevant fields for the event, using
-    the dataclass machinery, and override the ``FORMAT_STRING`` class member
+    the dataclass machinery, and override the ``FORMAT`` class member
 
     .. warning::
 
-       Mind that the ``FORMAT_STRING`` should match the type and the order of
+       Mind that the ``FORMAT`` should match the type and the order of
        the event fields fields. The format string is passed verbatim to the
        Python ``struct`` module, and the related information is available at
        https://docs.python.org/3/library/struct.html
@@ -56,7 +56,7 @@ class EventBase:
     """
 
     # pylint: disable=invalid-name
-    FORMAT_STRING = None
+    FORMAT = None
 
     def attribute_values(self) -> tuple:
         """Return the values for all the attributes, to be used, e.g., in the
@@ -73,19 +73,19 @@ class EventBase:
     def pack(self) -> bytes:
         """Pack the event for supporting binary output to file.
         """
-        return struct.pack(self.FORMAT_STRING, *self.attribute_values())
+        return struct.pack(self.FORMAT, *self.attribute_values())
 
     @classmethod
     def unpack(cls, data : bytes) -> EventBase:
         """Unpack some data into an event object.
         """
-        return cls(*struct.unpack(cls.FORMAT_STRING, data))
+        return cls(*struct.unpack(cls.FORMAT, data))
 
     @classmethod
     def read_from_file(cls, input_file) -> EventBase:
         """Read a single event from a file object open in binary mode.
         """
-        return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT_STRING)))
+        return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT)))
 
 
 

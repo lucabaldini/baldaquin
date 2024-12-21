@@ -42,7 +42,7 @@ class MockEvent(EventBase):
     and a pulse-height value.
     """
 
-    FORMAT_STRING = '=llll'
+    FORMAT = '=llll'
 
     trigger_id : int
     seconds : int
