@@ -40,11 +40,11 @@ class UserApplication(MockUserApplicationBase):
     CONFIGURATION_CLASS = Configuration
     CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
 
-    def process_event_data(self, event_data):
+    def process_packet(self, packet):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockPacket.unpack(event_data)
-        logger.debug(f'{event} <- {event_data}')
+        event = MockPacket.unpack(packet)
+        logger.debug(f'{event} <- {packet}')
 
 
 

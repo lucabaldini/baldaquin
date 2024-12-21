@@ -79,10 +79,10 @@ class UserApplication(MockUserApplicationBase):
         #pylint: disable=useless-super-delegation
         super().configure()
 
-    def process_event_data(self, event_data):
+    def process_packet(self, packet):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockPacket.unpack(event_data)
+        event = MockPacket.unpack(packet)
         self.pha_hist.fill(event.pha)
 
 

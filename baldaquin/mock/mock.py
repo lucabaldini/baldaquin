@@ -148,17 +148,17 @@ class MockEventHandler(EventHandlerBase):
         """Constructor.
         """
         super().__init__()
-        self.event_server = MockPacketServer()
+        self.packet_server = MockPacketServer()
 
     def setup_server(self, rate : float, pha_mean : float, pha_sigma : float) -> None:
         """Setup the event server.
         """
-        self.event_server.setup(rate, pha_mean, pha_sigma)
+        self.packet_server.setup(rate, pha_mean, pha_sigma)
 
-    def read_event_data(self):
+    def read_packet(self):
         """Overloaded method.
         """
-        return self.event_server.next()
+        return self.packet_server.next()
 
 
 

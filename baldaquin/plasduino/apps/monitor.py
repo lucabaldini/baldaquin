@@ -102,8 +102,8 @@ class AppEventHandler(EventHandlerBase):
         sketch_version = self.serial_interface.read_uint8()
         logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
 
-    def read_event_data(self):
-        """Read a single event.
+    def read_packet(self):
+        """Read a single packet.
         """
         return self.serial_interface.read(AnalogReadout.SIZE)
 
@@ -157,10 +157,10 @@ class Application(UserApplicationBase):
         logger.info('Flushing the serial port...')
         self.event_handler.serial_interface.flush()
 
-    def process_event_data(self, event_data):
-        """Dumb data processing routine---print out the actual event.
+    def process_packet(self, packet):
+        """.
         """
-        readout = AnalogReadout.unpack(event_data)
+        readout = AnalogReadout.unpack(packet)
         print(readout)
         if readout.pin_number == 0:
             self.x.append(readout.timestamp)

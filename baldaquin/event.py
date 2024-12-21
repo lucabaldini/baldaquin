@@ -205,20 +205,21 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:
-            event_data = self.read_event_data()
-            self._buffer.put(event_data)
+            packet = self.read_packet()
+            self._buffer.put(packet)
             self._statistics.update(1, 0, 0)
             if self._buffer.flush_needed():
                 self.flush_buffer()
-            self.process_event_data(event_data)
+            # We should make clear where this is defined.
+            self.process_packet(packet)
 
     def stop(self) -> None:
         """Stop the event handler.
         """
         self.__running = False
 
-    def read_event_data(self) -> Any:
-        """Read a single event (must be overloaded in derived classes).
+    def read_packet(self) -> PacketBase:
+        """Read a single packet (must be overloaded in derived classes).
 
         This is the actual blocking function that gets a single event from the hardware.
         """

@@ -43,7 +43,7 @@ class UserApplicationBase:
         # We should think about whether there is a more elegant way to do this.
         # Pass the user application to the child event handler? Use inheritance
         # rather than composition?
-        self.event_handler.process_event_data = self.process_event_data
+        self.event_handler.process_packet = self.process_packet
         self.configuration = self.CONFIGURATION_CLASS()
         if self.CONFIGURATION_FILE_PATH is not None:
             if self.CONFIGURATION_FILE_PATH.exists():
@@ -114,6 +114,6 @@ class UserApplicationBase:
         """
         self.stop_run()
 
-    def process_event_data(self, event_data):
+    def process_packet(self, packet):
         """Optional hook for a user application to do something with the event data.
         """
