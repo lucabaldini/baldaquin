@@ -70,14 +70,18 @@ class AnalogReadout(EventBase):
     * byte(s) 1  : the analog pin number;
     * byte(s) 2-5: the timestamp of the readout from millis();
     * byte(s) 6-7: the actual adc value.
+
+    We need to understand if, for simple cases like this, the length can be
+    calculated automatically.
     """
 
     FORMAT_STRING = '>BBLH'
+    LENGTH = 8
 
     header: int
     pin_id : int
     timestamp : float
-    adc : int
+    adc_value : int
 
     def __post_init__(self):
         """Post initiazation.
@@ -85,6 +89,11 @@ class AnalogReadout(EventBase):
         if self.header != Marker.ANALOG_READOUT_HEADER.value:
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
         self.timestamp /= 1000.
+
+    def __len__(self) -> int:
+        """
+        """
+        return self.LENGTH
 
 
 
@@ -119,10 +128,10 @@ class PlasduinoSerialInterface(SerialInterface):
         self.write_opcode(opcode)
         logger.debug(f'Writing configuration value {value} to the serial port')
         self.pack_and_write(value, fmt)
-        logger.info('Waiting for arduino to close the loop...')
         target_opcode = self.read_uint8()
         actual_opcode = self.read_uint8()
         actual_value = self.read_and_unpack(fmt)
+        logger.debug(f'Board response ({target_opcode}, {actual_opcode}, {actual_value})...')
         if actual_opcode != target_opcode or actual_value != value:
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 

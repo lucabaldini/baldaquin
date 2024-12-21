@@ -26,8 +26,17 @@ from loguru import logger
 
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
-    format=">>> <level>{message}</level>")
+    format=">>> <level>[{level}] {message}</level>")
 
+def config_logger(file_path : str = None, extra=None):
+    """Configure the loguru logger.
+    """
+    handlers = [DEFAULT_LOGURU_HANDLER]
+    if file_path is not None:
+        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
+    logger.configure(handlers=handlers, levels=None, extra=extra)
+
+config_logger()
 
 # Basic package structure.
 BALDAQUIN_ROOT = Path(__file__).parent
@@ -126,12 +135,3 @@ def setup_project(project_name : str) -> tuple[Path, Path]:
     for folder_path in folder_list:
         _create_folder(folder_path)
     return folder_list
-
-
-def config_logger(file_path : str = None, extra=None):
-    """Configure the loguru logger.
-    """
-    handlers = [DEFAULT_LOGURU_HANDLER]
-    if file_path is not None:
-        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
-    logger.configure(handlers=handlers, levels=None, extra=extra)
