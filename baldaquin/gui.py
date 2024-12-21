@@ -30,7 +30,7 @@ from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationParameter, ConfigurationBase
-from baldaquin.event import EventStatistics
+from baldaquin.event import PacketStatistics
 from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -46,8 +46,8 @@ _DEFAULT_ICON_CATALOG = 'material3'
 _DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
 
 
-def _icon_file_path(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
-    style : str = _DEFAULT_ICON_STYLE) -> str:
+def _icon_file_path(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
+    style: str = _DEFAULT_ICON_STYLE) -> str:
     """Return the path to a given icon file.
 
     Note this is returning a string, rather than a Path object, as the function
@@ -57,14 +57,14 @@ def _icon_file_path(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str
     return f'{BALDAQUIN_ICONS / catalog / file_name}'
 
 
-def load_icon(name : str, catalog : str = _DEFAULT_ICON_CATALOG, fmt : str = 'svg',
-    style : str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
+def load_icon(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
+    style: str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
     """Load an icon from the given catalog.
     """
     return QtGui.QIcon(_icon_file_path(name, catalog, fmt, style))
 
 
-def stylesheet_file_path(name : str = 'default') -> Path:
+def stylesheet_file_path(name: str = 'default') -> Path:
     """Return the path to a given stylesheet file.
     """
     file_name = f'{name}.qss'
@@ -78,25 +78,25 @@ class Button(QtWidgets.QPushButton):
 
     Arguments
     ---------
-    icon_name : str
+    icon_name: str
         The name of the icon to be associated to the button.
 
-    size : int
+    size: int
         The button size.
 
-    icon_size : int
+    icon_size: int
         The icon  size.
 
-    tooltip : str, optional
+    tooltip: str, optional
         An optional tooltip to be associated to the button.
     """
 
-    DEFAULT_SIZE : int = 40
-    DEFAULT_ICON_SIZE : int = 25
+    DEFAULT_SIZE: int = 40
+    DEFAULT_ICON_SIZE: int = 25
     #pylint: disable=too-few-public-methods
 
-    def __init__(self, icon_name : str, tooltip : str = None, size : int = DEFAULT_SIZE,
-        icon_size : int = DEFAULT_ICON_SIZE) -> None:
+    def __init__(self, icon_name: str, tooltip: str = None, size: int = DEFAULT_SIZE,
+        icon_size: int = DEFAULT_ICON_SIZE) -> None:
         """Constructor.
         """
         super().__init__()
@@ -106,7 +106,7 @@ class Button(QtWidgets.QPushButton):
         if tooltip:
             self.setToolTip(tooltip)
 
-    def set_icon(self, icon_name : str, icon_size : int = DEFAULT_ICON_SIZE) -> None:
+    def set_icon(self, icon_name: str, icon_size: int = DEFAULT_ICON_SIZE) -> None:
         """Set the button icon.
 
         Note that when icon_name is an Enum instance we automatically get the
@@ -144,8 +144,8 @@ class DataWidgetBase(QtWidgets.QWidget):
     MISSING_VALUE_LABEL = '-'
     VALUE_WIDGET_HEIGHT = 30
 
-    def __init__(self, name : str, title : str = None, value=None, units : str = None,
-                 fmt : str = None, **kwargs) -> None:
+    def __init__(self, name: str, title: str = None, value=None, units: str = None,
+                 fmt: str = None, **kwargs) -> None:
         """Constructor
         """
         #pylint: disable=not-callable, too-many-arguments
@@ -174,7 +174,7 @@ class DataWidgetBase(QtWidgets.QWidget):
         """Do nothing post-construction hook that can be overloaded in derived classes.
         """
 
-    def set_title(self, title : str) -> None:
+    def set_title(self, title: str) -> None:
         """Set the widget title.
         """
         self.title_widget.setText(title)
@@ -184,7 +184,7 @@ class DataWidgetBase(QtWidgets.QWidget):
         """
         raise NotImplementedError
 
-    def set_value(self, value : Any) -> None:
+    def set_value(self, value: Any) -> None:
         """Set hook to be reimplemented by derived classes.
         """
         raise NotImplementedError
@@ -198,7 +198,7 @@ class DisplayWidget(DataWidgetBase):
 
     VALUE_WIDGET_CLASS = QtWidgets.QLabel
 
-    def set_value(self, value : Any) -> None:
+    def set_value(self, value: Any) -> None:
         """Overloaded method.
         """
         text = f'{value:{self._fmt if self._fmt else ""}} {self._units if self._units else ""}'
@@ -216,11 +216,11 @@ class CardWidget(QtWidgets.QFrame):
     """Small class implementing a (read-only) card.
     """
 
-    _FIELD_ENUM : Enum = ()
+    _FIELD_ENUM: Enum = ()
     _VALUE_DICT = {}
     _KWARGS_DICT = {}
 
-    def __init__(self, add_bottom_stretch : bool = True) -> None:
+    def __init__(self, add_bottom_stretch: bool = True) -> None:
         """Constructor.
         """
         super().__init__()
@@ -256,7 +256,7 @@ class CardWidget(QtWidgets.QFrame):
         self._widget_dict[widget.name] = widget
         self.layout().addWidget(widget)
 
-    def set(self, name : str, value : Any):
+    def set(self, name: str, value: Any):
         """Set the value for a specific card item (addressed by name).
 
         This will raise a KeyError if the card item does not exist.
@@ -314,9 +314,9 @@ class EventHandlerCardField(Enum):
 
     FILE_PATH = 'Path to the output file'
     BUFFER_CLASS = 'Data buffer type'
-    NUM_EVENTS_PROCESSED = 'Number of events processed'
+    NUM_PACKETS_PROCESSED = 'Number of packets processed'
     AVERAGE_EVENT_RATE = 'Average event rate'
-    NUM_EVENTS_WRITTEN = 'Number events written to disk'
+    NUM_PACKETS_WRITTEN = 'Number of packets written to disk'
     NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
 
 
@@ -327,9 +327,9 @@ class EventHandlerCard(CardWidget):
 
     _FIELD_ENUM = EventHandlerCardField
     _VALUE_DICT = {
-        EventHandlerCardField.NUM_EVENTS_PROCESSED: 0,
+        EventHandlerCardField.NUM_PACKETS_PROCESSED: 0,
         EventHandlerCardField.AVERAGE_EVENT_RATE: 0.,
-        EventHandlerCardField.NUM_EVENTS_WRITTEN: 0,
+        EventHandlerCardField.NUM_PACKETS_WRITTEN: 0,
         EventHandlerCardField.NUM_BYTES_WRITTEN: 0
         }
     _KWARGS_DICT = {
@@ -454,7 +454,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
     :class:`baldaquin.config.ConfigurationBase` subclass.
     """
 
-    def __init__(self, configuration : ConfigurationBase = None) -> None:
+    def __init__(self, configuration: ConfigurationBase = None) -> None:
         """Constructor.
         """
         super().__init__()
@@ -462,7 +462,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         if configuration is not None:
             self.display(configuration)
 
-    def display(self, configuration : ConfigurationBase) -> None:
+    def display(self, configuration: ConfigurationBase) -> None:
         """Display a given configuration.
         """
         # Keep a reference to the input configuration class so that we can return
@@ -477,7 +477,7 @@ class ConfigurationWidget(QtWidgets.QWidget):
         self.layout().addStretch()
 
     @staticmethod
-    def __param_widget(param : ConfigurationParameter) -> DataWidgetBase:
+    def __param_widget(param: ConfigurationParameter) -> DataWidgetBase:
         """Turn a configuration parameter into the corresponding widget.
 
         The fact that we're using two different widgets for ``str`` input,
@@ -500,12 +500,12 @@ class ConfigurationWidget(QtWidgets.QWidget):
             return ParameterLineEdit(*args, **kwargs)
         raise RuntimeError(f'Unknown parameter type {type_}')
 
-    def current_value(self, name : str) -> Any:
+    def current_value(self, name: str) -> Any:
         """Retrieve the current value for a given key.
         """
         return self._widget_dict[name].current_value()
 
-    def set_value(self, name : str, value : Any) -> None:
+    def set_value(self, name: str, value: Any) -> None:
         """Set the value for a specific parameter (addressed by name).
 
         This will raise a KeyError if the widget does not exist.
@@ -535,7 +535,7 @@ class PlotCanvasWidget(FigureCanvas):
 
     Arguments
     ---------
-    kwrgs : dict
+    kwrgs: dict
         The keyword arguments to be passed to the subplot() call.
     """
 
@@ -574,7 +574,7 @@ class PlotCanvasWidget(FigureCanvas):
         """
         self.axes.clear()
 
-    def draw_strip_chart(self, x, y, clear : bool = True, **kwargs):
+    def draw_strip_chart(self, x, y, clear: bool = True, **kwargs):
         """
         """
         if clear:
@@ -583,19 +583,19 @@ class PlotCanvasWidget(FigureCanvas):
         self.axes.set_autoscale_on(True)
         self.axes.figure.canvas.draw()
 
-    def draw_histogram(self, histogram : HistogramBase, stat_box : bool = True,
-        clear : bool = True, **kwargs):
+    def draw_histogram(self, histogram: HistogramBase, stat_box: bool = True,
+        clear: bool = True, **kwargs):
         """Draw a histogram on the canvas.
 
         Arguments
         ---------
-        histogram : HistogramBase
+        histogram: HistogramBase
             The histogram object to be plotted.
 
-        clear : bool
+        clear: bool
             If True, clear the canvas before the object is plotted.
 
-        kwargs : dict
+        kwargs: dict
             The keyword arguments to be passed to the histogram.plot() call.
         """
         if clear:
@@ -621,7 +621,7 @@ class LoggerDisplay(QtWidgets.QTextEdit):
         super().__init__()
         logger.add(self.display)
 
-    def display(self, message : loguru._handler.Message) -> None:
+    def display(self, message: loguru._handler.Message) -> None:
         """Display a single message.
         """
         record = message.record
@@ -662,7 +662,7 @@ class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
     set_running_triggered = QtCore.Signal()
     set_paused_triggered = QtCore.Signal()
 
-    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
         FiniteStateMachineLogic.__init__(self)
@@ -680,7 +680,7 @@ class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
         self.start_button.clicked.connect(self.toggle_start_button)
         self.stop_button.clicked.connect(self.set_stopped)
 
-    def _add_button(self, icon_name : ControlBarIcon, tooltip : str = None) -> Button:
+    def _add_button(self, icon_name: ControlBarIcon, tooltip: str = None) -> Button:
         """Add a button to the control bar and return the Button object.
         """
         button = Button(icon_name, tooltip)
@@ -781,7 +781,7 @@ class MainWindow(QtWidgets.QMainWindow):
     MINIMUM_WIDTH = 1000
     TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
-    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
         super().__init__(parent)
@@ -803,9 +803,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
 
-    def add_widget(self, widget : QtWidgets.QWidget, row : int, col : int,
-        row_span : int = 1, col_span : int = 1,
-        align : QtCore.Qt.Alignment = QtCore.Qt.Alignment()) -> None:
+    def add_widget(self, widget: QtWidgets.QWidget, row: int, col: int,
+        row_span: int = 1, col_span: int = 1,
+        align: QtCore.Qt.Alignment = QtCore.Qt.Alignment()) -> None:
         """Add a widget to the underlying layout.
 
         This is just a convenience method mimicking the corresponding hook of the
@@ -813,40 +813,40 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Arguments
         ---------
-        widget : QtWidgets.QWidget
+        widget: QtWidgets.QWidget
             The widget to be added to the underlying layout.
 
-        row : int
+        row: int
             The starting row position for the widget.
 
-        col : int
+        col: int
             The starting column position for the widget.
 
-        row_span : int, optional (default 1)
+        row_span: int, optional (default 1)
             The number of rows spanned by the widget.
 
-        col_span : int, optional (default 1)
+        col_span: int, optional (default 1)
             The number of columns spanned by the widget.
 
-        align : QtCore.Qt.Alignment
+        align: QtCore.Qt.Alignment
             The alignment for the widget.
         """
         #pylint: disable=too-many-arguments
         self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
 
-    def add_tab(self, page : QtWidgets.QWidget, label : str,
-        icon_name : str = None) -> QtWidgets.QWidget:
+    def add_tab(self, page: QtWidgets.QWidget, label: str,
+        icon_name: str = None) -> QtWidgets.QWidget:
         """Add a page to the tab widget.
 
         Arguments
         ---------
-        page : QtWidgets.QWidget
+        page: QtWidgets.QWidget
             The widget to be added to the tab widget.
 
-        label : str
+        label: str
             The text label to be displayed on the tab.
 
-        icon_name : str, optional
+        icon_name: str, optional
             The name of the icon to be displayed on the tab (if None, non icon is shown).
         """
         pos = self.tab_widget.addTab(page, label)
@@ -854,7 +854,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tab_widget.setTabIcon(pos, load_icon(icon_name))
         return page
 
-    def add_plot_canvas_tab(self, label : str, icon_name : str = None, **kwargs):
+    def add_plot_canvas_tab(self, label: str, icon_name: str = None, **kwargs):
         """Add a page to the tab widget holding a matplotlib plot.
 
         Note that the proper signals of the control bar are automatically connected
@@ -863,13 +863,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Arguments
         ---------
-        label : str
+        label: str
             The text label to be displayed on the tab.
 
-        icon_name : str, optional
+        icon_name: str, optional
             The name of the icon to be displayed on the tab (if None, non icon is shown).
 
-        kwargs : dict
+        kwargs: dict
             All the keyword arguments to be passed to the matplotlib subplots() call.
         """
         widget = PlotCanvasWidget(**kwargs)
@@ -882,40 +882,40 @@ class MainWindow(QtWidgets.QMainWindow):
         """
         return self.add_tab(LoggerDisplay(), 'Logger', 'chat')
 
-    def update_run_control_test_stand_id(self, test_stand_id : int) -> None:
+    def update_run_control_test_stand_id(self, test_stand_id: int) -> None:
         """Update the test stand ID in the run control card.
         """
         self.run_control_card.set(RunControlCardField.TEST_STAND_ID, test_stand_id)
 
-    def update_run_control_run_id(self, run_id : int) -> None:
+    def update_run_control_run_id(self, run_id: int) -> None:
         """Update the test run ID in the run control card.
         """
         self.run_control_card.set(RunControlCardField.RUN_ID, run_id)
 
-    def update_run_control_state(self, state : FsmState) -> None:
+    def update_run_control_state(self, state: FsmState) -> None:
         """Update the test run control state in the run control card.
         """
         self.run_control_card.set(RunControlCardField.STATE, state.value)
 
-    def update_run_control_uptime(self, value : float) -> None:
+    def update_run_control_uptime(self, value: float) -> None:
         """Update the uptime in the run contro card.
         """
         self.run_control_card.set(RunControlCardField.UPTIME, value)
 
-    def update_event_handler_output_file(self, file_path : Path):
+    def update_event_handler_output_file(self, file_path: Path):
         """Update the output file path in the event handler card.
         """
         self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
 
-    def update_event_handler_stats(self, statistics : EventStatistics, event_rate : float) -> None:
+    def update_event_handler_stats(self, statistics: PacketStatistics, event_rate: float) -> None:
         """Update the data taking statistics in the event handler card.
         """
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_PROCESSED, statistics.events_processed)
-        self.event_handler_card.set(EventHandlerCardField.NUM_EVENTS_WRITTEN, statistics.events_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_PROCESSED, statistics.packets_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_WRITTEN, statistics.packets_written)
         self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, statistics.bytes_written)
         self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, event_rate)
 
-    def set_run_control(self, run_control : RunControlBase) -> None:
+    def set_run_control(self, run_control: RunControlBase) -> None:
         """Set the child run control that the GUI should manage.
         """
         self.run_control = run_control
@@ -940,7 +940,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Be prepared for when a user application is loaded on the run control.
         self.run_control.user_application_loaded.connect(self.setup_user_application)
 
-    def setup_user_application(self, user_application : UserApplicationBase) -> None:
+    def setup_user_application(self, user_application: UserApplicationBase) -> None:
         """Setup the user application.
         """
         # Update the proper (static) GUI elements.
@@ -982,8 +982,8 @@ def bootstrap_qapplication():
     return qapp
 
 
-def bootstrap_window(window_class, run_control : RunControlBase = None,
-    user_application : UserApplicationBase = None) -> None:
+def bootstrap_window(window_class, run_control: RunControlBase = None,
+    user_application: UserApplicationBase = None) -> None:
     """Bootstrap a main window.
 
     This is creating a QApplication, applying the relevant stylesheet, and

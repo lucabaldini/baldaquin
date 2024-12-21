@@ -28,13 +28,13 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import MainWindow
-from baldaquin.event import EventBase, EventHandlerBase
+from baldaquin.event import PacketBase, EventHandlerBase
 from baldaquin.mock import MOCK_PROJECT_NAME
 from baldaquin.runctrl import RunControlBase
 
 
 @dataclass
-class MockEvent(EventBase):
+class MockPacket(PacketBase):
 
     """Mock event data structure for testing purposes.
 
@@ -50,7 +50,7 @@ class MockEvent(EventBase):
     pha : int
 
     @classmethod
-    def random(cls, trigger_id : int, start_time, pha_mean : float, pha_sigma) -> MockEvent:
+    def random(cls, trigger_id : int, start_time, pha_mean : float, pha_sigma) -> MockPacket:
         """Create a random event object on the fly.
 
         Note that the trigger identifier must be passed externally as this function
@@ -79,7 +79,7 @@ class MockEvent(EventBase):
 
 
 
-class MockEventServerConfiguration(ConfigurationBase):
+class MockPacketServerConfiguration(ConfigurationBase):
 
     """Configuration structure for the mock uaser app.
     """
@@ -94,7 +94,7 @@ class MockEventServerConfiguration(ConfigurationBase):
 
 
 
-class MockEventServer:
+class MockPacketServer:
 
     """Mock event server for testing purposes.
 
@@ -131,7 +131,7 @@ class MockEventServer:
         """
         self.trigger_id += 1
         time.sleep(random.expovariate(self.rate))
-        event = MockEvent.random(self.trigger_id, self.start_time, self.pha_mean, self.pha_sigma)
+        event = MockPacket.random(self.trigger_id, self.start_time, self.pha_mean, self.pha_sigma)
         return event.pack()
 
 
@@ -148,7 +148,7 @@ class MockEventHandler(EventHandlerBase):
         """Constructor.
         """
         super().__init__()
-        self.event_server = MockEventServer()
+        self.event_server = MockPacketServer()
 
     def setup_server(self, rate : float, pha_mean : float, pha_sigma : float) -> None:
         """Setup the event server.

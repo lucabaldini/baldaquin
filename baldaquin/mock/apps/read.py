@@ -20,11 +20,11 @@ from loguru import logger
 
 from baldaquin.gui import bootstrap_window
 from baldaquin.mock import MOCK_APP_CONFIG
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
-    MockUserApplicationBase, MockEventServerConfiguration
+from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockPacket,\
+    MockUserApplicationBase, MockPacketServerConfiguration
 
 
-class Configuration(MockEventServerConfiguration):
+class Configuration(MockPacketServerConfiguration):
 
     """User application configuration.
     """
@@ -43,7 +43,7 @@ class UserApplication(MockUserApplicationBase):
     def process_event_data(self, event_data):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockEvent.unpack(event_data)
+        event = MockPacket.unpack(event_data)
         logger.debug(f'{event} <- {event_data}')
 
 

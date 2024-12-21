@@ -26,7 +26,7 @@ from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
-from baldaquin.event import EventStatistics
+from baldaquin.event import PacketStatistics
 from baldaquin.timeline import Timeline
 
 
@@ -251,7 +251,7 @@ class RunControlBase(FiniteStateMachineBase):
     run_id_changed = QtCore.Signal(int)
     user_application_loaded = QtCore.Signal(UserApplicationBase)
     uptime_updated = QtCore.Signal(float)
-    event_handler_stats_updated = QtCore.Signal(EventStatistics, float)
+    event_handler_stats_updated = QtCore.Signal(PacketStatistics, float)
 
     def __init__(self, refresh_interval : int = DEFAULT_REFRESH_INTERVAL) -> None:
         """Constructor.
@@ -454,7 +454,7 @@ class RunControlBase(FiniteStateMachineBase):
         elapsed_time = self.elapsed_time()
         statistics = self._user_application.event_handler.statistics()
         try:
-            event_rate = statistics.events_processed / elapsed_time
+            event_rate = statistics.packets_processed / elapsed_time
         except TypeError:
             event_rate = 0.
         self.uptime_updated.emit(elapsed_time)

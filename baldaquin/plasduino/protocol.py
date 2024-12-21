@@ -20,7 +20,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from baldaquin import logger
-from baldaquin.event import EventBase
+from baldaquin.event import PacketBase
 from baldaquin.sport import SerialInterface
 
 
@@ -72,7 +72,7 @@ class Polarity(Enum):
 
 
 @dataclass
-class DigitalTransition(EventBase):
+class DigitalTransition(PacketBase):
 
     """A plasduino digital transition is a 6-bit binary array containing:
 
@@ -82,7 +82,7 @@ class DigitalTransition(EventBase):
     """
 
     FORMAT = '>BBL'
-    SIZE = EventBase.calculate_size(FORMAT)
+    SIZE = PacketBase.calculate_size(FORMAT)
 
     header: int
     _info: int
@@ -102,7 +102,7 @@ class DigitalTransition(EventBase):
 
 
 @dataclass
-class AnalogReadout(EventBase):
+class AnalogReadout(PacketBase):
 
     """A plasduino analog readout is a 8-bit binary array containing:
 
@@ -113,7 +113,7 @@ class AnalogReadout(EventBase):
     """
 
     FORMAT = '>BBLH'
-    SIZE = EventBase.calculate_size(FORMAT)
+    SIZE = PacketBase.calculate_size(FORMAT)
 
     header: int
     pin_number: int

@@ -23,19 +23,19 @@ from loguru import logger
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.buf import CircularBuffer
-from baldaquin.event import EventStatistics
-from baldaquin.mock.mock import MockEvent, MockEventHandler
+from baldaquin.event import PacketStatistics
+from baldaquin.mock.mock import MockPacket, MockEventHandler
 from baldaquin.__qt__ import QtCore
 
 
 def test_mock_event():
     """Create a mock event and make sure that pack() and unpack() roundtrip.
     """
-    evt1 = MockEvent.random(0, 0., 1000., 50.)
+    evt1 = MockPacket.random(0, 0., 1000., 50.)
     logger.info(evt1)
     data = evt1.pack()
     logger.info(data)
-    evt2 = MockEvent.unpack(data)
+    evt2 = MockPacket.unpack(data)
     logger.info(evt2)
     assert evt1.trigger_id == evt2.trigger_id
     assert evt1.seconds == evt2.seconds
@@ -50,20 +50,20 @@ def test_mock_event_io(num_events : int = 10):
     # Write random events to file...
     with open(file_path, 'wb') as output_file:
         for i in range(num_events):
-            event = MockEvent.random(i, start_time, 1000., 50.)
+            event = MockPacket.random(i, start_time, 1000., 50.)
             logger.info(event)
             output_file.write(event.pack())
     # ... and read them back.
     with open(file_path, 'rb') as input_file:
         for i in range(num_events):
-            event = MockEvent.read_from_file(input_file)
+            event = MockPacket.read_from_file(input_file)
             logger.info(event)
             assert event.trigger_id == i
 
-def test_events_statistics():
+def test_packets_statistics():
     """
     """
-    stats = EventStatistics()
+    stats = PacketStatistics()
     logger.info(stats)
     stats.update(3, 3, 10)
     logger.info(stats)

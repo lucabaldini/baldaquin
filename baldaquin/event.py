@@ -32,7 +32,7 @@ from baldaquin.buf import CircularBuffer
 
 
 @dataclass
-class EventBase:
+class PacketBase:
 
     """Virtual base class with possible event structure.
 
@@ -46,12 +46,12 @@ class EventBase:
        Python ``struct`` module, and the related information is available at
        https://docs.python.org/3/library/struct.html
 
-    The basic idea, here, is that the :meth:`pack() <baldaquin.event.EventBase.pack()>`
+    The basic idea, here, is that the :meth:`pack() <baldaquin.event.PacketBase.pack()>`
     method returns a bytes object that can be written into a binary file,
-    while the :meth:`unpack() <baldaquin.event.EventBase.unpack()>` method does
+    while the :meth:`unpack() <baldaquin.event.PacketBase.unpack()>` method does
     the opposite, i.e., it constructs an event object from its binary representation
     (the two are designed to round-trip). Additionally, the
-    :meth:`read_from_file() <baldaquin.event.EventBase.read_from_file()>`
+    :meth:`read_from_file() <baldaquin.event.PacketBase.read_from_file()>`
     method reads and unpack one event from file.
     """
 
@@ -92,13 +92,13 @@ class EventBase:
         return struct.pack(self.FORMAT, *self.attribute_values())
 
     @classmethod
-    def unpack(cls, data : bytes) -> EventBase:
+    def unpack(cls, data : bytes) -> PacketBase:
         """Unpack some data into an event object.
         """
         return cls(*struct.unpack(cls.FORMAT, data))
 
     @classmethod
-    def read_from_file(cls, input_file) -> EventBase:
+    def read_from_file(cls, input_file) -> PacketBase:
         """Read a single event from a file object open in binary mode.
         """
         return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT)))
@@ -106,27 +106,27 @@ class EventBase:
 
 
 @dataclass
-class EventStatistics:
+class PacketStatistics:
 
     """Small container class helping with the event handler bookkeeping.
     """
 
-    events_processed : int = 0
-    events_written : int = 0
+    packets_processed : int = 0
+    packets_written : int = 0
     bytes_written : int = 0
 
     def reset(self) -> None:
         """Reset the statistics.
         """
-        self.events_processed = 0
-        self.events_written = 0
+        self.packets_processed = 0
+        self.packets_written = 0
         self.bytes_written = 0
 
-    def update(self, events_processed, events_written, bytes_written) -> None:
+    def update(self, packets_processed, packets_written, bytes_written) -> None:
         """Update the event statistics.
         """
-        self.events_processed += events_processed
-        self.events_written += events_written
+        self.packets_processed += packets_processed
+        self.packets_written += packets_written
         self.bytes_written += bytes_written
 
 
@@ -169,11 +169,11 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         self.setAutoDelete(False)
         # Create the event buffer.
         self._buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
-        self._statistics = EventStatistics()
+        self._statistics = PacketStatistics()
         self.__running = False
 
-    def statistics(self) -> EventStatistics:
-        """Return the underlying EventStatistics object.
+    def statistics(self) -> PacketStatistics:
+        """Return the underlying PacketStatistics object.
         """
         return self._statistics
 
@@ -191,8 +191,8 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
-        events_written, bytes_written = self._buffer.flush()
-        self._statistics.update(0, events_written, bytes_written)
+        packets_written, bytes_written = self._buffer.flush()
+        self._statistics.update(0, packets_written, bytes_written)
 
     def run(self):
         """Overloaded QRunnable method.

@@ -99,7 +99,7 @@ Any run control object is equipped to emit the following signals:
   object is passed along with the signal);
 * ``uptime_updated`` (float ``uptime``) is emitted whenever the uptime for the
   run control is updated;
-* ``event_handler_stats_updated`` (int ``num_events_processed``, int ``num_events_written``,
+* ``event_handler_stats_updated`` (int ``num_packets_processed``, int ``num_packets_written``,
   int ``num_bytes_written``, float ``average_event_rate``) is emitted whenever
   the event handler provides updates for the underlying statistics.
 
