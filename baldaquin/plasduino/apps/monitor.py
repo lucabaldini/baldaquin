@@ -29,6 +29,7 @@ from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_PROJECT_NAME
 from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
+from baldaquin.plt_ import plt
 from baldaquin.runctrl import RunControlBase
 from baldaquin.plasduino.__serial__ import arduino_info
 
@@ -40,6 +41,19 @@ class AppMainWindow(MainWindow):
     """
 
     PROJECT_NAME = PLASDUINO_PROJECT_NAME
+
+    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts')
+
+    def setup_user_application(self, user_application):
+        """Overloaded method.
+        """
+        super().setup_user_application(user_application)
+        plot_strip_charts = lambda : self.strip_chart_tab.draw_strip_chart(user_application.x, user_application.y)
+        self.strip_chart_tab.connect_slot(plot_strip_charts)
 
 
 
@@ -109,6 +123,8 @@ class Application(UserApplicationBase):
         """Overloaded constructor.
         """
         super().__init__()
+        self.x = []
+        self.y = []
 
     def setup(self):
         """
@@ -124,7 +140,9 @@ class Application(UserApplicationBase):
     def start_run(self):
         """
         """
-        self.event_handler.serial_interface.setup_analog_sampling_sketch((0, 1), 500)
+        pin_list = (0, 1)
+        sampling_interval = 500
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(pin_list, sampling_interval)
         self.event_handler.serial_interface.write_start_run()
         super().start_run()
 
@@ -144,6 +162,11 @@ class Application(UserApplicationBase):
         """
         readout = AnalogReadout.unpack(event_data)
         print(readout)
+        if readout.pin_number == 0:
+            self.x.append(readout.timestamp)
+            self.y.append(readout.adc_value)
+            #plt.plot(self.x, self.y)
+
 
 
 

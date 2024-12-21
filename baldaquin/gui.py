@@ -562,6 +562,7 @@ class PlotCanvasWidget(FigureCanvas):
         self._update_timer.setSingleShot(True)
         self._update_timer.start()
         self._update_timer.setSingleShot(False)
+        self._update_timer.stop()
 
     def connect_slot(self, slot) -> None:
         """Connect a slot to the underlying timer managing the canvas update.
@@ -572,6 +573,15 @@ class PlotCanvasWidget(FigureCanvas):
         """Clear the canvas.
         """
         self.axes.clear()
+
+    def draw_strip_chart(self, x, y, clear : bool = True, **kwargs):
+        """
+        """
+        if clear:
+            self.clear()
+        self.axes.plot(x, y)
+        self.axes.set_autoscale_on(True)
+        self.axes.figure.canvas.draw()
 
     def draw_histogram(self, histogram : HistogramBase, stat_box : bool = True,
         clear : bool = True, **kwargs):
