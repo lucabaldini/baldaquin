@@ -90,17 +90,17 @@ class AppEventHandler(EventHandlerBase):
         """Constructor.
         """
         super().__init__()
-        self.serial_interface = None
+        self.serial_interface = PlasduinoSerialInterface()
 
     def open_serial_interface(self):
         """
         """
         port, model, vid, pid = arduino_info()
-        self.serial_interface = PlasduinoSerialInterface(port)
+        self.serial_interface.connect(port)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
-        sketch_id = self.serial_interface.read_uint8()
-        sketch_version = self.serial_interface.read_uint8()
+        sketch_id = self.serial_interface.read_and_unpack('B')
+        sketch_version = self.serial_interface.read_and_unpack('B')
         logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
 
     def read_packet(self):

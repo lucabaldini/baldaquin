@@ -21,7 +21,7 @@ from enum import Enum
 
 from baldaquin import logger
 from baldaquin.event import PacketBase
-from baldaquin.sport import SerialInterface
+from baldaquin.serial_ import SerialInterface
 
 
 

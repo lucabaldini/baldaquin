@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ import serial
 from baldaquin import logger
 
 
+
 SERIAL_DATA_SIZE_DICT = {
     'c': 1,
     'b': 1,
@@ -42,18 +43,31 @@ SERIAL_DATA_SIZE_DICT = {
     }
 
 
-
 class SerialInterface(serial.Serial):
 
     """Small wrapper around the serial.Serial class.
     """
 
-    def __init__(self, port: str = None, baudrate: int = 115200, timeout: float = None,
-        **kwargs) -> None:
-        """Constructor.
+    def setup(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
+        """Setup the connection.
         """
-        logger.info(f'Opening serial connection to port {port} @ {baudrate} baud rate...')
-        super().__init__(port, baudrate, timeout=timeout, **kwargs)
+        logger.debug(f'Configuring serial connection (port = {port}, baudarate = {baudrate}, timeout = {timeout})...')
+        self.port = port
+        self.baudrate = baudrate
+        self.timeout = timeout
+
+    def connect(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
+        """Connect to the serial port.
+        """
+        self.setup(port, baudrate, timeout)
+        logger.info(f'Opening serial connection to port {self.port}...')
+        self.open()
+
+    def disconnect(self):
+        """Disconnect from the serial port.
+        """
+        logger.info(f'Closing serial connection to port {self.port}...')
+        self.close()
 
     def pulse_dtr(self, pulse_length: float = 0.5) -> None:
         """Pulse the DTR line for a given amount of time.
@@ -68,6 +82,7 @@ class SerialInterface(serial.Serial):
         """
         size = SERIAL_DATA_SIZE_DICT[fmt]
         return struct.unpack(f'{byte_order}{fmt}', self.read(size))[0]
+        #return struct.unpack(fmt, self.read(struct.calcsize(fmt)))[0]
 
     def read_uint8(self) -> int:
         """Read an 8-bit unsigned unsigned integer from the serial port.
@@ -85,28 +100,7 @@ class SerialInterface(serial.Serial):
         return self.read_and_unpack('L')
 
     def pack_and_write(self, value: int, fmt: str) -> int:
-        """ Write a c struct to the serial port.
-
-        For convenience, here are the basic format strings.
-        Format  C type             Size
-        x       pad byte
-        c       char               1
-        b       signed char        1
-        B       unsigned char      1
-        ?       _Bool              1
-        h       short              2
-        H       unsigned short     2
-        i       int                4
-        I       unsigned int       4
-        l       long               4
-        L       unsigned long      4
-        q       long long          8
-        Q       unsigned long long 8
-        f       float              4
-        d       double             8
-        s       char[]
-        p       char[]
-        P       void *
+        """ Write a value to the serial port.
         """
         return self.write(struct.pack(fmt, value))
 
