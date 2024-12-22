@@ -39,7 +39,7 @@ def list_com_ports(*devices):
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
         logger.debug(f'{port.device} -> vid {hex(port.vid)}, pid {hex(port.pid)} '
-            'by {port.manufacturer}')
+            f'by {port.manufacturer}')
     return ports
 
 

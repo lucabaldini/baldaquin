@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 22024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@ from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_PROJECT_NAME
+from baldaquin.plasduino.plasduino import autodetect_arduino_board
 from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
-from baldaquin.plasduino.__serial__ import arduino_info
 from baldaquin.plt_ import plt
 from baldaquin.runctrl import RunControlBase
 from baldaquin.strip import StripChart
@@ -95,7 +95,7 @@ class AppEventHandler(EventHandlerBase):
     def open_serial_interface(self):
         """
         """
-        port, model, vid, pid = arduino_info()
+        port = autodetect_arduino_board()
         self.serial_interface.connect(port)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
