@@ -46,9 +46,3 @@ def autodetect_arduino_board() -> str:
     if len(ports) > 1:
         logger.warning('More than one arduino board found, picking the first one...')
     return ports[0].device
-
-
-
-#if __name__ == '__main__':
-#    device = autodetect_arduino_board()
-#    print(device)
