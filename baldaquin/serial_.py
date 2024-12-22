@@ -93,7 +93,7 @@ class SerialInterface(serial.Serial):
               were received until then.
         """
         logger.debug(f'Configuring serial connection (port = {port}, '
-            'baudarate = {baudrate}, timeout = {timeout})...')
+            f'baudarate = {baudrate}, timeout = {timeout})...')
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
