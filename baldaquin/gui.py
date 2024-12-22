@@ -574,13 +574,15 @@ class PlotCanvasWidget(FigureCanvas):
         """
         self.axes.clear()
 
-    def draw_strip_chart(self, x, y, clear: bool = True, **kwargs):
+    def draw_strip_charts(self, *strip_charts, clear: bool = True, **kwargs):
         """
         """
         if clear:
             self.clear()
-        self.axes.plot(x, y)
+        for strip_chart in strip_charts:
+            strip_chart.plot(self.axes)
         self.axes.set_autoscale_on(True)
+        self.axes.legend(loc='upper right')
         self.axes.figure.canvas.draw()
 
     def draw_histogram(self, histogram: HistogramBase, stat_box: bool = True,

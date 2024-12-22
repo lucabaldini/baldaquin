@@ -20,7 +20,7 @@ import collections
 
 import matplotlib.dates
 
-from baldaquin.plt_ import plt, setup_gca
+from baldaquin.plt_ import plt, setup_axes
 from baldaquin.timeline import Timeline
 
 
@@ -38,10 +38,11 @@ class StripChart:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, max_length: int, xoffset: float = 0., xlabel: str = None,
-        ylabel: str = None) -> None:
+    def __init__(self, max_length: int, label: str, xoffset: float = 0.,
+        xlabel: str = None, ylabel: str = None) -> None:
         """Constructor.
         """
+        self.label = label
         self.xoffset = xoffset
         self.x = collections.deque(maxlen=max_length)
         self.y = collections.deque(maxlen=max_length)
@@ -54,13 +55,15 @@ class StripChart:
         self.x.append(x + self.xoffset)
         self.y.append(y)
 
-    def plot(self, **kwargs) -> None:
+    def plot(self, axes=None, **kwargs) -> None:
         """Plot the strip chart.
         """
+        if axes is None:
+            axes = plt.gca()
         #x = matplotlib.dates.num2date(np.array(self.x) / 86400)
         #plt.plot(x, self.y, **kwargs)
-        plt.plot(self.x, self.y, **kwargs)
-        setup_gca(xlabel=self.xlabel, ylabel=self.ylabel, grids=True)
+        axes.plot(self.x, self.y, label=self.label, **kwargs)
+        setup_axes(axes, xlabel=self.xlabel, ylabel=self.ylabel, grids=True)
 
 
 if __name__ == '__main__':

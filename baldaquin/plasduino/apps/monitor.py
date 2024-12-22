@@ -29,9 +29,10 @@ from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_PROJECT_NAME
 from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
+from baldaquin.plasduino.__serial__ import arduino_info
 from baldaquin.plt_ import plt
 from baldaquin.runctrl import RunControlBase
-from baldaquin.plasduino.__serial__ import arduino_info
+from baldaquin.strip import StripChart
 
 
 
@@ -52,7 +53,7 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        plot_strip_charts = lambda : self.strip_chart_tab.draw_strip_chart(user_application.x, user_application.y)
+        plot_strip_charts = lambda : self.strip_chart_tab.draw_strip_charts(*user_application.strip_charts)
         self.strip_chart_tab.connect_slot(plot_strip_charts)
 
 
@@ -134,8 +135,10 @@ class Application(UserApplicationBase):
     def configure(self):
         """Overloaded method.
         """
-        print(self.configuration)
-        logger.info(f'Nothing to do in Application.configure()')
+        self.strip_charts = [
+            StripChart(100, 'Pin 1', xlabel='Time [s]', ylabel='ADC counts'),
+            StripChart(100, 'Pin 2', xlabel='Time [s]', ylabel='ADC counts'),
+            ]
 
     def start_run(self):
         """
@@ -161,12 +164,7 @@ class Application(UserApplicationBase):
         """.
         """
         readout = AnalogReadout.unpack(packet)
-        print(readout)
-        if readout.pin_number == 0:
-            self.x.append(readout.timestamp)
-            self.y.append(readout.adc_value)
-            #plt.plot(self.x, self.y)
-
+        self.strip_charts[readout.pin_number].append(readout.timestamp, readout.adc_value)
 
 
 
