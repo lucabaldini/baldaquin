@@ -141,7 +141,7 @@ class PlasduinoSerialInterface(SerialInterface):
         """
         """
         logger.debug(f'Writing {opcode} to the serial port...')
-        self.write_uint8(opcode.value)
+        self.pack_and_write(opcode.value, 'B')
 
     def write_start_run(self):
         """ Write a start run command to the serial port.
@@ -163,8 +163,8 @@ class PlasduinoSerialInterface(SerialInterface):
         self.write_opcode(opcode)
         logger.debug(f'Writing configuration value {value} to the serial port')
         self.pack_and_write(value, fmt)
-        target_opcode = self.read_uint8()
-        actual_opcode = self.read_uint8()
+        target_opcode = self.read_and_unpack('B')
+        actual_opcode = self.read_and_unpack('B')
         actual_value = self.read_and_unpack(fmt)
         logger.debug(f'Board response ({target_opcode}, {actual_opcode}, {actual_value})...')
         if actual_opcode != target_opcode or actual_value != value:

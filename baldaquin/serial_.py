@@ -25,24 +25,6 @@ from baldaquin import logger
 
 
 
-SERIAL_DATA_SIZE_DICT = {
-    'c': 1,
-    'b': 1,
-    'B': 1,
-    '?': 1,
-    'h': 2,
-    'H': 2,
-    'i': 4,
-    'I': 4,
-    'l': 4,
-    'L': 4,
-    'q': 8,
-    'Q': 8,
-    'f': 4,
-    'd': 8
-    }
-
-
 class SerialInterface(serial.Serial):
 
     """Small wrapper around the serial.Serial class.
@@ -80,41 +62,9 @@ class SerialInterface(serial.Serial):
     def read_and_unpack(self, fmt: str, byte_order: str = '>'):
         """Read a given number of bytes from the serial port and unpack them.
         """
-        size = SERIAL_DATA_SIZE_DICT[fmt]
-        return struct.unpack(f'{byte_order}{fmt}', self.read(size))[0]
-        #return struct.unpack(fmt, self.read(struct.calcsize(fmt)))[0]
-
-    def read_uint8(self) -> int:
-        """Read an 8-bit unsigned unsigned integer from the serial port.
-        """
-        return self.read_and_unpack('B')
-
-    def read_uint16(self) -> int:
-        """Read a 16-bit unsigned unsigned integer from the serial port.
-        """
-        return self.read_and_unpack('H')
-
-    def read_uint32(self) -> int:
-        """Read a 32-bit unsigned unsigned integer from the serial port.
-        """
-        return self.read_and_unpack('L')
+        return struct.unpack(f'{byte_order}{fmt}', self.read(struct.calcsize(fmt)))[0]
 
     def pack_and_write(self, value: int, fmt: str) -> int:
         """ Write a value to the serial port.
         """
         return self.write(struct.pack(fmt, value))
-
-    def write_uint8(self, value: int) -> int:
-        """ Write a uint8_t to the serial port.
-        """
-        return self.pack_and_write(value, 'B')
-
-    def write_uint16(self, value: int) -> int:
-        """ Write a uint16_t to the serial port.
-        """
-        return self.pack_and_write(value, 'H')
-
-    def write_uint32(self, value: int) -> int:
-        """ Write a uint32_t to the serial port.
-        """
-        return self.pack_and_write(value, 'I')
