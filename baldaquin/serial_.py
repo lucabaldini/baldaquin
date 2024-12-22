@@ -20,8 +20,27 @@ import struct
 import time
 
 import serial
+import serial.tools.list_ports
 
 from baldaquin import logger
+
+
+
+def list_com_ports(*devices):
+    """List all the com ports with devices attached, possibly with a filter on the
+    (vid, pid) pairs we are interested into.
+    """
+    logger.info('Scanning serial devices...')
+    ports = serial.tools.list_ports.comports()
+    logger.info(f'Done, {len(ports)} device(s) found.')
+    if len(devices) > 0:
+        logger.info(f'Filtering port list for specific devices: {devices}...')
+        ports = [port for port in ports if (port.vid, port.pid) in devices]
+        logger.info(f'Done, {len(ports)} device(s) remaining.')
+    for port in ports:
+        logger.debug(f'{port.device} -> vid {hex(port.vid)}, pid {hex(port.pid)} '
+            'by {port.manufacturer}')
+    return ports
 
 
 
