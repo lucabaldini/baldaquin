@@ -190,7 +190,7 @@ def setup_axes(axes, **kwargs):
 def setup_gca(**kwargs):
     """Setup the axes for the current plot.
     """
-    setup_axes(plt.gca())
+    setup_axes(plt.gca(), **kwargs)
 
 
 def _set_rc_param(key : str, value : Any):
