@@ -30,10 +30,51 @@ class SerialInterface(serial.Serial):
     """Small wrapper around the serial.Serial class.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def setup(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
-        """Setup the connection.
+        """Setup the serial connection.
+
+        Arguments
+        ---------
+        port : str
+            The name of the port to connect to (e.g., ``/dev/ttyACM0``).
+
+        baudrate : int
+            The baud rate.
+
+            Verbatim from the pyserial documentation: the parameter baudrate can
+            be one of the standard values: 50, 75, 110, 134, 150, 200, 300, 600,
+            1200, 1800, 2400, 4800, 9600, 19200, 38400, 57600, 115200. These are
+            well supported on all platforms.
+
+            Standard values above 115200, such as: 230400, 460800, 500000, 576000,
+            921600, 1000000, 1152000, 1500000, 2000000, 2500000, 3000000, 3500000,
+            4000000 also work on many platforms and devices.
+
+            Non-standard values are also supported on some platforms (GNU/Linux,
+            MAC OSX >= Tiger, Windows). Though, even on these platforms some serial
+            ports may reject non-standard values.
+
+        timeout : float
+            The timeout in seconds.
+
+            Verbatim from the pyserial documentation: possible values for the parameter
+            timeout which controls the behavior of read():
+
+            * ``timeout = None``: wait forever / until requested number of bytes
+              are received
+
+            * ``timeout = 0``: non-blocking mode, return immediately in any case,
+              returning zero or more, up to the requested number of bytes
+
+            * ``timeout = x``: set timeout to x seconds (float allowed) returns
+              immediately when the requested number of bytes are available,
+              otherwise wait until the timeout expires and return all bytes that
+              were received until then.
         """
-        logger.debug(f'Configuring serial connection (port = {port}, baudarate = {baudrate}, timeout = {timeout})...')
+        logger.debug(f'Configuring serial connection (port = {port}, '
+            'baudarate = {baudrate}, timeout = {timeout})...')
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -59,10 +100,10 @@ class SerialInterface(serial.Serial):
         time.sleep(pulse_length)
         self.dtr = 0
 
-    def read_and_unpack(self, fmt: str, byte_order: str = '>'):
+    def read_and_unpack(self, fmt: str):
         """Read a given number of bytes from the serial port and unpack them.
         """
-        return struct.unpack(f'{byte_order}{fmt}', self.read(struct.calcsize(fmt)))[0]
+        return struct.unpack(fmt, self.read(struct.calcsize(fmt)))[0]
 
     def pack_and_write(self, value: int, fmt: str) -> int:
         """ Write a value to the serial port.

@@ -135,25 +135,45 @@ class AnalogReadout(PacketBase):
 class PlasduinoSerialInterface(SerialInterface):
 
     """Specialized serial interface.
+
+    This is derived class of our basic serial interface, where we essentially
+    implement the simple plasduino communication protocol.
     """
 
-    def write_opcode(self, opcode):
+    # pylint: disable=too-many-ancestors
+
+    def read_and_unpack(self, fmt: str):
+        """Overloaded function.
+
+        For some reason on the arduino side we go into the trouble of reverting the
+        native bit order and we transmit things as big endian---I have no idea
+        what I was thinking, back in the days, but I don't think it makes sense
+        to fix this nonsense, now. Extra work on the transmitting side, and extra
+        work on the receiving side too. Good job, Luca!
         """
+        return super().read_and_unpack(f'>{fmt}')
+
+    def write_opcode(self, opcode: OpCode) -> None:
+        """Write the value of a given opcode to the serial port.
+
+        This is typically meant to signal the start/stop run, or to configure the
+        behavior of the sketch on the arduino side (e.g., select the pins for
+        analog readout).
         """
         logger.debug(f'Writing {opcode} to the serial port...')
         self.pack_and_write(opcode.value, 'B')
 
-    def write_start_run(self):
+    def write_start_run(self) -> None:
         """ Write a start run command to the serial port.
         """
         self.write_opcode(OpCode.OP_CODE_START_RUN)
 
-    def write_stop_run(self):
+    def write_stop_run(self) -> None:
         """ Write a stop run command to the serial port.
         """
         self.write_opcode(OpCode.OP_CODE_STOP_RUN)
 
-    def write_cmd(self, opcode: OpCode, value, fmt: str):
+    def write_cmd(self, opcode: OpCode, value: int, fmt: str) -> None:
         """ Write a command to the arduino board.
 
         This implies writing the opcode to the serial port, writing the actual

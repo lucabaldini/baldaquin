@@ -24,6 +24,7 @@ List of modules
    event
    hist
    runctrl
+   serial_
    timeline
 
 
