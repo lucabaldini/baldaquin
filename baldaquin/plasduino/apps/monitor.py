@@ -1,4 +1,4 @@
-# Copyright (C) 22024 the baldaquin team.
+# Copyright (C) 2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,30 +16,22 @@
 """Plasduino monitor application.
 """
 
-import time
-
-import numpy as np
-
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
-from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
-from baldaquin.plasduino.plasduino import autodetect_arduino_board, PlasduinoRunControl,\
-    PlasduinoAnalogEventHandler
-from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
-from baldaquin.plt_ import plt
-from baldaquin.runctrl import RunControlBase
+from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler
+from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.strip import StripChart
 
 
 
 class AppMainWindow(MainWindow):
 
-    """
+    """Application graphical user interface.
     """
 
     _PROJECT_NAME = plasduino.PROJECT_NAME
@@ -54,7 +46,8 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        plot_strip_charts = lambda : self.strip_chart_tab.draw_strip_charts(*user_application.strip_charts)
+        plot_strip_charts = lambda :\
+            self.strip_chart_tab.draw_strip_charts(*user_application.strip_charts)
         self.strip_chart_tab.connect_slot(plot_strip_charts)
 
 
@@ -66,7 +59,8 @@ class AppConfiguration(ConfigurationBase):
 
     TITLE = 'Monitor configuration'
     PARAMETER_SPECS = (
-        ('sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd', dict(min=100, max=100000)),
+        ('sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd',
+            dict(min=100, max=100000)),
     )
 
 
@@ -81,16 +75,6 @@ class GenericMonitor(UserApplicationBase):
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'monitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
 
-    def __init__(self):
-        """Overloaded constructor.
-        """
-        super().__init__()
-
-    def setup(self):
-        """
-        """
-        self.event_handler.open_serial_interface()
-
     def configure(self):
         """Overloaded method.
         """
@@ -99,17 +83,28 @@ class GenericMonitor(UserApplicationBase):
             StripChart(100, 'Pin 2', xlabel='Time [s]', ylabel='ADC counts'),
             ]
 
-    def start_run(self):
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
         """
+        self.event_handler.open_serial_interface()
+
+    def teardown(self) -> None:
+        """Overloaded method (STOPPED -> RESET).
+        """
+        logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
+
+    def start_run(self) -> None:
+        """Overloaded method.
         """
         pin_list = (0, 1)
         sampling_interval = 500
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(pin_list, sampling_interval)
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(pin_list,
+            sampling_interval)
         self.event_handler.serial_interface.write_start_run()
         super().start_run()
 
-    def stop_run(self):
-        """
+    def stop_run(self) -> None:
+        """Overloaded method.
         """
         self.event_handler.serial_interface.write_stop_run()
         super().stop_run()
@@ -119,8 +114,8 @@ class GenericMonitor(UserApplicationBase):
         logger.info('Flushing the serial port...')
         self.event_handler.serial_interface.flush()
 
-    def process_packet(self, packet):
-        """.
+    def process_packet(self, packet) -> None:
+        """Overloaded method.
         """
         readout = AnalogReadout.unpack(packet)
         self.strip_charts[readout.pin_number].append(readout.timestamp, readout.adc_value)
