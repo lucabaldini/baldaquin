@@ -84,7 +84,7 @@ class TemperatureMonitor(UserApplicationBase):
         super().__init__()
         self.strip_chart_dict = {pin: None for pin in self._PIN_LIST}
 
-    def _strip_chart(self, pin: int, max_length: int) -> SlidingStripChart:
+    def _create_strip_chart(self, pin: int, max_length: int) -> SlidingStripChart:
         """Create a new strip chart for a given pin.
         """
         return SlidingStripChart(max_length, f'Pin {pin}', **self._STRIP_CHART_KWARGS)
@@ -94,7 +94,7 @@ class TemperatureMonitor(UserApplicationBase):
         """
         sampling_interval = self.configuration.value('sampling_interval')
         max_length = self.configuration.value('strip_chart_max_length')
-        self.strip_chart_dict = {pin: self._strip_chart(pin, max_length) for pin in self._PIN_LIST}
+        self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) for pin in self._PIN_LIST}
         self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PIN_LIST,
             sampling_interval)
 
