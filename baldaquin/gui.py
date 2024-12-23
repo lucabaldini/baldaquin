@@ -779,25 +779,28 @@ class MainWindow(QtWidgets.QMainWindow):
     """Base class for a DAQ main window.
     """
 
-    PROJECT_NAME = None
-    MINIMUM_WIDTH = 1000
-    TAB_ICON_SIZE = QtCore.QSize(25, 25)
+    _PROJECT_NAME = None
+    _MINIMUM_WIDTH = 1000
+    _TAB_ICON_SIZE = QtCore.QSize(25, 25)
 
     def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
+        if self._PROJECT_NAME is None:
+            msg = f'{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set.'
+            raise RuntimeError(msg)
         super().__init__(parent)
         self.setCentralWidget(QtWidgets.QWidget())
         self.centralWidget().setLayout(QtWidgets.QGridLayout())
-        self.centralWidget().setMinimumWidth(self.MINIMUM_WIDTH)
+        self.centralWidget().setMinimumWidth(self._MINIMUM_WIDTH)
         self.control_bar = ControlBar(self)
         self.add_widget(self.control_bar, 1, 0)
         self.run_control_card = RunControlCard()
-        self.run_control_card.set(RunControlCardField.PROJECT_NAME, self.PROJECT_NAME)
+        self.run_control_card.set(RunControlCardField.PROJECT_NAME, self._PROJECT_NAME)
         self.add_widget(self.run_control_card, 0, 0)
         self.tab_widget = QtWidgets.QTabWidget()
         #tab.setTabPosition(tab.TabPosition.West)
-        self.tab_widget.setIconSize(self.TAB_ICON_SIZE)
+        self.tab_widget.setIconSize(self._TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')

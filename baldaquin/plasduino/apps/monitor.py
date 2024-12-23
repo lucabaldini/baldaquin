@@ -42,7 +42,7 @@ class AppMainWindow(MainWindow):
     """
     """
 
-    PROJECT_NAME = plasduino.PROJECT_NAME
+    _PROJECT_NAME = plasduino.PROJECT_NAME
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
