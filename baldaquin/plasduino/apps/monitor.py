@@ -91,7 +91,7 @@ class GenericMonitor(UserApplicationBase):
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).
         """
-        logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
+        self.event_handler.serial_interface.disconnect()
 
     def start_run(self) -> None:
         """Overloaded method.
