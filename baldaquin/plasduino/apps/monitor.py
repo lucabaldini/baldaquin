@@ -59,9 +59,28 @@ class AppConfiguration(ConfigurationBase):
 
     TITLE = 'Monitor configuration'
     PARAMETER_SPECS = (
-        ('sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd',
-            dict(min=100, max=100000)),
+        ('sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd', dict(min=100, max=100000)),
+        ('ch0', 'int', 0, 'Pin number for channel 0', None, None, dict(min=-1, max=5)),
+        ('ch1', 'int', 1, 'Pin number for channel 1', None, None, dict(min=-1, max=5)),
+        ('ch2', 'int', -1, 'Pin number for channel 2', None, None, dict(min=-1, max=5)),
+        ('ch3', 'int', -1, 'Pin number for channel 3', None, None, dict(min=-1, max=5)),
+        ('ch4', 'int', -1, 'Pin number for channel 4', None, None, dict(min=-1, max=5)),
+        ('ch5', 'int', -1, 'Pin number for channel 5', None, None, dict(min=-1, max=5))
     )
+
+    def sketch_parameters(self):
+        """Return the parameters that are necessary for the configuration of the
+        sketch on the arduino side.
+        """
+        pin_list = []
+        for i in range(6):
+            pin = self.value(f'ch{i}')
+            if pin in pin_list:
+                raise RuntimeError(f'Duplicated pin in {self.__class__.__name__}')
+            if pin >= 0:
+                pin_list.append(pin)
+        sampling_interval = self.value('sampling_interval')
+        return pin_list, sampling_interval
 
 
 
@@ -82,6 +101,8 @@ class GenericMonitor(UserApplicationBase):
             StripChart(100, 'Pin 1', xlabel='Time [s]', ylabel='ADC counts'),
             StripChart(100, 'Pin 2', xlabel='Time [s]', ylabel='ADC counts'),
             ]
+        args = self.configuration.sketch_parameters()
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(*args)
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
@@ -96,10 +117,6 @@ class GenericMonitor(UserApplicationBase):
     def start_run(self) -> None:
         """Overloaded method.
         """
-        pin_list = (0, 1)
-        sampling_interval = 500
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(pin_list,
-            sampling_interval)
         self.event_handler.serial_interface.write_start_run()
         super().start_run()
 
