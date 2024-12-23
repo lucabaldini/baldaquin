@@ -18,6 +18,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any
 
 from baldaquin import logger
 from baldaquin.event import PacketBase
@@ -27,7 +28,12 @@ from baldaquin.serial_ import SerialInterface
 
 class Marker(Enum):
 
-    """Useful protocol markers.
+    """Relevant protocol markers, verbatim from
+    https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol.h
+
+    (In the old days we used to have this generated automatically from the
+    corresponding header file, but the project is so stable now, that this seems
+    hardly relevant.)
     """
 
     NO_OP_HEADER = 0xA0
@@ -40,8 +46,12 @@ class Marker(Enum):
 
 class OpCode(Enum):
 
-    """Definition of the opcodes from
-    https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol_h.py
+    """Definition of the operational codes, verbatim from
+    https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol.h
+
+    (In the old days we used to have this generated automatically from the
+    corresponding header file, but the project is so stable now, that this seems
+    hardly relevant.)
     """
 
     OP_CODE_NO_OP = 0x00
@@ -63,7 +73,8 @@ class OpCode(Enum):
 
 class Polarity(Enum):
 
-    """Polarity of a digital transition on the serial port.
+    """Polarity of a digital transition on the serial port---this indicate whether
+    the timestamp was acquired on the rising or falling edge of the input signal.
     """
 
     RISING = 1
@@ -83,6 +94,7 @@ class DigitalTransition(PacketBase):
 
     FORMAT = '>BBL'
     SIZE = PacketBase.calculate_size(FORMAT)
+    HEADER_MARKER = Marker.DIGITAL_TRANSITION_HEADER.value
 
     header: int
     _info: int
@@ -90,14 +102,19 @@ class DigitalTransition(PacketBase):
     pin_number: int = 0
     polarity: Polarity = Polarity.RISING
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post initialization.
+
+        We make sure that the header is correct, unpack the _info field, and
+        convert the timestamp from us to s.
         """
-        if self.header != Marker.DIGITAL_TRANSITION_HEADER.value:
+        if self.header != self.HEADER_MARKER:
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
+        # Note the _info field is packing into a single byte the polarity
+        # (the MSB) and the pin number.
         self.pin_number = self._info & 0x7F
         self.polarity = (self._info >> 7) & 0x1
-        self.timestamp /= 1000000.
+        self.timestamp /= 1.e6
 
 
 
@@ -114,27 +131,28 @@ class AnalogReadout(PacketBase):
 
     FORMAT = '>BBLH'
     SIZE = PacketBase.calculate_size(FORMAT)
+    HEADER_MARKER = Marker.ANALOG_READOUT_HEADER.value
 
     header: int
     pin_number: int
     timestamp: float
     adc_value: int
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Post initialization.
 
-        We basically make sure that the header is correct, and we convert the timestamp
+        We make sure that the header is correct, and we convert the timestamp
         from ms to s.
         """
-        if self.header != Marker.ANALOG_READOUT_HEADER.value:
+        if self.header != self.HEADER_MARKER:
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
-        self.timestamp /= 1000.
+        self.timestamp /= 1.e3
 
 
 
 class PlasduinoSerialInterface(SerialInterface):
 
-    """Specialized serial interface.
+    """Specialized plasduino serial interface.
 
     This is derived class of our basic serial interface, where we essentially
     implement the simple plasduino communication protocol.
@@ -142,7 +160,7 @@ class PlasduinoSerialInterface(SerialInterface):
 
     # pylint: disable=too-many-ancestors
 
-    def read_and_unpack(self, fmt: str):
+    def read_and_unpack(self, fmt: str) -> Any:
         """Overloaded function.
 
         For some reason on the arduino side we go into the trouble of reverting the
@@ -153,7 +171,7 @@ class PlasduinoSerialInterface(SerialInterface):
         """
         return super().read_and_unpack(f'>{fmt}')
 
-    def write_opcode(self, opcode: OpCode) -> None:
+    def write_opcode(self, opcode: OpCode) -> int:
         """Write the value of a given opcode to the serial port.
 
         This is typically meant to signal the start/stop run, or to configure the
@@ -161,17 +179,17 @@ class PlasduinoSerialInterface(SerialInterface):
         analog readout).
         """
         logger.debug(f'Writing {opcode} to the serial port...')
-        self.pack_and_write(opcode.value, 'B')
+        return self.pack_and_write(opcode.value, 'B')
 
-    def write_start_run(self) -> None:
+    def write_start_run(self) -> int:
         """ Write a start run command to the serial port.
         """
-        self.write_opcode(OpCode.OP_CODE_START_RUN)
+        return self.write_opcode(OpCode.OP_CODE_START_RUN)
 
-    def write_stop_run(self) -> None:
+    def write_stop_run(self) -> int:
         """ Write a stop run command to the serial port.
         """
-        self.write_opcode(OpCode.OP_CODE_STOP_RUN)
+        return self.write_opcode(OpCode.OP_CODE_STOP_RUN)
 
     def write_cmd(self, opcode: OpCode, value: int, fmt: str) -> None:
         """ Write a command to the arduino board.
@@ -179,6 +197,21 @@ class PlasduinoSerialInterface(SerialInterface):
         This implies writing the opcode to the serial port, writing the actual
         payload and, finally, reading back the arduino response and making
         sure the communication went fine.
+
+        And, looking back at this after many years, I cannot help noticing that
+        it looks a little bit funny, but I guess it did make sense, back in the
+        days.
+
+        Arguments
+        ---------
+        opcode : OpCode
+            The opcode defining the command.
+
+        value : int
+            The actual value.
+
+        fmt : str
+            The format string.
         """
         self.write_opcode(opcode)
         logger.debug(f'Writing configuration value {value} to the serial port')
@@ -187,10 +220,10 @@ class PlasduinoSerialInterface(SerialInterface):
         actual_opcode = self.read_and_unpack('B')
         actual_value = self.read_and_unpack(fmt)
         logger.debug(f'Board response ({target_opcode}, {actual_opcode}, {actual_value})...')
-        if actual_opcode != target_opcode or actual_value != value:
+        if actual_opcode != opcode.value or actual_value != value:
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
-    def setup_analog_sampling_sketch(self, pin_list: tuple, sampling_interval: int):
+    def setup_analog_sampling_sketch(self, pin_list: tuple, sampling_interval: int) -> None:
         """ Setup the sktchAnalogSampling sketch.
         """
         self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pin_list), 'B')
