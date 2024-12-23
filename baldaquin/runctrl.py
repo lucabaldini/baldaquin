@@ -234,8 +234,8 @@ class RunControlBase(FiniteStateMachineBase):
 
     """Run control class.
 
-    Derived classes need to set the ``PROJECT_NAME`` class member (this controls
-    the placement of the output files) and, optionally ``DEFAULT_REFRESH_INTERVAL``
+    Derived classes need to set the ``_PROJECT_NAME`` class member (this controls
+    the placement of the output files) and, optionally ``_DEFAULT_REFRESH_INTERVAL``
     as well.
 
     Arguments
@@ -245,8 +245,8 @@ class RunControlBase(FiniteStateMachineBase):
         updating the information on the control GUI as the data taking proceeds.
     """
 
-    PROJECT_NAME = None
-    DEFAULT_REFRESH_INTERVAL = 750
+    _PROJECT_NAME = None
+    _DEFAULT_REFRESH_INTERVAL = 750
 
     # pylint: disable=c-extension-no-member, too-many-instance-attributes
     run_id_changed = QtCore.Signal(int)
@@ -254,11 +254,11 @@ class RunControlBase(FiniteStateMachineBase):
     uptime_updated = QtCore.Signal(float)
     event_handler_stats_updated = QtCore.Signal(PacketStatistics, float)
 
-    def __init__(self, refresh_interval : int = DEFAULT_REFRESH_INTERVAL) -> None:
+    def __init__(self, refresh_interval : int = _DEFAULT_REFRESH_INTERVAL) -> None:
         """Constructor.
         """
-        if self.PROJECT_NAME is None:
-            msg = f'{self.__class__.__name__} needs to be subclassed, and PROJECT_NAME set.'
+        if self._PROJECT_NAME is None:
+            msg = f'{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set.'
             raise RuntimeError(msg)
         super().__init__()
         self._test_stand_id = self._read_test_stand_id()
@@ -300,7 +300,7 @@ class RunControlBase(FiniteStateMachineBase):
         file_name : str
             The file name.
         """
-        return config_folder_path(self.PROJECT_NAME) / file_name
+        return config_folder_path(self._PROJECT_NAME) / file_name
 
     def _test_stand_id_file_path(self) -> Path:
         """Return the path to the configuration file holding the test stand id.
@@ -334,7 +334,7 @@ class RunControlBase(FiniteStateMachineBase):
     def data_folder_path(self) -> Path:
         """Return the path to the data folder for the current run.
         """
-        return data_folder_path(self.PROJECT_NAME) / self._file_name_base()
+        return data_folder_path(self._PROJECT_NAME) / self._file_name_base()
 
     def data_file_name(self) -> str:
         """Return the current data file name.

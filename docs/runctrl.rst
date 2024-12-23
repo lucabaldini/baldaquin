@@ -81,14 +81,14 @@ acquisition, including:
 
 :class:`RunControlBase <baldaquin.runctrl.RunControlBase>` is still an abstract
 class that cannot be instantiated directly. Subclasses must, at the very minimum,
-define the ``PROJECT_NAME`` class attribute, and a minimal working example of a
+define the ``_PROJECT_NAME`` class attribute, and a minimal working example of a
 concrete run control will look like:
 
 .. code::
 
    class MyRunControl:
 
-      PROJECT_NAME = 'my_project'
+      _PROJECT_NAME = 'my_project'
 
 Any run control object is equipped to emit the following signals:
 
@@ -137,18 +137,18 @@ I/O and file locations
 ~~~~~~~~~~~~~~~~~~~~~~
 
 The basic rules for the location of the files managed by the run control are
-determined by the ``PROJECT_NAME`` class attribute, and they boil down to:
+determined by the ``_PROJECT_NAME`` class attribute, and they boil down to:
 
 * configuration files (e.g., ``test_stand.cfg`` and ``run.cfg``) live in
-  ``$HOME/.baldaquin/PROJECT_NAME``;
+  ``$HOME/.baldaquin/_PROJECT_NAME``;
 * all run-specific data products (that is, data files and log files) are saved
-  in ``$BALDAQUIN_DATA/PROJECT_NAME`` if the ``$BALDAQUIN_DATA`` environmental
-  variable is defined, and in ``$HOME/baldaquindata/PROJECT_NAME`` otherwise---more
+  in ``$BALDAQUIN_DATA/_PROJECT_NAME`` if the ``$BALDAQUIN_DATA`` environmental
+  variable is defined, and in ``$HOME/baldaquindata/_PROJECT_NAME`` otherwise---more
   specifically, a self-contained folder named after the test-stand and run ID is
   created there every time a run is started;
 * user applications provide their own semantics to control the location of the
   relevant configuration files, but the latter are typically located in
-  ``$HOME/.baldaquin/PROJECT_NAME/apps``.
+  ``$HOME/.baldaquin/_PROJECT_NAME/apps``.
 
 
 

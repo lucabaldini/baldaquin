@@ -66,7 +66,7 @@ class PlasduinoRunControl(RunControlBase):
     """Specialized plasduino run control.
     """
 
-    PROJECT_NAME = plasduino.PROJECT_NAME
+    _PROJECT_NAME = plasduino.PROJECT_NAME
 
 
 
