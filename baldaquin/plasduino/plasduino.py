@@ -1,4 +1,4 @@
-# Copyright (C) 22024 the baldaquin team.
+# Copyright (C) 2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
