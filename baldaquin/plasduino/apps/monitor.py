@@ -21,14 +21,14 @@ import time
 import numpy as np
 
 from baldaquin import logger
+from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
-from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
-from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_PROJECT_NAME
-from baldaquin.plasduino.plasduino import autodetect_arduino_board
+from baldaquin.plasduino import PLASDUINO_APP_CONFIG
+from baldaquin.plasduino.plasduino import autodetect_arduino_board, PlasduinoRunControl, PlasduinoEventHandler
 from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
 from baldaquin.plt_ import plt
 from baldaquin.runctrl import RunControlBase
@@ -41,7 +41,7 @@ class AppMainWindow(MainWindow):
     """
     """
 
-    PROJECT_NAME = PLASDUINO_PROJECT_NAME
+    PROJECT_NAME = plasduino.PROJECT_NAME
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
@@ -69,39 +69,8 @@ class AppConfiguration(ConfigurationBase):
     )
 
 
-class AppRunControl(RunControlBase):
 
-    """Mock run control for testing purposes.
-    """
-
-    PROJECT_NAME = PLASDUINO_PROJECT_NAME
-
-
-
-class AppEventHandler(EventHandlerBase):
-
-    """Mock event handler for testing purpose.
-    """
-
-    BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=20, flush_size=10, flush_interval=2.)
-
-    def __init__(self):
-        """Constructor.
-        """
-        super().__init__()
-        self.serial_interface = PlasduinoSerialInterface()
-
-    def open_serial_interface(self):
-        """
-        """
-        port = autodetect_arduino_board()
-        self.serial_interface.connect(port)
-        self.serial_interface.pulse_dtr()
-        logger.info('Hand-shaking with the arduino board...')
-        sketch_id = self.serial_interface.read_and_unpack('B')
-        sketch_version = self.serial_interface.read_and_unpack('B')
-        logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+class AppEventHandler(PlasduinoEventHandler):
 
     def read_packet(self):
         """Read a single packet.
@@ -110,12 +79,12 @@ class AppEventHandler(EventHandlerBase):
 
 
 
-class Application(UserApplicationBase):
+class GenericMonitor(UserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Temperature monitor'
+    NAME = 'Generic monitor'
     CONFIGURATION_CLASS = AppConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'monitor.cfg'
     EVENT_HANDLER_CLASS = AppEventHandler
@@ -124,8 +93,6 @@ class Application(UserApplicationBase):
         """Overloaded constructor.
         """
         super().__init__()
-        self.x = []
-        self.y = []
 
     def setup(self):
         """
@@ -169,4 +136,4 @@ class Application(UserApplicationBase):
 
 
 if __name__ == '__main__':
-    bootstrap_window(AppMainWindow, AppRunControl(), Application())
+    bootstrap_window(AppMainWindow, PlasduinoRunControl(), GenericMonitor())

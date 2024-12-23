@@ -16,6 +16,12 @@
 """Plasduino common resources.
 """
 
+from baldaquin import logger
+from baldaquin import plasduino
+from baldaquin.buf import CircularBuffer
+from baldaquin.event import EventHandlerBase
+from baldaquin.plasduino.protocol import PlasduinoSerialInterface
+from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import list_com_ports
 
 
@@ -39,6 +45,12 @@ def autodetect_arduino_board() -> str:
 
     Note this returns None if no supported arduino board is found, and the the
     first board found in case there are more than one.
+
+    Returns
+    -------
+    str
+        The name of the (first available) port with a supported arduino attached
+        to it.
     """
     ports = list_com_ports(*_SUPPORTED_BOARDS)
     if len(ports) == 0:
@@ -46,3 +58,48 @@ def autodetect_arduino_board() -> str:
     if len(ports) > 1:
         logger.warning('More than one arduino board found, picking the first one...')
     return ports[0].device
+
+
+
+class PlasduinoRunControl(RunControlBase):
+
+    """Specialized plasduino run control.
+    """
+
+    PROJECT_NAME = plasduino.PROJECT_NAME
+
+
+
+class PlasduinoEventHandler(EventHandlerBase):
+
+    """Plasduino basic event handler.
+
+    This takes care of all the operations connected with the handshaking and
+    sketch upload. Derived classes must implement the ``read_packet()`` slot.
+    """
+
+    BUFFER_CLASS = CircularBuffer
+    BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_interval=5.)
+
+    def __init__(self) -> None:
+        """Constructor.
+
+        We create an empty serial interface, here.
+        """
+        super().__init__()
+        self.serial_interface = PlasduinoSerialInterface()
+
+    def open_serial_interface(self) -> None:
+        """Autodetect a supported arduino board, open the serial connection to it,
+        and do the handshaking.
+
+        .. warning::
+            We still have to implement to sketch upload part, here.
+        """
+        port = autodetect_arduino_board()
+        self.serial_interface.connect(port)
+        self.serial_interface.pulse_dtr()
+        logger.info('Hand-shaking with the arduino board...')
+        sketch_id = self.serial_interface.read_and_unpack('B')
+        sketch_version = self.serial_interface.read_and_unpack('B')
+        logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')

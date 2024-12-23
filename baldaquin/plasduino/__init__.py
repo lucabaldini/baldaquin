@@ -16,9 +16,9 @@
 """Plasduino project.
 """
 
-from baldaquin import setup_project, _create_folder
+from baldaquin import setup_project
 
 
-PLASDUINO_PROJECT_NAME = 'plasduino'
+PROJECT_NAME = 'plasduino'
 
-PLASDUINO_CONFIG, PLASDUINO_APP_CONFIG, PLASDUINO_DATA = setup_project(PLASDUINO_PROJECT_NAME)
+PLASDUINO_CONFIG, PLASDUINO_APP_CONFIG, PLASDUINO_DATA = setup_project(PROJECT_NAME)
