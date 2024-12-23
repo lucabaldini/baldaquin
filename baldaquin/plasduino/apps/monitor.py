@@ -28,7 +28,8 @@ from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
-from baldaquin.plasduino.plasduino import autodetect_arduino_board, PlasduinoRunControl, PlasduinoEventHandler
+from baldaquin.plasduino.plasduino import autodetect_arduino_board, PlasduinoRunControl,\
+    PlasduinoAnalogEventHandler
 from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout
 from baldaquin.plt_ import plt
 from baldaquin.runctrl import RunControlBase
@@ -70,15 +71,6 @@ class AppConfiguration(ConfigurationBase):
 
 
 
-class AppEventHandler(PlasduinoEventHandler):
-
-    def read_packet(self):
-        """Read a single packet.
-        """
-        return self.serial_interface.read(AnalogReadout.SIZE)
-
-
-
 class GenericMonitor(UserApplicationBase):
 
     """Simplest possible user application for testing purposes.
@@ -87,7 +79,7 @@ class GenericMonitor(UserApplicationBase):
     NAME = 'Generic monitor'
     CONFIGURATION_CLASS = AppConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'monitor.cfg'
-    EVENT_HANDLER_CLASS = AppEventHandler
+    EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
 
     def __init__(self):
         """Overloaded constructor.

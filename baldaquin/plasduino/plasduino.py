@@ -20,7 +20,8 @@ from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.buf import CircularBuffer
 from baldaquin.event import EventHandlerBase
-from baldaquin.plasduino.protocol import PlasduinoSerialInterface
+from baldaquin.plasduino.protocol import PlasduinoSerialInterface, AnalogReadout,\
+    DigitalTransition
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import list_com_ports
 
@@ -105,3 +106,27 @@ class PlasduinoEventHandler(EventHandlerBase):
         sketch_id = self.serial_interface.read_and_unpack('B')
         sketch_version = self.serial_interface.read_and_unpack('B')
         logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+
+
+
+class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
+
+    """Event handler for the plasduino sketches reading analog data.
+    """
+
+    def read_packet(self):
+        """Read a single packet, that is, an analog readout.
+        """
+        return self.serial_interface.read(AnalogReadout.SIZE)
+
+
+
+class PlasduinoDigitalEventHandler(PlasduinoEventHandler):
+
+    """Event handler for the plasduino sketches reading digital data.
+    """
+
+    def read_packet(self):
+        """Read a single packet, that is, an analog readout.
+        """
+        return self.serial_interface.read(DigitalTransition.SIZE)
