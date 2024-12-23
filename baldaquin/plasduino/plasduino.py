@@ -97,6 +97,8 @@ class PlasduinoEventHandler(EventHandlerBase):
             We still have to implement to sketch upload part, here.
         """
         port = autodetect_arduino_board()
+        if port is None:
+            raise RuntimeError('Could not find a suitable arduino board connected.')
         self.serial_interface.connect(port)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
