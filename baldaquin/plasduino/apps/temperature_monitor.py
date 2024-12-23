@@ -125,6 +125,21 @@ class TemperatureMonitor(UserApplicationBase):
         logger.info('Flushing the serial port...')
         self.event_handler.serial_interface.flush()
 
+    def pause(self) -> None:
+        """
+        """
+        self.event_handler.serial_interface.write_stop_run()
+
+    def resume(self) -> None:
+        """
+        """
+        self.event_handler.serial_interface.write_start_run()
+
+    def stop(self) -> None:
+        """
+        """
+        self.event_handler.serial_interface.write_stop_run()
+
     def process_packet(self, packet) -> None:
         """Overloaded method.
         """

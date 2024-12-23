@@ -109,6 +109,7 @@ class DigitalTransition(PacketBase):
         convert the timestamp from us to s.
         """
         if self.header != self.HEADER_MARKER:
+            logger.error(f'Expected {hex(self.HEADER_MARKER)}, got {hex(self.header)}...')
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
         # Note the _info field is packing into a single byte the polarity
         # (the MSB) and the pin number.
@@ -145,6 +146,7 @@ class AnalogReadout(PacketBase):
         from ms to s.
         """
         if self.header != self.HEADER_MARKER:
+            logger.error(f'Expected {hex(self.HEADER_MARKER)}, got {hex(self.header)}...')
             raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
         self.timestamp /= 1.e3
 
@@ -190,6 +192,9 @@ class PlasduinoSerialInterface(SerialInterface):
         """ Write a stop run command to the serial port.
         """
         return self.write_opcode(OpCode.OP_CODE_STOP_RUN)
+        #end_mark = self.read_and_unpack('B')
+        #if not end_mark == Marker.RUN_END_MARKER:
+        #    raise RuntimeError('End run marker mismatch.')
 
     def write_cmd(self, opcode: OpCode, value: int, fmt: str) -> None:
         """ Write a command to the arduino board.
