@@ -107,6 +107,11 @@ class PlasduinoEventHandler(EventHandlerBase):
         sketch_version = self.serial_interface.read_and_unpack('B')
         logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
 
+    def close_serial_interface(self) -> None:
+        """Close the serial interface.
+        """
+        self.serial_interface.disconnect()
+
 
 
 class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
