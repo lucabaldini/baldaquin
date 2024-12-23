@@ -71,6 +71,20 @@ class PlasduinoRunControl(RunControlBase):
 
 
 
+class PlasduinoParameterSpecs:
+
+    """Definition of some useful parameter specs.
+    """
+
+    SAMPLING_INTERVAL = (
+        'sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd', dict(min=100, max=1000000)
+        )
+    STRIP_CHART_MAX_LENGTH = (
+        'strip_chart_max_length', 'int', 200, 'Strip chart maximum length', dict(min=10, max=1000000)
+        )
+
+
+
 class PlasduinoEventHandler(EventHandlerBase):
 
     """Plasduino basic event handler.

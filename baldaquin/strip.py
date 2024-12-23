@@ -24,7 +24,7 @@ from baldaquin.plt_ import plt, setup_axes
 from baldaquin.timeline import Timeline
 
 
-class StripChart:
+class SlidingStripChart:
 
     """Class describing a strip chart, that is, a scatter plot where the number of
     points is limited to a maximum, so that the thing acts essentially as a sliding
@@ -38,18 +38,18 @@ class StripChart:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, max_length: int, label: str, xoffset: float = 0.,
+    def __init__(self, max_length: int, label: str = '', xoffset: float = 0.,
         xlabel: str = None, ylabel: str = None) -> None:
         """Constructor.
         """
         self.label = label
         self.xoffset = xoffset
-        self.x = collections.deque(maxlen=max_length)
-        self.y = collections.deque(maxlen=max_length)
         self.xlabel = xlabel
         self.ylabel = ylabel
+        self.x = collections.deque(maxlen=max_length)
+        self.y = collections.deque(maxlen=max_length)
 
-    def append(self, x: float, y: float) -> None:
+    def add_data_point(self, x: float, y: float) -> None:
         """Append a data point to the strip chart.
         """
         self.x.append(x + self.xoffset)
