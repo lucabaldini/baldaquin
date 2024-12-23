@@ -56,7 +56,6 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     for port in ports:
         logger.debug(f'{port.device} -> vid {hex(port.vid)}, pid {hex(port.pid)} '
             f'by {port.manufacturer}')
-    print(type(ports))
     return ports
 
 
