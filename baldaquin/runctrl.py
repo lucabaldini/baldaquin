@@ -234,8 +234,9 @@ class RunControlBase(FiniteStateMachineBase):
 
     """Run control class.
 
-    Derived classes need to set the ``PROJECT_NAME`` class member and, optionally
-    ``DEFAULT_REFRESH_INTERVAL`` as well.
+    Derived classes need to set the ``PROJECT_NAME`` class member (this controls
+    the placement of the output files) and, optionally ``DEFAULT_REFRESH_INTERVAL``
+    as well.
 
     Arguments
     ---------
