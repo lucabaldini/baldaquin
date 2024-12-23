@@ -38,7 +38,7 @@ class SlidingStripChart:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, max_length: int, label: str = '', xoffset: float = 0.,
+    def __init__(self, max_length: int = None, label: str = '', xoffset: float = 0.,
         xlabel: str = None, ylabel: str = None) -> None:
         """Constructor.
         """
