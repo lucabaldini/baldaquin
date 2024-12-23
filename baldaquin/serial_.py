@@ -18,17 +18,32 @@
 
 import struct
 import time
+from typing import Any
 
 import serial
 import serial.tools.list_ports
+import serial.tools.list_ports_common
 
 from baldaquin import logger
 
 
 
-def list_com_ports(*devices):
+def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     """List all the com ports with devices attached, possibly with a filter on the
     (vid, pid) pairs we are interested into.
+
+    Arguments
+    ---------
+    *devices : (vid, pid) tuples
+        The (vid, pid) tuples to filter the list of ports returned by pyserial.
+        This is useful when we are searching for a specific device attached to a
+        port; an arduino uno, e.g., might look something like (0x2341, 0x43).
+
+    Returns
+    -------
+    list of serial.tools.list_ports_common.ListPortInfo
+        See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+        for the object documentation.
     """
     logger.info('Scanning serial devices...')
     ports = serial.tools.list_ports.comports()
@@ -40,6 +55,7 @@ def list_com_ports(*devices):
     for port in ports:
         logger.debug(f'{port.device} -> vid {hex(port.vid)}, pid {hex(port.pid)} '
             f'by {port.manufacturer}')
+    print(type(ports))
     return ports
 
 
@@ -100,6 +116,17 @@ class SerialInterface(serial.Serial):
 
     def connect(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
         """Connect to the serial port.
+
+        Arguments
+        ---------
+        port : str
+            The name of the serial port (e.g., ``/dev/ttyACM0``).
+
+        baudrate : int
+            The baud rate.
+
+        timeout : float, optional
+            The timeout in seconds.
         """
         self.setup(port, baudrate, timeout)
         logger.info(f'Opening serial connection to port {self.port}...')
@@ -113,18 +140,61 @@ class SerialInterface(serial.Serial):
 
     def pulse_dtr(self, pulse_length: float = 0.5) -> None:
         """Pulse the DTR line for a given amount of time.
+
+        This asserts the DTR line, waits for a specific amount of time, and then
+        deasserts the line.
+
+        Arguments
+        ---------
+        pulse_length : float
+            The duration (in seconds) for the DTR line signal to be asserted.
         """
         logger.info(f'Pulsing the DTR line for {pulse_length} s...')
         self.dtr = 1
         time.sleep(pulse_length)
         self.dtr = 0
 
-    def read_and_unpack(self, fmt: str):
+    def read_and_unpack(self, fmt: str) -> Any:
         """Read a given number of bytes from the serial port and unpack them.
+
+        Note that the number of bytes to be read from the serial port is automatically
+        calculated from the format string.
+        See https://docs.python.org/3/library/struct.html for all the details about
+        format strings and byte ordering.
+
+        Arguments
+        ---------
+        fmt : str
+            The format string for the packet to be read from the seria port.
+
+        Returns
+        -------
+        any
+            Returns the proper Python object for the format string at hand.
+
+        Example
+        -------
+        >>> s = SerialInterface(port)
+        >>> val = s.read_and_unpack('B') # Single byte (val is int)
+        >>> val = s.read_and_unpack('>L') # Big-endian unsigned long (val is also int)
         """
         return struct.unpack(fmt, self.read(struct.calcsize(fmt)))[0]
 
-    def pack_and_write(self, value: int, fmt: str) -> int:
-        """ Write a value to the serial port.
+    def pack_and_write(self, value: Any, fmt: str) -> int:
+        """ Pack a given value into a proper bytes object and write the latter
+        to the serial port.
+
+        Arguments
+        ---------
+        value : any
+            The value to be written to the serial port.
+
+        fmt : str
+            The format string to pack the value with.
+
+        Returns
+        -------
+        int
+            The number of bytes written to the serial port.
         """
         return self.write(struct.pack(fmt, value))
