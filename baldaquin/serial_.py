@@ -42,7 +42,8 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     Returns
     -------
     list of serial.tools.list_ports_common.ListPortInfo
-        See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+        See
+        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
         for the object documentation.
     """
     logger.info('Scanning serial devices...')
