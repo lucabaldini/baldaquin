@@ -27,6 +27,11 @@ import serial.tools.list_ports_common
 from baldaquin import logger
 
 
+# List of standard baud rates.
+STANDARD_BAUD_RATES = serial.Serial.BAUDRATES
+DEFAULT_BAUD_RATE = 115200
+
+
 
 def _fmt_port(port: serial.tools.list_ports_common.ListPortInfo) -> str:
     """Small convenience function to print out some pretty-printed serial port info.
@@ -82,7 +87,7 @@ class SerialInterface(serial.Serial):
 
     # pylint: disable=too-many-ancestors
 
-    def setup(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
+    def setup(self, port: str, baudrate: int = DEFAULT_BAUD_RATE, timeout: float = None) -> None:
         """Setup the serial connection.
 
         Arguments
