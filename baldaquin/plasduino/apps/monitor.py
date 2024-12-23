@@ -96,12 +96,11 @@ class GenericMonitor(UserApplicationBase):
     def configure(self):
         """Overloaded method.
         """
-        self.strip_charts = [
-            StripChart(100, 'Pin 1', xlabel='Time [s]', ylabel='ADC counts'),
-            StripChart(100, 'Pin 2', xlabel='Time [s]', ylabel='ADC counts'),
-            ]
-        args = self.configuration.sketch_parameters()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(*args)
+        pin_list, sampling_interval = self.configuration.sketch_parameters()
+        kwargs = dict(xlabel='Time [s]', ylabel='ADC counts')
+        self.strip_charts = [StripChart(100, f'Pin {pin}', **kwargs) for pin in pin_list]
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(pin_list,
+            sampling_interval)
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
