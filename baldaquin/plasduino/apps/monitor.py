@@ -57,7 +57,6 @@ class AppConfiguration(ConfigurationBase):
     """User application configuration.
     """
 
-    TITLE = 'Monitor configuration'
     PARAMETER_SPECS = (
         ('sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd', dict(min=100, max=100000)),
         ('ch0', 'int', 0, 'Pin number for channel 0', None, None, dict(min=-1, max=5)),
