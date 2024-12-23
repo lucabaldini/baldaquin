@@ -28,6 +28,19 @@ from baldaquin import logger
 
 
 
+def _fmt_port(port: serial.tools.list_ports_common.ListPortInfo) -> str:
+    """Small convenience function to print out some pretty-printed serial port info.
+    """
+    text = port.device
+    vid, pid, manufacturer = port.vid, port.pid, port.manufacturer
+    if vid is None and pid is None:
+        return text
+    text = f'{text} -> vid {hex(vid)}, pid {hex(pid)}'
+    if manufacturer is not None:
+        text = f'{text} by {manufacturer}'
+    return text
+
+
 def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     """List all the com ports with devices attached, possibly with a filter on the
     (vid, pid) pairs we are interested into.
@@ -49,7 +62,7 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     logger.info('Scanning serial devices...')
     ports = serial.tools.list_ports.comports()
     for port in ports:
-        logger.debug(f'{port.device} -> vid {port.vid}, pid {port.pid}')
+        logger.debug(_fmt_port(port))
     logger.info(f'Done, {len(ports)} device(s) found.')
     if len(devices) > 0:
         device_list = [f'({hex(vid)}, {hex(pid)})' for vid, pid in devices]
@@ -57,8 +70,7 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
         ports = [port for port in ports if (port.vid, port.pid) in devices]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
-        logger.debug(f'{port.device} -> vid {hex(port.vid)}, pid {hex(port.pid)} '
-            f'by {port.manufacturer}')
+        logger.debug(_fmt_port(port))
     return ports
 
 
