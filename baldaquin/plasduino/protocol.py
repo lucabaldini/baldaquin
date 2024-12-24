@@ -18,7 +18,6 @@
 
 from dataclasses import dataclass
 from enum import Enum
-import struct
 
 from baldaquin import logger
 from baldaquin.event import PacketBase
