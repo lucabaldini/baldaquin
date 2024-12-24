@@ -16,14 +16,16 @@
 """Plasduino common resources.
 """
 
+import struct
 import time
 from typing import Any
 
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.buf import CircularBuffer
-from baldaquin.event import EventHandlerBase
+from baldaquin.event import PacketBase, EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
+from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import list_com_ports, SerialInterface
 
@@ -84,19 +86,33 @@ class PlasduinoSerialInterface(SerialInterface):
         """
         return super().read_and_unpack(f'>{fmt}')
 
-    def wait_rem(self) -> None:
-        """
-        """
-        logger.info(f'Waiting for the run-end marker...')
-        end_mark = self.read_and_unpack('B')
-        if not end_mark == Marker.RUN_END_MARKER.value:
-            raise RuntimeError(f'End run marker mismatch, got {hex(end_mark)}.')
-        logger.info('Got it!')
+    def read_run_end_marker(self) -> None:
+        """Read a single byte from the serial port and make sure it is the
+        run-end marker.
 
-    def read_until_rem(self, timeout: float = None) -> None:
-        """Read data from the serial port until the end-of-run marker is found.
+        (The run end marker is sent over through the serial port from the arduino
+        sketch when the run is stopped and all the measurements have been completed,
+        and needs to be taken out of the way in order for the next run to take place.)
         """
-        logger.info(f'Scanning serial input for run-end marker...')
+        logger.info('Waiting for the run end marker...')
+        marker = self.read_and_unpack('B')
+        if not marker == Marker.RUN_END_MARKER.value:
+            raise RuntimeError(f'Run end marker mismatch '
+                f'(expected {hex(Marker.RUN_END_MARKER.value)}, found {hex(marker)}).')
+        logger.info('Run end marker correctly read.')
+
+    def read_until_run_end_marker(self, timeout: float = None) -> None:
+        """Read data from the serial port until the end-of-run marker is found.
+
+        This is actually never used, as the intermediate data would get lost, but
+        it is potentially useful when debugging the serial communication.
+
+        Arguments
+        ---------
+        timeout : float (default None)
+            The timeout (in s) to be temporarily set for the transaction.
+        """
+        logger.info('Scanning serial input for run-end marker...')
         previous_timeout = self.timeout
         if timeout != self.timeout:
             self.timeout = timeout
@@ -114,6 +130,11 @@ class PlasduinoSerialInterface(SerialInterface):
         This is typically meant to signal the start/stop run, or to configure the
         behavior of the sketch on the arduino side (e.g., select the pins for
         analog readout).
+
+        Arguments
+        ---------
+        opcode : OpCode
+            The operational code to be written to the serial port.
         """
         logger.debug(f'Writing {opcode} to the serial port...')
         return self.pack_and_write(opcode.value, 'B')
@@ -160,11 +181,20 @@ class PlasduinoSerialInterface(SerialInterface):
         if actual_opcode != opcode.value or actual_value != value:
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
-    def setup_analog_sampling_sketch(self, pin_list: tuple, sampling_interval: int) -> None:
+    def setup_analog_sampling_sketch(self, sampling_interval: int) -> None:
         """ Setup the sktchAnalogSampling sketch.
+
+        Note that we are taking a minimal approach, here, where exactly two input
+        analog pins are used, and they are those dictated by the Lab 1 shield, i.e.,
+        the only thing that we are setting, effectively, is the sampling interval.
+
+        Arguments
+        ---------
+        sampling_interval : int
+            The sampling interval in ms.
         """
-        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pin_list), 'B')
-        for pin in pin_list:
+        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(Lab1.ANALOG_PINS), 'B')
+        for pin in Lab1.ANALOG_PINS:
             self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
         self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
 
@@ -193,7 +223,8 @@ class PlasduinoEventHandler(EventHandlerBase):
     def __init__(self) -> None:
         """Constructor.
 
-        We create an empty serial interface, here.
+        Note we create an empty serial interface, here, and we then open the port
+        while setting up the user application.
         """
         super().__init__()
         self.serial_interface = PlasduinoSerialInterface()
@@ -204,6 +235,13 @@ class PlasduinoEventHandler(EventHandlerBase):
 
         .. warning::
             We still have to implement to sketch upload part, here.
+
+        Arguments
+        ---------
+        timeout : float (default None)
+            The timeout (in s) for the serial readout. If set to None, every read
+            operation is effectively blocking, and this is the way we should operate
+            in normal conditions.
         """
         port = autodetect_arduino_board()
         if port is None:
@@ -220,6 +258,11 @@ class PlasduinoEventHandler(EventHandlerBase):
         """
         self.serial_interface.disconnect()
 
+    def process_packet(self, packet: PacketBase) -> None:
+        """Overloaded method.
+        """
+        raise NotImplementedError
+
 
 
 class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
@@ -232,20 +275,45 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
         """
         return self.serial_interface.read(AnalogReadout.SIZE)
 
-    def read_orphan_packets(self, sleep_time: int = None) -> int:
+    def read_pending_packets(self, sleep_time: int = None) -> int:
+        """Wait and read all the pending packets from the serial port, then consume
+        the run end marker.
+
+        This is necessary because, after the sketch running on the arduino board
+        receives the run end opcode, there is a varible number of analog readouts
+        (ranging from 0 to 2 if 2 pins are used) that are acquired before the
+        data acquisition is actually stopped. (Yes, poor design on the sketch side.)
+        What we do here is essentially: wait a long enough time (it should be
+        equal or longer than the sampling time to catch all the corner cases),
+        see how many bytes are waiting in the input buffer of the serial port,
+        calculate the number of pending packets, read them and finally consume the
+        run end marker, so that we are ready to start again.
+
+        Note that the pending packets are correctly processed, passed to the
+        event handler buffer and written to disk.
+
+        Arguments
+        ---------
+        sleep_time : int (default None)
+            The amount of time (in ms) we wait before polling the serial port
+            for additional pending packets.
         """
-        """
-        logger.info('Waiting for orphap packet(s)...')
+        logger.info('Waiting for pending packet(s)...')
         if sleep_time is not None:
             time.sleep(sleep_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
         num_packets = num_bytes // AnalogReadout.SIZE
         if num_packets > 0:
             logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
-            for i in range(num_packets):
+            for _ in range(num_packets):
                 self.acquire_packet()
             self.flush_buffer()
-        self.serial_interface.wait_rem()
+        self.serial_interface.read_run_end_marker()
+
+    def process_packet(self, packet: PacketBase) -> None:
+        """Overloaded method.
+        """
+        raise NotImplementedError
 
 
 
@@ -258,3 +326,8 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandler):
         """Read a single packet, that is, an analog readout.
         """
         return self.serial_interface.read(DigitalTransition.SIZE)
+
+    def process_packet(self, packet: PacketBase) -> None:
+        """Overloaded method.
+        """
+        raise NotImplementedError

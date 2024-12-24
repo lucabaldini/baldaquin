@@ -74,7 +74,6 @@ class TemperatureMonitor(UserApplicationBase):
     CONFIGURATION_CLASS = AppConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'temperature_monitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
-    _PIN_LIST = Lab1.ANALOG_PINS
     _SAMPLING_INTERVAL = 500
     _STRIP_CHART_KWARGS = dict(xlabel='Time [s]', ylabel='ADC counts')
 
@@ -82,7 +81,7 @@ class TemperatureMonitor(UserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = {pin: None for pin in self._PIN_LIST}
+        self.strip_chart_dict = {pin: None for pin in Lab1.ANALOG_PINS}
 
     def _create_strip_chart(self, pin: int, max_length: int) -> SlidingStripChart:
         """Create a new strip chart for a given pin.
@@ -94,14 +93,13 @@ class TemperatureMonitor(UserApplicationBase):
         """
         max_length = self.configuration.value('strip_chart_max_length')
         self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) \
-            for pin in self._PIN_LIST}
+            for pin in Lab1.ANALOG_PINS}
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PIN_LIST,
-            self._SAMPLING_INTERVAL)
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).
@@ -119,7 +117,7 @@ class TemperatureMonitor(UserApplicationBase):
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
+        self.event_handler.read_pending_packets(self._SAMPLING_INTERVAL)
 
     def process_packet(self, packet) -> None:
         """Overloaded method.
