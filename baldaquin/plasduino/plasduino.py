@@ -16,6 +16,8 @@
 """Plasduino common resources.
 """
 
+import time
+
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.buf import CircularBuffer
@@ -50,8 +52,7 @@ def autodetect_arduino_board() -> str:
     Returns
     -------
     str
-        The name of the (first available) port with a supported arduino attached
-        to it.
+        The name of the (first available) port with a supported arduino attached to it.
     """
     ports = list_com_ports(*_SUPPORTED_BOARDS)
     if len(ports) == 0:
@@ -68,20 +69,6 @@ class PlasduinoRunControl(RunControlBase):
     """
 
     _PROJECT_NAME = plasduino.PROJECT_NAME
-
-
-
-class PlasduinoParameterSpecs:
-
-    """Definition of some useful parameter specs.
-    """
-
-    SAMPLING_INTERVAL = (
-        'sampling_interval', 'int', 500, 'Sampling interval', 'ms', 'd', dict(min=100, max=1000000)
-        )
-    STRIP_CHART_MAX_LENGTH = (
-        'strip_chart_max_length', 'int', 200, 'Strip chart maximum length', dict(min=10, max=1000000)
-        )
 
 
 
@@ -104,7 +91,7 @@ class PlasduinoEventHandler(EventHandlerBase):
         super().__init__()
         self.serial_interface = PlasduinoSerialInterface()
 
-    def open_serial_interface(self) -> None:
+    def open_serial_interface(self, timeout: float = None) -> None:
         """Autodetect a supported arduino board, open the serial connection to it,
         and do the handshaking.
 
@@ -114,7 +101,7 @@ class PlasduinoEventHandler(EventHandlerBase):
         port = autodetect_arduino_board()
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port)
+        self.serial_interface.connect(port, timeout=timeout)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
         sketch_id = self.serial_interface.read_and_unpack('B')
@@ -133,10 +120,25 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
     """Event handler for the plasduino sketches reading analog data.
     """
 
-    def read_packet(self):
+    def read_packet(self) -> int:
         """Read a single packet, that is, an analog readout.
         """
         return self.serial_interface.read(AnalogReadout.SIZE)
+
+    def read_orphan_packets(self, sleep_time: int = None) -> int:
+        """
+        """
+        logger.info('Waiting for orphap packet(s)...')
+        if sleep_time is not None:
+            time.sleep(sleep_time / 1000.)
+        num_bytes = self.serial_interface.in_waiting
+        num_packets = num_bytes // AnalogReadout.SIZE
+        if num_packets > 0:
+            logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
+            for i in range(num_packets):
+                self.acquire_packet()
+            self.flush_buffer()
+        self.serial_interface.wait_rem()
 
 
 

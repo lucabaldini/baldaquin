@@ -18,6 +18,7 @@
 
 from dataclasses import dataclass
 from enum import Enum
+import struct
 from typing import Any
 
 from baldaquin import logger
@@ -173,6 +174,30 @@ class PlasduinoSerialInterface(SerialInterface):
         """
         return super().read_and_unpack(f'>{fmt}')
 
+    def wait_rem(self) -> None:
+        """
+        """
+        logger.info(f'Waiting for the run-end marker...')
+        end_mark = self.read_and_unpack('B')
+        if not end_mark == Marker.RUN_END_MARKER.value:
+            raise RuntimeError(f'End run marker mismatch, got {hex(end_mark)}.')
+        logger.info('Got it!')
+
+    def read_until_rem(self, timeout: float = None) -> None:
+        """Read data from the serial port until the end-of-run marker is found.
+        """
+        logger.info(f'Scanning serial input for run-end marker...')
+        previous_timeout = self.timeout
+        if timeout != self.timeout:
+            self.timeout = timeout
+            logger.debug(f'Serial port timeout temporarily set to {self.timeout} s...')
+        data = self.read_until(struct.pack('B', Marker.RUN_END_MARKER.value))
+        if len(data) > 0:
+            logger.debug(f'{len(data)} byte(s) found: {data}')
+        if previous_timeout != self.timeout:
+            self.timeout = previous_timeout
+            logger.debug(f'Serial port timeout restored to {self.timeout} s...')
+
     def write_opcode(self, opcode: OpCode) -> int:
         """Write the value of a given opcode to the serial port.
 
@@ -192,9 +217,6 @@ class PlasduinoSerialInterface(SerialInterface):
         """ Write a stop run command to the serial port.
         """
         return self.write_opcode(OpCode.OP_CODE_STOP_RUN)
-        #end_mark = self.read_and_unpack('B')
-        #if not end_mark == Marker.RUN_END_MARKER:
-        #    raise RuntimeError('End run marker mismatch.')
 
     def write_cmd(self, opcode: OpCode, value: int, fmt: str) -> None:
         """ Write a command to the arduino board.

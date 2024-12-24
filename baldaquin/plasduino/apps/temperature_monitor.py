@@ -16,6 +16,8 @@
 """Plasduino monitor application.
 """
 
+import time
+
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
@@ -23,8 +25,7 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
-from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
-    PlasduinoParameterSpecs
+from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.strip import SlidingStripChart
@@ -60,8 +61,7 @@ class AppConfiguration(ConfigurationBase):
     """
 
     PARAMETER_SPECS = (
-        PlasduinoParameterSpecs.SAMPLING_INTERVAL,
-        PlasduinoParameterSpecs.STRIP_CHART_MAX_LENGTH
+        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length', dict(min=10, max=1000000)),
     )
 
 
@@ -76,6 +76,7 @@ class TemperatureMonitor(UserApplicationBase):
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'temperature_monitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _PIN_LIST = Lab1.ANALOG_PINS
+    _SAMPLING_INTERVAL = 500
     _STRIP_CHART_KWARGS = dict(xlabel='Time [s]', ylabel='ADC counts')
 
     def __init__(self) -> None:
@@ -92,16 +93,15 @@ class TemperatureMonitor(UserApplicationBase):
     def configure(self):
         """Overloaded method.
         """
-        sampling_interval = self.configuration.value('sampling_interval')
         max_length = self.configuration.value('strip_chart_max_length')
         self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) for pin in self._PIN_LIST}
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PIN_LIST,
-            sampling_interval)
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PIN_LIST,
+            self._SAMPLING_INTERVAL)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).
@@ -117,13 +117,9 @@ class TemperatureMonitor(UserApplicationBase):
     def stop_run(self) -> None:
         """Overloaded method.
         """
-        self.event_handler.serial_interface.write_stop_run()
         super().stop_run()
-        num_bytes = self.event_handler.serial_interface.in_waiting
-        logger.info(f'{num_bytes} bytes remaining in the input serial buffer...')
-        self.event_handler.serial_interface.read(num_bytes)
-        logger.info('Flushing the serial port...')
-        self.event_handler.serial_interface.flush()
+        self.event_handler.serial_interface.write_stop_run()
+        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
 
     def pause(self) -> None:
         """
