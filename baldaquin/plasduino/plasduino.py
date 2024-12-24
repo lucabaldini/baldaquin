@@ -209,7 +209,7 @@ class PlasduinoRunControl(RunControlBase):
 
 
 
-class PlasduinoEventHandler(EventHandlerBase):
+class PlasduinoEventHandlerBase(EventHandlerBase):
 
     """Plasduino basic event handler.
 
@@ -265,7 +265,7 @@ class PlasduinoEventHandler(EventHandlerBase):
 
 
 
-class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
+class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
 
     """Event handler for the plasduino sketches reading analog data.
     """
@@ -317,7 +317,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandler):
 
 
 
-class PlasduinoDigitalEventHandler(PlasduinoEventHandler):
+class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
     """Event handler for the plasduino sketches reading digital data.
     """
