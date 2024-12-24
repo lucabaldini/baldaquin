@@ -80,6 +80,19 @@ class Polarity(Enum):
 
 
 
+class HeaderMismatchError(RuntimeError):
+
+    """RuntimeError subclass to signal that a header mismatch in a data structure.
+    """
+
+    def __init__(self, cls: type, expected: int, actual: int):
+        """Constructor.
+        """
+        super().__init__(f'{cls.__name__} header mismatch '
+            f'(expected {hex(expected)}, found {hex(actual)}).')
+
+
+
 @dataclass
 class DigitalTransition(PacketBase):
 
@@ -107,8 +120,7 @@ class DigitalTransition(PacketBase):
         convert the timestamp from us to s.
         """
         if self.header != self.HEADER_MARKER:
-            logger.error(f'Expected {hex(self.HEADER_MARKER)}, got {hex(self.header)}...')
-            raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
+            raise HeaderMismatchError(self.__class__, self.HEADER_MARKER, self.header)
         # Note the _info field is packing into a single byte the polarity
         # (the MSB) and the pin number.
         self.pin_number = self._info & 0x7F
@@ -144,6 +156,5 @@ class AnalogReadout(PacketBase):
         from ms to s.
         """
         if self.header != self.HEADER_MARKER:
-            logger.error(f'Expected {hex(self.HEADER_MARKER)}, got {hex(self.header)}...')
-            raise RuntimeError(f'{self.__class__.__name__} header mismatch.')
+            raise HeaderMismatchError(self.__class__, self.HEADER_MARKER, self.header)
         self.timestamp /= 1.e3
