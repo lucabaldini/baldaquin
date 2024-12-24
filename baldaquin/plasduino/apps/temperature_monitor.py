@@ -23,7 +23,7 @@ from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
-from baldaquin.gui import bootstrap_window, MainWindow
+from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler
 from baldaquin.plasduino.protocol import AnalogReadout
@@ -38,6 +38,7 @@ class AppMainWindow(MainWindow):
     """
 
     _PROJECT_NAME = plasduino.PROJECT_NAME
+    _CONTROL_BAR_CLASS = SimpleControlBar
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.

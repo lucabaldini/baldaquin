@@ -320,6 +320,7 @@ class EventHandlerCardField(Enum):
     NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
 
 
+
 class EventHandlerCard(CardWidget):
 
     """Specialized card widget for the event handler.
@@ -774,6 +775,37 @@ class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
 
 
 
+class SimpleControlBar(ControlBar):
+
+    """Simpler version of a control bar, where essentially we prevent the possibility
+    to press the pause button.
+
+    This is a small tweak to go along with simple data acquisition systems (such
+    as plasduino) where on the hardware side there is essentially no good way to
+    pause the system---all we can do is to start and stop the data acquisition.
+
+    .. warning::
+        This has not been throroughly tested, and this derived class is still
+        inheriting all the complex logic of its base class, but I do think that
+        just re-implementing these two methods will do the trick.
+    """
+
+    def start_run(self) -> None:
+        """Method called in the ``STOPPED`` -> ``RUNNING`` transition.
+        """
+        self.reset_button.setEnabled(False)
+        self.start_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+
+    def stop_run(self) -> None:
+        """Method called in the ``RUNNING`` -> ``STOPPED`` transition.
+        """
+        self.reset_button.setEnabled(True)
+        self.start_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+
+
+
 class MainWindow(QtWidgets.QMainWindow):
 
     """Base class for a DAQ main window.
@@ -782,6 +814,7 @@ class MainWindow(QtWidgets.QMainWindow):
     _PROJECT_NAME = None
     _MINIMUM_WIDTH = 1000
     _TAB_ICON_SIZE = QtCore.QSize(25, 25)
+    _CONTROL_BAR_CLASS = ControlBar
 
     def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
@@ -793,7 +826,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setCentralWidget(QtWidgets.QWidget())
         self.centralWidget().setLayout(QtWidgets.QGridLayout())
         self.centralWidget().setMinimumWidth(self._MINIMUM_WIDTH)
-        self.control_bar = ControlBar(self)
+        self.control_bar = self._CONTROL_BAR_CLASS(self)
         self.add_widget(self.control_bar, 1, 0)
         self.run_control_card = RunControlCard()
         self.run_control_card.set(RunControlCardField.PROJECT_NAME, self._PROJECT_NAME)
