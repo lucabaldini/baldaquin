@@ -93,7 +93,6 @@ class UserApplicationBase:
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
-        self.event_handler.set_output_file(None)
 
     def pause(self) -> None:
         """
