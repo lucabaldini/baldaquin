@@ -13,16 +13,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Plasduino monitor application.
+"""Plasduino temperature monitor application.
 """
 
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
-from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
-from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler
+from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
+    PlasduinoAnalogApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.strip import SlidingStripChart
@@ -65,7 +65,7 @@ class AppConfiguration(ConfigurationBase):
 
 
 
-class TemperatureMonitor(UserApplicationBase):
+class TemperatureMonitor(PlasduinoAnalogApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
@@ -94,30 +94,6 @@ class TemperatureMonitor(UserApplicationBase):
         max_length = self.configuration.value('strip_chart_max_length')
         self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) \
             for pin in Lab1.ANALOG_PINS}
-
-    def setup(self) -> None:
-        """Overloaded method (RESET -> STOPPED).
-        """
-        self.event_handler.open_serial_interface()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
-
-    def teardown(self) -> None:
-        """Overloaded method (STOPPED -> RESET).
-        """
-        self.event_handler.close_serial_interface()
-
-    def start_run(self) -> None:
-        """Overloaded method.
-        """
-        self.event_handler.serial_interface.write_start_run()
-        super().start_run()
-
-    def stop_run(self) -> None:
-        """Overloaded method.
-        """
-        super().stop_run()
-        self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.read_pending_packets(self._SAMPLING_INTERVAL)
 
     def process_packet(self, packet) -> None:
         """Overloaded method.

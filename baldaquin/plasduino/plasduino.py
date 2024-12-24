@@ -22,6 +22,7 @@ from typing import Any
 
 from baldaquin import logger
 from baldaquin import plasduino
+from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.event import PacketBase, EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
@@ -331,3 +332,42 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         """Overloaded method.
         """
         raise NotImplementedError
+
+
+
+class PlasduinoAnalogApplicationBase(UserApplicationBase):
+
+    """Specialized base class for plasduino user applications relying on the
+    sktchAnalogSampling.ino sketch.
+    """
+
+    _SAMPLING_INTERVAL = None
+
+    def configure(self):
+        """Overloaded method.
+        """
+        raise NotImplementedError
+
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
+        """
+        self.event_handler.open_serial_interface()
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
+
+    def teardown(self) -> None:
+        """Overloaded method (STOPPED -> RESET).
+        """
+        self.event_handler.close_serial_interface()
+
+    def start_run(self) -> None:
+        """Overloaded method (STOPPED -> RUNNING).
+        """
+        self.event_handler.serial_interface.write_start_run()
+        super().start_run()
+
+    def stop_run(self) -> None:
+        """Overloaded method (RUNNING -> STOPPED).
+        """
+        super().stop_run()
+        self.event_handler.serial_interface.write_stop_run()
+        self.event_handler.read_pending_packets(self._SAMPLING_INTERVAL)
