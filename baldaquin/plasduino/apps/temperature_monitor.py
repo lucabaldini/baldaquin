@@ -16,9 +16,6 @@
 """Plasduino monitor application.
 """
 
-import time
-
-from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
@@ -62,7 +59,8 @@ class AppConfiguration(ConfigurationBase):
     """
 
     PARAMETER_SPECS = (
-        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length', dict(min=10, max=1000000)),
+        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
+            dict(min=10, max=1000000)),
     )
 
 
@@ -95,7 +93,8 @@ class TemperatureMonitor(UserApplicationBase):
         """Overloaded method.
         """
         max_length = self.configuration.value('strip_chart_max_length')
-        self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) for pin in self._PIN_LIST}
+        self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) \
+            for pin in self._PIN_LIST}
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
@@ -117,26 +116,6 @@ class TemperatureMonitor(UserApplicationBase):
 
     def stop_run(self) -> None:
         """Overloaded method.
-        """
-        super().stop_run()
-        self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
-
-    def pause(self) -> None:
-        """
-        """
-        super().pause()
-        self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
-
-    def resume(self) -> None:
-        """
-        """
-        self.event_handler.serial_interface.write_start_run()
-        super().start_run()
-
-    def stop(self) -> None:
-        """
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
