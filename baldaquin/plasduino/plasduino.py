@@ -335,7 +335,7 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
 
 
-class PlasduinoAnalogApplicationBase(UserApplicationBase):
+class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
 
     """Specialized base class for plasduino user applications relying on the
     sktchAnalogSampling.ino sketch.

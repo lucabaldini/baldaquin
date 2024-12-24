@@ -22,7 +22,7 @@ from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
-    PlasduinoAnalogApplicationBase
+    PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.strip import SlidingStripChart
@@ -65,7 +65,7 @@ class AppConfiguration(ConfigurationBase):
 
 
 
-class TemperatureMonitor(PlasduinoAnalogApplicationBase):
+class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
