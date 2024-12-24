@@ -124,17 +124,22 @@ class TemperatureMonitor(UserApplicationBase):
     def pause(self) -> None:
         """
         """
+        super().pause()
         self.event_handler.serial_interface.write_stop_run()
+        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
 
     def resume(self) -> None:
         """
         """
         self.event_handler.serial_interface.write_start_run()
+        super().start_run()
 
     def stop(self) -> None:
         """
         """
+        super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
+        self.event_handler.read_orphan_packets(self._SAMPLING_INTERVAL)
 
     def process_packet(self, packet) -> None:
         """Overloaded method.
