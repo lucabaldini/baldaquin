@@ -194,6 +194,22 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         packets_written, bytes_written = self._buffer.flush()
         self._statistics.update(0, packets_written, bytes_written)
 
+    def acquire_packet(self) -> None:
+        """Acquire a single packet.
+
+        This is the inner function that gets execute within the run() method, and
+        it is factored out so that, if necessary, it can be called in a stand-alone
+        fashion, rather than automatically when the data acquisition thread is
+        launched.
+        """
+        packet = self.read_packet()
+        self._buffer.put(packet)
+        self._statistics.update(1, 0, 0)
+        if self._buffer.flush_needed():
+            self.flush_buffer()
+        # We should make clear where this is defined.
+        self.process_packet(packet)
+
     def run(self):
         """Overloaded QRunnable method.
         """
@@ -202,16 +218,9 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         if self._buffer.size() > 0:
             logger.warning('Event buffer is not empty at the start run, clearing it...')
             self._buffer.clear()
-        # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:
-            packet = self.read_packet()
-            self._buffer.put(packet)
-            self._statistics.update(1, 0, 0)
-            if self._buffer.flush_needed():
-                self.flush_buffer()
-            # We should make clear where this is defined.
-            self.process_packet(packet)
+            self.acquire_packet()
 
     def stop(self) -> None:
         """Stop the event handler.
@@ -222,5 +231,12 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """Read a single packet (must be overloaded in derived classes).
 
         This is the actual blocking function that gets a single event from the hardware.
+        """
+        raise NotImplementedError
+
+    def process_packet(self, packet: PacketBase) -> None:
+        """Process a single packet (must be overloaded in derived classes).
+
+        This is typically implemented downstream in the user application.
         """
         raise NotImplementedError
