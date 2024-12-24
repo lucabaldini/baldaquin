@@ -19,7 +19,6 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from baldaquin import logger
 from baldaquin.event import PacketBase
 
 
