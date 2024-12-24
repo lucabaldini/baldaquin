@@ -198,7 +198,12 @@ class SerialInterface(serial.Serial):
         >>> val = s.read_and_unpack('B') # Single byte (val is int)
         >>> val = s.read_and_unpack('>L') # Big-endian unsigned long (val is also int)
         """
-        return struct.unpack(fmt, self.read(struct.calcsize(fmt)))[0]
+        data = self.read(struct.calcsize(fmt))
+        try:
+            return struct.unpack(fmt, data)[0]
+        except struct.error as exception:
+            logger.error(f'Could not unpack {data} with format "{fmt}".')
+            raise exception
 
     def pack_and_write(self, value: Any, fmt: str) -> int:
         """ Pack a given value into a proper bytes object and write the latter
