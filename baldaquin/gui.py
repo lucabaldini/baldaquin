@@ -583,7 +583,7 @@ class PlotCanvasWidget(FigureCanvas):
         for strip_chart in strip_charts:
             strip_chart.plot(self.axes)
         self.axes.set_autoscale_on(True)
-        self.axes.legend(loc='upper right')
+        self.axes.legend(loc='upper left')
         self.axes.figure.canvas.draw()
 
     def draw_histogram(self, histogram: HistogramBase, stat_box: bool = True,
