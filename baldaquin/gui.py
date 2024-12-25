@@ -559,6 +559,7 @@ class PlotCanvasWidget(FigureCanvas):
         class member, and get to be updated in the proper slot.
         """
         self._plot_list += plots
+        self._update()
 
     def _update(self):
         """Update all the registered plots.
