@@ -18,11 +18,10 @@
 
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
-from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
-    PlasduinoAnalogUserApplicationBase
+    PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.strip import SlidingStripChart
@@ -53,25 +52,13 @@ class AppMainWindow(MainWindow):
 
 
 
-class AppConfiguration(ConfigurationBase):
-
-    """User application configuration.
-    """
-
-    PARAMETER_SPECS = (
-        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
-            dict(min=10, max=1000000)),
-    )
-
-
-
 class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
     NAME = 'Temperature Monitor'
-    CONFIGURATION_CLASS = AppConfiguration
+    CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'temperature_monitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _SAMPLING_INTERVAL = 500

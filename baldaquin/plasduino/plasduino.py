@@ -24,6 +24,7 @@ from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
+from baldaquin.config import ConfigurationBase
 from baldaquin.event import PacketBase, EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
 from baldaquin.plasduino.shields import Lab1
@@ -276,7 +277,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         """
         return self.serial_interface.read(AnalogReadout.SIZE)
 
-    def read_pending_packets(self, sleep_time: int = None) -> int:
+    def wait_pending_packets(self, sleep_time: int = None) -> int:
         """Wait and read all the pending packets from the serial port, then consume
         the run end marker.
 
@@ -303,6 +304,11 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         if sleep_time is not None:
             time.sleep(sleep_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
+        # At this point we expect a number of events which is a multiple of
+        # AnalogReadout.SIZE, +1. If this is not the case, it might indicate that
+        # we have not waited enough.
+        if num_bytes % AnalogReadout.SIZE != 1:
+            logger.warning(f'{num_bytes} pending on the serial port, expected 1, 9 or 17...')
         num_packets = num_bytes // AnalogReadout.SIZE
         if num_packets > 0:
             logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
@@ -332,6 +338,18 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         """Overloaded method.
         """
         raise NotImplementedError
+
+
+
+class PlasduinoAnalogConfiguration(ConfigurationBase):
+
+    """User application configuration for plasduino analog applications.
+    """
+
+    PARAMETER_SPECS = (
+        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
+            dict(min=10, max=1000000)),
+    )
 
 
 
@@ -370,4 +388,4 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.read_pending_packets(self._SAMPLING_INTERVAL)
+        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)
