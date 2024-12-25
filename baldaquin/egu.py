@@ -17,6 +17,8 @@
 """
 
 import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
+
 
 
 class ConversionBase:
@@ -71,7 +73,18 @@ class SplineConversion(ConversionBase):
     def __init__(self, x, y, k: int = 3) -> None:
         """Constructor.
         """
+        self._spline = InterpolatedUnivariateSpline(x, y, k=k)
+
+    @classmethod
+    def from_file(cls, file_path: str) -> None:
+        """Read the data points for the spline from file.
+        """
         pass
+
+    def _conversion_function(self, raw):
+        """Overloaded method.
+        """
+        return self._spline(raw)
 
 
 
