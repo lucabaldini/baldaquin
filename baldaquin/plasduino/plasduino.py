@@ -30,6 +30,7 @@ from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalT
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import list_com_ports, SerialInterface
+from baldaquin.strip import SlidingStripChart
 
 
 
@@ -360,6 +361,13 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
     """
 
     _SAMPLING_INTERVAL = None
+
+    @staticmethod
+    def create_strip_charts(ylabel: str = 'ADC counts') -> dict[str: SlidingStripChart]:
+        """Create all the strip charts for displaying real-time data.
+        """
+        kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
+        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in Lab1.ANALOG_PINS}
 
     def configure(self):
         """Overloaded method.

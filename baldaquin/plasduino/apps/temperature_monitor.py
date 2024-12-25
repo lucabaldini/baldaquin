@@ -62,31 +62,25 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'temperature_monitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _SAMPLING_INTERVAL = 500
-    _STRIP_CHART_KWARGS = dict(xlabel='Time [s]', ylabel='ADC counts')
 
     def __init__(self) -> None:
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = {pin: None for pin in Lab1.ANALOG_PINS}
-
-    def _create_strip_chart(self, pin: int, max_length: int) -> SlidingStripChart:
-        """Create a new strip chart for a given pin.
-        """
-        return SlidingStripChart(max_length, f'Pin {pin}', **self._STRIP_CHART_KWARGS)
+        self.strip_chart_dict = self.create_strip_charts()
 
     def configure(self):
         """Overloaded method.
         """
         max_length = self.configuration.value('strip_chart_max_length')
-        self.strip_chart_dict = {pin: self._create_strip_chart(pin, max_length) \
-            for pin in Lab1.ANALOG_PINS}
+        for chart in self.strip_chart_dict.values():
+            chart.reset(max_length)
 
     def process_packet(self, packet) -> None:
         """Overloaded method.
         """
         readout = AnalogReadout.unpack(packet)
-        self.strip_chart_dict[readout.pin_number].add_data_point(readout.timestamp,
+        self.strip_chart_dict[readout.pin_number].add_point(readout.timestamp,
             readout.adc_value)
 
 

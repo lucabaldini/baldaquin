@@ -49,7 +49,13 @@ class SlidingStripChart:
         self.x = collections.deque(maxlen=max_length)
         self.y = collections.deque(maxlen=max_length)
 
-    def add_data_point(self, x: float, y: float) -> None:
+    def reset(self, max_length: int = None) -> None:
+        """Reset the strip chart.
+        """
+        self.x = collections.deque(maxlen=max_length)
+        self.y = collections.deque(maxlen=max_length)
+
+    def add_point(self, x: float, y: float) -> None:
         """Append a data point to the strip chart.
         """
         self.x.append(x + self.xoffset)
@@ -60,20 +66,5 @@ class SlidingStripChart:
         """
         if axes is None:
             axes = plt.gca()
-        #x = matplotlib.dates.num2date(np.array(self.x) / 86400)
-        #plt.plot(x, self.y, **kwargs)
         axes.plot(self.x, self.y, label=self.label, **kwargs)
         setup_axes(axes, xlabel=self.xlabel, ylabel=self.ylabel, grids=True)
-
-
-if __name__ == '__main__':
-    import numpy as np
-    x = np.linspace(0., 1000., 100)
-    y = np.sin(x / 100)
-    timeline = Timeline()
-    t0 = timeline.latch().seconds
-    strip_chart = StripChart(50, t0)
-    for _x, _y in zip(x, y):
-        strip_chart.append(_x, _y)
-    strip_chart.plot()
-    plt.show()
