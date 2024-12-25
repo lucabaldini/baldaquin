@@ -549,6 +549,26 @@ class PlotCanvasWidget(FigureCanvas):
         self.axes = self.figure.subplots(**kwargs)
         self._update_timer = QtCore.QTimer()
         self._update_timer.setInterval(self.UPDATE_TIMER_INTERVAL)
+        self._update_timer.timeout.connect(self._update)
+        self._plot_list = []
+
+    def register(self, *plots) -> None:
+        """Register the underlying plots.
+
+        All the plots passed as an argument here get passed to the ``_plot_list``
+        class member, and get to be updated in the proper slot.
+        """
+        self._plot_list += plots
+
+    def _update(self):
+        """Update all the registered plots.
+        """
+        self.axes.clear()
+        for plot in self._plot_list:
+            plot.plot(self.axes)
+        self.axes.set_autoscale_on(True)
+        self.axes.legend(loc='upper left')
+        self.axes.figure.canvas.draw()
 
     def start_updating(self) -> None:
         """Start the update timer.
@@ -560,53 +580,7 @@ class PlotCanvasWidget(FigureCanvas):
         to capture the events collected after the stop.
         """
         self._update_timer.stop()
-        self._update_timer.setSingleShot(True)
-        self._update_timer.start()
-        self._update_timer.setSingleShot(False)
-        self._update_timer.stop()
-
-    def connect_slot(self, slot) -> None:
-        """Connect a slot to the underlying timer managing the canvas update.
-        """
-        self._update_timer.timeout.connect(slot)
-
-    def clear(self) -> None:
-        """Clear the canvas.
-        """
-        self.axes.clear()
-
-    def draw_strip_charts(self, *strip_charts, clear: bool = True, **kwargs):
-        """
-        """
-        if clear:
-            self.clear()
-        for strip_chart in strip_charts:
-            strip_chart.plot(self.axes)
-        self.axes.set_autoscale_on(True)
-        self.axes.legend(loc='upper left')
-        self.axes.figure.canvas.draw()
-
-    def draw_histogram(self, histogram: HistogramBase, stat_box: bool = True,
-        clear: bool = True, **kwargs):
-        """Draw a histogram on the canvas.
-
-        Arguments
-        ---------
-        histogram: HistogramBase
-            The histogram object to be plotted.
-
-        clear: bool
-            If True, clear the canvas before the object is plotted.
-
-        kwargs: dict
-            The keyword arguments to be passed to the histogram.plot() call.
-        """
-        if clear:
-            self.clear()
-        histogram.plot(self.axes, **kwargs)
-        if stat_box:
-            histogram.stat_box(self.axes)
-        self.axes.figure.canvas.draw()
+        self._update()
 
 
 

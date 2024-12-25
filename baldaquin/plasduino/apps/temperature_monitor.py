@@ -46,9 +46,7 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        plot_strip_charts = lambda :\
-            self.strip_chart_tab.draw_strip_charts(*user_application.strip_chart_dict.values())
-        self.strip_chart_tab.connect_slot(plot_strip_charts)
+        self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
 
 
 
