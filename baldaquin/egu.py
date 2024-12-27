@@ -20,6 +20,7 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 from baldaquin import logger
+from baldaquin.plt_ import plt, setup_gca
 
 
 
@@ -93,7 +94,8 @@ class SplineConversion(ConversionBase):
     def __init__(self, raw: np.array, physical: np.array, k: int = 3) -> None:
         """Constructor.
         """
-        self._spline = InterpolatedUnivariateSpline(*self._process_input(raw, physical), k=k)
+        self._raw, self._physical = self._process_input(raw, physical)
+        self._spline = InterpolatedUnivariateSpline(self._raw, self._physical, k=k)
 
     @staticmethod
     def _process_input(raw, physical) -> tuple[np.array, np.array]:
@@ -145,6 +147,12 @@ class SplineConversion(ConversionBase):
         data = cls.read_data(file_path, col_raw, col_physical)
         return cls(*data, k)
 
+    def plot(self):
+        """Plot the interpolating spline.
+        """
+        plt.plot(self._raw, self._physical)
+        setup_gca(xlabel='Raw units', ylabel='Physical units')
+
     def _conversion_function(self, raw):
         """Overloaded method.
         """
@@ -162,7 +170,7 @@ class ThermistorConversion(SplineConversion):
         """Constructor.
         """
         # pylint: disable=too-many-arguments
-        adc = (2**adc_num_bits - 1) * resistance / (resistance + shunt_resistance)
+        adc = (2**adc_num_bits - 1) * shunt_resistance / (resistance + shunt_resistance)
         super().__init__(adc, temperature, k)
 
     @classmethod
