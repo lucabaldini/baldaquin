@@ -1,5 +1,6 @@
 #    R25          10      k ohm +/-       1           %
-#  B(25/50)      3380       K +/-         1           %#
+#  B(25/50)      3380       K +/-         1           %
+#
 #
 #   TEMP.       R-low      R-center     R-high
 #  (deg.C)     (k ohm)     (k ohm)     (k ohm)
