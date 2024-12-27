@@ -68,6 +68,13 @@ by an infinite loop.
   sampling parameters) are hard-coded into each application and cannot be changed
   at runtime.
 
+While all the original code is available on the old repository, we only copied over
+the two relevant sketches, compiled for the arduino uno, in the new repo. They live
+in:
+
+* ``baldaquin/plasduino/sketches/digital_timer.hex`` (sketch number 1, version 3);
+* ``baldaquin/plasduino/sketches/analog_sampling.hex`` (sketch number 2, version 3).
+
 
 Loading the appropriate sketch
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
