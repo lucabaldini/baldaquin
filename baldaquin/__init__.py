@@ -41,7 +41,6 @@ config_logger()
 # Basic package structure.
 BALDAQUIN_ROOT = Path(__file__).parent
 BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
-BALDAQUIN_CORE = BALDAQUIN_ROOT / 'core'
 BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
 BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
 BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'

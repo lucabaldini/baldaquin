@@ -16,9 +16,14 @@
 """Plasduino project.
 """
 
+from pathlib import Path
+
 from baldaquin import setup_project
 
 
 PROJECT_NAME = 'plasduino'
 
 PLASDUINO_CONFIG, PLASDUINO_APP_CONFIG, PLASDUINO_DATA = setup_project(PROJECT_NAME)
+
+PLASUINO_ROOT = Path(__file__).parent
+PLASDUINO_SENSORS = PLASUINO_ROOT / 'sensors'

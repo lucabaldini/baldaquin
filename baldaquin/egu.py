@@ -19,12 +19,16 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
+from baldaquin import logger
+
 
 
 class ConversionBase:
 
     """Abstract base class for a generic conversion.
     """
+
+    # pylint: disable=too-few-public-methods
 
     def _conversion_function(self, raw) -> None:
         """Conversion function, to be reimplemented in derived classes.
@@ -43,6 +47,8 @@ class LinearConversion(ConversionBase):
     """Linear conversion.
     """
 
+    # pylint: disable=too-few-public-methods
+
     def __init__(self, slope: float, intercept: float = 0) -> None:
         """Constructor.
         """
@@ -56,30 +62,88 @@ class LinearConversion(ConversionBase):
 
 
 
-class PolynomialConversion(ConversionBase):
-
-    """Polynomial conversion.
-    """
-
-    pass
+# class PolynomialConversion(ConversionBase):
+#
+#     """Polynomial conversion.
+#     """
+#
+#     pass
 
 
 
 class SplineConversion(ConversionBase):
 
-    """Polynomial conversion.
+    """Spline conversion.
+
+    This is performing a simple spline interpolation of the physical values vs. the
+    raw values.
+
+    Arguments
+    ---------
+    raw : array_like
+        The array of raw values.
+
+    physical : array_like
+        The array of physical values
+
+    k : int (default 3)
+        The degree of the interpolating spline.
     """
 
-    def __init__(self, x, y, k: int = 3) -> None:
+    def __init__(self, raw: np.array, physical: np.array, k: int = 3) -> None:
         """Constructor.
         """
-        self._spline = InterpolatedUnivariateSpline(x, y, k=k)
+        self._spline = InterpolatedUnivariateSpline(*self._process_input(raw, physical), k=k)
+
+    @staticmethod
+    def _process_input(raw, physical) -> tuple[np.array, np.array]:
+        """Sort and remove duplicates from the input arrays.
+
+        In order for us to be able to build the spline, the x (raw) values must
+        be passed in ascending order, and the y (physical) values must be (potentially)
+        shuffled accordingly.
+
+        Looking around on the internet, it seems like simply checking if an array
+        is sorted is almost as expensive as calling argsort or unique, see, e.g.,
+        https://github.com/numpy/numpy/issues/8392
+        and therefore we just go ahead and re-sort everything and remove duplicates
+        even when there is nothing to do.
+        """
+        raw, _index = np.unique(raw, return_index=True)
+        physical = physical[_index]
+        return raw, physical
+
+    @staticmethod
+    def read_data(file_path: str, col_raw: int = 0, col_physical: int = 1, **kwargs):
+        """Read data from file.
+
+        Arguments
+        ---------
+        file_path : str
+            The path to the input text file containing the data.
+
+        col_raw : int
+            The index of the column containing the raw values.
+
+        col_physical : int
+            The index of the column containing the physical values.
+
+        kwrargs : dict
+            optional keyword arguments passed to ``np.loadtxt()``
+        """
+        logger.info(f'Reading conversion data from {file_path}...')
+        raw, physical = np.loadtxt(file_path, usecols=(col_raw, col_physical),
+            unpack=True, **kwargs)
+        logger.info(f'Done, {len(raw)} data point(s) found.')
+        return raw, physical
 
     @classmethod
-    def from_file(cls, file_path: str) -> None:
-        """Read the data points for the spline from file.
+    def from_file(cls, file_path: str, col_raw: int = 0, col_physical: int = 1,
+        k: int = 3) -> None:
+        """Read the data points for the spline from a file.
         """
-        pass
+        data = cls.read_data(file_path, col_raw, col_physical)
+        return cls(*data, k)
 
     def _conversion_function(self, raw):
         """Overloaded method.
@@ -88,8 +152,24 @@ class SplineConversion(ConversionBase):
 
 
 
-if __name__ == '__main__':
-    c = LinearConversion(2., 1.)
-    raw = np.linspace(0., 1., 11)
-    val = c(raw)
-    print(raw, val)
+class ThermistorConversion(SplineConversion):
+
+    """Specific conversion for a thermistor.
+    """
+
+    def __init__(self, temperature: np.array, resistance: np.array, shunt_resistance: float,
+        adc_num_bits: int, k: int = 3) -> None:
+        """Constructor.
+        """
+        # pylint: disable=too-many-arguments
+        adc = (2**adc_num_bits - 1) * resistance / (resistance + shunt_resistance)
+        super().__init__(adc, temperature, k)
+
+    @classmethod
+    def from_file(cls, file_path: str, shunt_resistance: float, adc_num_bits: int,
+        col_temperature: int = 0, col_resistance: int = 1, k: int = 3) -> None:
+        """Read the data points for the spline from file.
+        """
+        # pylint: disable=arguments-renamed, too-many-arguments
+        data = cls.read_data(file_path, col_temperature, col_resistance)
+        return cls(*data, shunt_resistance, adc_num_bits, k)
