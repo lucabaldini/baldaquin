@@ -21,6 +21,7 @@ List of modules
    app
    buf
    config
+   egu
    event
    hist
    runctrl
