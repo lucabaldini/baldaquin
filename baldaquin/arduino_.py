@@ -76,20 +76,16 @@ _SUPPORTED_BOARDS = (UNO,)
 # Build a dictionary {(vid, pid): ArduinoBoard} containing all the supported boards.
 # Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
 _BOARD_IDENTIFIER_DICT = {}
-for board in _SUPPORTED_BOARDS:
-    for (vid, pid) in board.identifiers:
-        _BOARD_IDENTIFIER_DICT[(vid, pid)] = board
+for _board in _SUPPORTED_BOARDS:
+    for _id in _board.identifiers:
+        _BOARD_IDENTIFIER_DICT[_id] = _board
 
 
 def board_identifiers(*boards: ArduinoBoard) -> tuple:
     """Return all the possible identiers corresponding to a subset of the supported
     arduino boards.
     """
-    identifiers = []
-    for board in boards:
-        for identifier in board.identifiers:
-            identifiers.append(identifier)
-    return identifiers
+    return tuple(sum([list(board.identifiers) for board in boards], start=[]))
 
 
 def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
