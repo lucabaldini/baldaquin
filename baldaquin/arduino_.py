@@ -23,7 +23,9 @@
 
 from dataclasses import dataclass
 
+from baldaquin import logger
 from baldaquin import execute_shell_command
+from baldaquin.serial_ import list_com_ports
 
 
 @dataclass
@@ -92,6 +94,31 @@ def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
     """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
     """
     return _BOARD_IDENTIFIER_DICT.get((vid, pid))
+
+
+def autodetect_arduino_boards(*boards: ArduinoBoard):
+    """Autodetect all supported arduino boards of one or more specific types
+    attached to the COM ports.
+    """
+    logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
+    return list_com_ports(*board_identifiers(*boards))
+
+
+def autodetect_arduino_board(*boards: ArduinoBoard):
+    """Autodetect the first arduino board within a list of board types.
+
+    Note this returns None if no supported arduino board is found, and the
+    first board found in case there are more than one.
+    """
+    ports = autodetect_arduino_boards(*boards)
+    if len(ports) == 0:
+        return None
+    for port in ports:
+        board = identify_arduino_board(port.vid, port.pid)
+        logger.info(f'{port.device} -> {board.board_id} ({board.name})')
+    if len(ports) > 1:
+        logger.warning('More than one arduino board found, picking the first one...')
+    return ports[0].device
 
 
 
@@ -234,3 +261,4 @@ if __name__ == '__main__':
     #AvrDude.upload(file_path, port, UNO)
     print(_BOARD_IDENTIFIER_DICT)
     print(identify_arduino_board(9025, 67))
+    print(autodetect_arduino_board(UNO))

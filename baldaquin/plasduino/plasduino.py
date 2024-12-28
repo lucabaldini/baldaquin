@@ -39,26 +39,6 @@ from baldaquin.strip import SlidingStripChart
 _SUPPORTED_BOARDS = (arduino_.UNO, )
 
 
-def autodetect_arduino_board() -> str:
-    """Autodetect a supported arduino board attached to one the serial ports, and
-    return the corresponding device name (e.g., ``/dev/ttyACM0``).
-
-    Note this returns None if no supported arduino board is found, and the the
-    first board found in case there are more than one.
-
-    Returns
-    -------
-    str
-        The name of the (first available) port with a supported arduino attached to it.
-    """
-    ports = list_com_ports(*arduino_.board_identifiers(*_SUPPORTED_BOARDS))
-    if len(ports) == 0:
-        return None
-    if len(ports) > 1:
-        logger.warning('More than one arduino board found, picking the first one...')
-    return ports[0].device
-
-
 
 class PlasduinoSerialInterface(SerialInterface):
 
@@ -238,7 +218,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             operation is effectively blocking, and this is the way we should operate
             in normal conditions.
         """
-        port = autodetect_arduino_board()
+        port = arduino_.autodetect_arduino_board()
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
         self.serial_interface.connect(port, timeout=timeout)
