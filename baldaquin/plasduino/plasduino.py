@@ -37,7 +37,6 @@ from baldaquin.strip import SlidingStripChart
 
 # List of supported boards, i.e., only the arduino uno at the moment.
 _SUPPORTED_BOARDS = (arduino_.UNO, )
-_SUPPORTED_BOARD_IDENTIFIERS = sum([list(board.identifiers) for board in _SUPPORTED_BOARDS], start=[])
 
 
 def autodetect_arduino_board() -> str:
@@ -52,7 +51,7 @@ def autodetect_arduino_board() -> str:
     str
         The name of the (first available) port with a supported arduino attached to it.
     """
-    ports = list_com_ports(*_SUPPORTED_BOARD_IDENTIFIERS)
+    ports = list_com_ports(*arduino_.board_identifiers(*_SUPPORTED_BOARDS))
     if len(ports) == 0:
         return None
     if len(ports) > 1:

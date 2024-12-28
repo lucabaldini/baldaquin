@@ -69,6 +69,31 @@ UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'a
 _SUPPORTED_BOARDS = (UNO,)
 
 
+# Build a dictionary {(vid, pid): ArduinoBoard} containing all the supported boards.
+# Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
+_BOARD_IDENTIFIER_DICT = {}
+for board in _SUPPORTED_BOARDS:
+    for (vid, pid) in board.identifiers:
+        _BOARD_IDENTIFIER_DICT[(vid, pid)] = board
+
+
+def board_identifiers(*boards: ArduinoBoard) -> tuple:
+    """Return all the possible identiers corresponding to a subset of the supported
+    arduino boards.
+    """
+    identifiers = []
+    for board in boards:
+        for identifier in board.identifiers:
+            identifiers.append(identifier)
+    return identifiers
+
+
+def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
+    """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+    """
+    return _BOARD_IDENTIFIER_DICT.get((vid, pid))
+
+
 
 class ArduinoCli:
 
@@ -206,4 +231,6 @@ if __name__ == '__main__':
     file_path = 'baldaquin/plasduino/sketches/analog_sampling.hex'
     port = '/dev/ttyACM0'
     #ArduinoCli.upload(file_path, port, UNO)
-    AvrDude.upload(file_path, port, UNO)
+    #AvrDude.upload(file_path, port, UNO)
+    print(_BOARD_IDENTIFIER_DICT)
+    print(identify_arduino_board(9025, 67))
