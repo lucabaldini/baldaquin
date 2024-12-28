@@ -218,7 +218,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             operation is effectively blocking, and this is the way we should operate
             in normal conditions.
         """
-        port = arduino_.autodetect_arduino_board()
+        port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
         self.serial_interface.connect(port, timeout=timeout)
