@@ -20,6 +20,7 @@ import struct
 import time
 from typing import Any
 
+from baldaquin import arduino_
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.app import UserApplicationBase
@@ -35,16 +36,8 @@ from baldaquin.strip import SlidingStripChart
 
 
 # List of supported boards, i.e., only the arduino uno at the moment.
-# This comes in the form of a list of (vid, pid) tuples, with the numbers taken
-# verbatim from https://github.com/arduino/ArduinoCore-avr/blob/master/boards.txt
-# At some point we might want to do a more thorough job of listing all the
-# possible (vid, pid) of the actual arduino boards with which plasduino would
-# work (I am sure, e.g., that we tested the thing with arduino mega).
-
-_SUPPORTED_BOARDS = (
-    (0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243), (0x2341, 0x006A), # uno
-)
-
+_SUPPORTED_BOARDS = (arduino_.UNO, )
+_SUPPORTED_BOARD_IDENTIFIERS = sum([list(board.identifiers) for board in _SUPPORTED_BOARDS], start=[])
 
 
 def autodetect_arduino_board() -> str:
@@ -59,7 +52,7 @@ def autodetect_arduino_board() -> str:
     str
         The name of the (first available) port with a supported arduino attached to it.
     """
-    ports = list_com_ports(*_SUPPORTED_BOARDS)
+    ports = list_com_ports(*_SUPPORTED_BOARD_IDENTIFIERS)
     if len(ports) == 0:
         return None
     if len(ports) > 1:

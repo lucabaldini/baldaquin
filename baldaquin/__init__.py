@@ -19,6 +19,7 @@
 
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 from loguru import logger
@@ -62,6 +63,15 @@ if not BALDAQUIN_QT_WRAPPER in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
     logger.error(f'{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available')
     BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
 logger.info(f'Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}')
+
+
+def execute_shell_command(args):
+    """Execute a shell command.
+    """
+    logger.info(f'About to execute "{" ".join(args)}"...')
+    status = subprocess.run(args)
+    logger.info(f'{status}')
+    return status
 
 
 def _create_folder(folder_path : Path) -> None:
