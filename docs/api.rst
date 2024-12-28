@@ -19,6 +19,7 @@ List of modules
    :caption: Core
 
    app
+   arduino_
    buf
    config
    egu
