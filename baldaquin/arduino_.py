@@ -17,7 +17,7 @@
 
 .. warning::
     We are taking this chance to look around and see what's the best way to interface
-    to arduino, and this module might drastically change in the future---at this
+    to arduino, and this module might significantly change in the future---at this
     point you should consider all the API as experimental.
 """
 
@@ -47,6 +47,8 @@ class ArduinoBoard:
     from the Arduino UNO, being used in plasduino.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     board_id: str
     name: str
     vendor: str
@@ -56,7 +58,7 @@ class ArduinoBoard:
     build_mcu: str
     identifiers: tuple
 
-    def fqbn(self):
+    def fqbn(self) -> str:
         """Return the fully qualified board name (FQBN), as defined in
         https://arduino.github.io/arduino-cli/1.1/platform-specification/
         """
@@ -140,8 +142,11 @@ class ArduinoCli:
     to install).
     """
 
+    # pylint: disable=line-too-long, too-few-public-methods
+
     PROGRAM_NAME = 'arduino-cli'
 
+    @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard, verbose: bool = False):
         """Upload a sketch to a board.
 
@@ -150,40 +155,43 @@ class ArduinoCli:
         beside the fact that the FQBN is the only thing that it seems to need to
         make the magic.
 
-        Usage:
-          arduino-cli upload [flags]
+        .. code-block:: shell
 
-        Examples:
-          arduino-cli upload /home/user/Arduino/MySketch -p /dev/ttyACM0 -b arduino:avr:uno
-          arduino-cli upload -p 192.168.10.1 -b arduino:avr:uno --upload-field password=abc
+            Usage:
+              arduino-cli upload [flags]
 
-        Flags:
-              --board-options strings         List of board options separated by commas. Or can be used multiple times for multiple options.
-              --build-path string             Directory containing binaries to upload.
-              --discovery-timeout duration    Max time to wait for port discovery, e.g.: 30s, 1m (default 1s)
-          -b, --fqbn string                   Fully Qualified Board Name, e.g.: arduino:avr:uno
-          -h, --help                          help for upload
-              --input-dir string              Directory containing binaries to upload.
-          -i, --input-file string             Binary file to upload.
-          -p, --port string                   Upload port address, e.g.: COM3 or /dev/ttyACM2
-          -m, --profile string                Sketch profile to use
-          -P, --programmer string             Programmer to use, e.g: atmel_ice
-          -l, --protocol string               Upload port protocol, e.g: serial
-          -F, --upload-field key=value        Set a value for a field required to upload.
-              --upload-property stringArray   Override an upload property with a custom value. Can be used multiple times for multiple properties.
-          -v, --verbose                       Optional, turns on verbose mode.
-          -t, --verify                        Verify uploaded binary after the upload.
+            Examples:
+              arduino-cli upload /home/user/Arduino/MySketch -p /dev/ttyACM0 -b arduino:avr:uno
+              arduino-cli upload -p 192.168.10.1 -b arduino:avr:uno --upload-field password=abc
 
-        Global Flags:
-              --additional-urls strings   Comma-separated list of additional URLs for the Boards Manager.
-              --config-dir string         Sets the default data directory (Arduino CLI will look for configuration file in this directory).
-              --config-file string        The custom config file (if not specified the default will be used).
-              --json                      Print the output in JSON format.
-              --log                       Print the logs on the standard output.
-              --log-file string           Path to the file where logs will be written.
-              --log-format string         The output format for the logs, can be: text, json (default "text")
-              --log-level string          Messages with this level and above will be logged. Valid levels are: trace, debug, info, warn, error, fatal, panic (default "info")
-              --no-color                  Disable colored output.
+            Flags:
+                  --board-options strings         List of board options separated by commas. Or can be used multiple times for multiple options.
+                  --build-path string             Directory containing binaries to upload.
+                  --discovery-timeout duration    Max time to wait for port discovery, e.g.: 30s, 1m (default 1s)
+              -b, --fqbn string                   Fully Qualified Board Name, e.g.: arduino:avr:uno
+              -h, --help                          help for upload
+                  --input-dir string              Directory containing binaries to upload.
+              -i, --input-file string             Binary file to upload.
+              -p, --port string                   Upload port address, e.g.: COM3 or /dev/ttyACM2
+              -m, --profile string                Sketch profile to use
+              -P, --programmer string             Programmer to use, e.g: atmel_ice
+              -l, --protocol string               Upload port protocol, e.g: serial
+              -F, --upload-field key=value        Set a value for a field required to upload.
+                  --upload-property stringArray   Override an upload property with a custom value. Can be used multiple times for multiple properties.
+              -v, --verbose                       Optional, turns on verbose mode.
+              -t, --verify                        Verify uploaded binary after the upload.
+
+            Global Flags:
+                  --additional-urls strings   Comma-separated list of additional URLs for the Boards Manager.
+                  --config-dir string         Sets the default data directory (Arduino CLI will look for configuration file in this directory).
+                  --config-file string        The custom config file (if not specified the default will be used).
+                  --json                      Print the output in JSON format.
+                  --log                       Print the logs on the standard output.
+                  --log-file string           Path to the file where logs will be written.
+                  --log-format string         The output format for the logs, can be: text, json (default "text")
+                  --log-level string          Messages with this level and above will be logged. Valid levels are: trace, debug, info, warn, error, fatal, panic (default "info")
+                  --no-color                  Disable colored output.
+
         """
         args = [
             ArduinoCli.PROGRAM_NAME, 'upload',
@@ -201,41 +209,47 @@ class AvrDude:
 
     """Poor-man Python interface to the avrdude.
 
-    Usage: avrdude [options]
-        Options:
-          -p <partno>                Required. Specify AVR device.
-          -b <baudrate>              Override RS-232 baud rate.
-          -B <bitclock>              Specify JTAG/STK500v2 bit clock period (us).
-          -C <config-file>           Specify location of configuration file.
-          -c <programmer>            Specify programmer type.
-          -D                         Disable auto erase for flash memory
-          -i <delay>                 ISP Clock Delay [in microseconds]
-          -P <port>                  Specify connection port.
-          -F                         Override invalid signature check.
-          -e                         Perform a chip erase.
-          -O                         Perform RC oscillator calibration (see AVR053).
-          -U <memtype>:r|w|v:<filename>[:format]
-                                     Memory operation specification.
-                                     Multiple -U options are allowed, each request
-                                     is performed in the order specified.
-          -n                         Do not write anything to the device.
-          -V                         Do not verify.
-          -u                         Disable safemode, default when running from a script.
-          -s                         Silent safemode operation, will not ask you if
-                                     fuses should be changed back.
-          -t                         Enter terminal mode.
-          -E <exitspec>[,<exitspec>] List programmer exit specifications.
-          -x <extended_param>        Pass <extended_param> to programmer.
-          -v                         Verbose output. -v -v for more.
-          -q                         Quell progress output. -q -q for less.
-          -l logfile                 Use logfile rather than stderr for diagnostics.
-          -?                         Display this usage.
+    .. code-block:: shell
 
-        avrdude version 6.4, URL: <http://savannah.nongnu.org/projects/avrdude/>
+        Usage: avrdude [options]
+            Options:
+              -p <partno>                Required. Specify AVR device.
+              -b <baudrate>              Override RS-232 baud rate.
+              -B <bitclock>              Specify JTAG/STK500v2 bit clock period (us).
+              -C <config-file>           Specify location of configuration file.
+              -c <programmer>            Specify programmer type.
+              -D                         Disable auto erase for flash memory
+              -i <delay>                 ISP Clock Delay [in microseconds]
+              -P <port>                  Specify connection port.
+              -F                         Override invalid signature check.
+              -e                         Perform a chip erase.
+              -O                         Perform RC oscillator calibration (see AVR053).
+              -U <memtype>:r|w|v:<filename>[:format]
+                                         Memory operation specification.
+                                         Multiple -U options are allowed, each request
+                                         is performed in the order specified.
+              -n                         Do not write anything to the device.
+              -V                         Do not verify.
+              -u                         Disable safemode, default when running from a script.
+              -s                         Silent safemode operation, will not ask you if
+                                         fuses should be changed back.
+              -t                         Enter terminal mode.
+              -E <exitspec>[,<exitspec>] List programmer exit specifications.
+              -x <extended_param>        Pass <extended_param> to programmer.
+              -v                         Verbose output. -v -v for more.
+              -q                         Quell progress output. -q -q for less.
+              -l logfile                 Use logfile rather than stderr for diagnostics.
+              -?                         Display this usage.
+
+            avrdude version 6.4, URL: <http://savannah.nongnu.org/projects/avrdude/>
+
     """
+
+    # pylint: disable=line-too-long, too-few-public-methods
 
     PROGRAM_NAME = 'avrdude'
 
+    @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard, verbose: bool = False):
         """Upload a sketch to a board.
         """
@@ -250,15 +264,3 @@ class AvrDude:
         if verbose:
             args.append('-v')
         execute_shell_command(args)
-
-
-
-if __name__ == '__main__':
-    print(UNO)
-    file_path = 'baldaquin/plasduino/sketches/analog_sampling.hex'
-    port = '/dev/ttyACM0'
-    #ArduinoCli.upload(file_path, port, UNO)
-    #AvrDude.upload(file_path, port, UNO)
-    print(_BOARD_IDENTIFIER_DICT)
-    print(identify_arduino_board(9025, 67))
-    print(autodetect_arduino_board(UNO))
