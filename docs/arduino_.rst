@@ -51,6 +51,22 @@ which can be integrated into a generic auto-detection workflow.
 Uploading sketches
 ------------------
 
+This module implements two diffent interfaces to programmatically upload sketches
+onto a connected Arduino board:
+
+* :class:`ArduinoCli <baldaquin.arduino_.ArduinoCli>`, wrapping the Arduino
+  command-line interface;
+* :class:`AvrDude <baldaquin.arduino_.AvrDude>`, wrapping avrdude.
+
+Apparently the former is the one-stop shop, these days, for interacting programmatically
+with Arduino hardware, but since it relies on the second for a lot of boards,
+whether it is more convenient to use one or the other is largely a matter of what it is
+easier to install.
+
+In both cases, the basic interface for uploading pre-compiled sketches is the same
+
+>>> ArduinoCli.upload(file_path: str, port: str, board: ArduinoBoard)
+
 
 
 Module documentation
