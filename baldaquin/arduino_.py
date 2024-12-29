@@ -23,6 +23,8 @@
 
 from dataclasses import dataclass
 
+import serial.tools.list_ports_common
+
 from baldaquin import logger
 from baldaquin import execute_shell_command
 from baldaquin.serial_ import list_com_ports
@@ -84,39 +86,89 @@ for _board in _SUPPORTED_BOARDS:
 def board_identifiers(*boards: ArduinoBoard) -> tuple:
     """Return all the possible identiers corresponding to a subset of the supported
     arduino boards.
+
+    Arguments
+    ---------
+    *boards : ArduinoBoard
+        The ArduinoBoard object(s) we are interested into.
+
+    Returns
+    -------
+    tuple
+        A tuple of (vid, pid) tuples.
     """
     return tuple(sum([list(board.identifiers) for board in boards], start=[]))
 
 
 def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
     """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+
+    Arguments
+    ---------
+    vid : int
+        The vendor ID for the given device.
+
+    pid : int
+        The prodict ID for the given device.
+
+    Returns
+    -------
+    ArduinoBoard
+        The ArduinoBoard object corresponding to the vid and pid passes as arguments.
     """
     return _BOARD_IDENTIFIER_DICT.get((vid, pid))
 
 
-def autodetect_arduino_boards(*boards: ArduinoBoard):
+def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
     """Autodetect all supported arduino boards of one or more specific types
     attached to the COM ports.
+
+    Arguments
+    ---------
+    *boards : ArduinoBoard
+        The ArduinoBoard object(s) we are interested into.
+
+    Returns
+    -------
+    serial.tools.list_ports_common.ListPortInfo
+        See
+        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+        for the object documentation.
     """
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    return list_com_ports(*board_identifiers(*boards))
+    ports = list_com_ports(*board_identifiers(*boards))
+    for port in ports:
+        board = identify_arduino_board(port.vid, port.pid)
+        if port is not None:
+            logger.info(f'{port.device} -> {board.board_id} ({board.name})')
+    return ports
 
 
-def autodetect_arduino_board(*boards: ArduinoBoard):
-    """Autodetect the first arduino board within a list of board types.
+def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
+    """Autodetect the first supported arduino board within a list of board types.
 
     Note this returns None if no supported arduino board is found, and the
     first board found in case there are more than one.
+
+    Arguments
+    ---------
+    *boards : ArduinoBoard
+        The ArduinoBoard object(s) we are interested into.
+
+    Returns
+    -------
+    serial.tools.list_ports_common.ListPortInfo
+        See
+        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+        for the object documentation.
     """
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
         return None
-    for port in ports:
-        board = identify_arduino_board(port.vid, port.pid)
-        logger.info(f'{port.device} -> {board.board_id} ({board.name})')
+    port = port[0]
     if len(ports) > 1:
-        logger.warning('More than one arduino board found, picking the first one...')
-    return ports[0].device
+        logger.warning(f'More than one arduino board found, picking {port}...')
+    return port
 
 
 
