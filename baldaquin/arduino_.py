@@ -22,6 +22,7 @@
 """
 
 from dataclasses import dataclass
+import subprocess
 
 import serial.tools.list_ports_common
 
@@ -165,14 +166,62 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_c
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
         return None
-    port = port[0]
+    port = ports[0]
     if len(ports) > 1:
         logger.warning(f'More than one arduino board found, picking {port}...')
     return port
 
 
 
-class ArduinoCli:
+class ArduinoProgrammingInterfaceBase:
+
+    """Basic class for concrete interfaces for programming Arduino devices.
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    PROGRAM_NAME = None
+    PROGRAM_URL = None
+
+    @staticmethod
+    def upload(file_path: str, port: str, board: ArduinoBoard,
+        **kwargs) -> subprocess.CompletedProcess:
+        """Do nothing method, to be reimplented in derived classes.
+        """
+        raise NotImplementedError
+
+    @classmethod
+    def _execute(cls, args) -> subprocess.CompletedProcess:
+        """Execute a shell command.
+
+        This is wrapping the basic subprocess functionality, adding some simple
+        diagnostics. Note a ``CalledProcessError`` exception is raised if the
+        underlying program returns an error code different from zero.
+
+        Arguments
+        ---------
+        args : any
+            All the arguments passed to subprocess.run().
+
+        Returns
+        -------
+        subprocess.CompletedProcess
+            The CompletedProcess object.
+        """
+        # pylint: disable=raise-missing-from
+        try:
+            status = execute_shell_command(args)
+        except FileNotFoundError:
+            logger.error(f'Please make sure {cls.PROGRAM_NAME} is properly installed.')
+            if cls.PROGRAM_URL is not None:
+                logger.error(f'See {cls.PROGRAM_URL} for more details.')
+            raise RuntimeError(f'{cls.PROGRAM_NAME} not found')
+        status.check_returncode()
+        return status
+
+
+
+class ArduinoCli(ArduinoProgrammingInterfaceBase):
 
     """Poor-man Python interface to the Arduino-CLI.
 
@@ -190,12 +239,14 @@ class ArduinoCli:
     to install).
     """
 
-    # pylint: disable=line-too-long, too-few-public-methods
+    # pylint: disable=line-too-long, too-few-public-methods, arguments-differ
 
     PROGRAM_NAME = 'arduino-cli'
+    PROGRAM_URL = 'https://github.com/arduino/arduino-cli'
 
     @staticmethod
-    def upload(file_path: str, port: str, board: ArduinoBoard, verbose: bool = False):
+    def upload(file_path: str, port: str, board: ArduinoBoard,
+        verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
 
         Note this is using avrdude under the hood, so one might wonder why we
@@ -249,11 +300,11 @@ class ArduinoCli:
             ]
         if verbose:
             args.append('--verbose')
-        execute_shell_command(args)
+        return ArduinoCli._execute(args)
 
 
 
-class AvrDude:
+class AvrDude(ArduinoProgrammingInterfaceBase):
 
     """Poor-man Python interface to the avrdude.
 
@@ -293,12 +344,14 @@ class AvrDude:
 
     """
 
-    # pylint: disable=line-too-long, too-few-public-methods
+    # pylint: disable=line-too-long, too-few-public-methods, arguments-differ
 
     PROGRAM_NAME = 'avrdude'
+    PROGRAM_URL = 'https://github.com/avrdudes/avrdude'
 
     @staticmethod
-    def upload(file_path: str, port: str, board: ArduinoBoard, verbose: bool = False):
+    def upload(file_path: str, port: str, board: ArduinoBoard,
+        verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
         """
         args = [
@@ -311,4 +364,12 @@ class AvrDude:
             ]
         if verbose:
             args.append('-v')
-        execute_shell_command(args)
+        AvrDude._execute(args)
+
+
+
+# if __name__ == '__main__':
+#     file_path = '/data/work/baldaquin/baldaquin/plasduino/sketches/analog_sampling.hex'
+#     port = '/dev/ttyACM0'
+#     ArduinoCli.upload(file_path, port, UNO)
+#     AvrDude.upload(file_path, port, UNO)

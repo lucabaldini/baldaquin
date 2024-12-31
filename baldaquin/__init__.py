@@ -69,9 +69,7 @@ def execute_shell_command(args):
     """Execute a shell command.
     """
     logger.info(f'About to execute "{" ".join(args)}"...')
-    status = subprocess.run(args)
-    logger.info(f'{status}')
-    return status
+    return subprocess.run(args)
 
 
 def _create_folder(folder_path : Path) -> None:
