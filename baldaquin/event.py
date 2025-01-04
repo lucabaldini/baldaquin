@@ -32,12 +32,12 @@ from baldaquin.buf import CircularBuffer
 
 
 @dataclass
-class PacketBase:
+class BarePacketBase:
 
-    """Virtual base class with possible event structure.
+    """Virtual base class with the simplest possible event structure.
 
-    Concrete subclasses should define the relevant fields for the event, using
-    the dataclass machinery, and override the ``FORMAT`` class member
+    Concrete subclasses should define the relevant fields for the event, using the
+    dataclass machinery, and override the ``FORMAT`` and ``SIZE`` class variable.s
 
     .. warning::
 
@@ -74,22 +74,26 @@ class PacketBase:
         """
         return self.SIZE
 
-    def attribute_values(self) -> tuple:
-        """Return the values for all the attributes, to be used, e.g., in the
-        ``pack()`` method.
+    def __iter__(self):
+        """Overloaded dunder method to make the class iterable.
+
+        This provides an iterator over all the values of the dataclass field and
+        is used, e.g., in the ``pack()`` method.
 
         See, e.g., https://stackoverflow.com/questions/69090253/ for more
-        information about how to programmatically iterate over dataclass fields.
-        Since this is not necessarily blazingly fast, we provide the functionality
-        wrapped in a small function, so that subclasses can overaload it if
-        needed.
+        information about how to programmatically iterate over dataclass fields, and
+        https://stackoverflow.com/questions/74393947/ for more discussion about how
+        to make a datclass iterable.
+
+        Also note this is not necessarily blazingly fast, and subclasses can
+        overaload it when optimization is needed.
         """
-        return tuple(getattr(self, field.name) for field in dataclasses.fields(self))
+        return (getattr(self, field.name) for field in dataclasses.fields(self))
 
     def pack(self) -> bytes:
         """Pack the event for supporting binary output to file.
         """
-        return struct.pack(self.FORMAT, *self.attribute_values())
+        return struct.pack(self.FORMAT, *self)
 
     @classmethod
     def unpack(cls, data : bytes) -> PacketBase:
@@ -101,7 +105,42 @@ class PacketBase:
     def read_from_file(cls, input_file) -> PacketBase:
         """Read a single event from a file object open in binary mode.
         """
-        return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT)))
+        return cls.unpack(input_file.read(self.SIZE))
+
+
+
+class HeaderMismatchError(RuntimeError):
+
+    """RuntimeError subclass to signal that a header mismatch in a data structure.
+    """
+
+    def __init__(self, cls: type, expected: int, actual: int):
+        """Constructor.
+        """
+        super().__init__(f'{cls.__name__} header mismatch '
+            f'(expected {hex(expected)}, found {hex(actual)}).')
+
+
+
+@dataclass
+class PacketBase(BarePacketBase):
+
+    """Slightly more specialized packet structure with a header.
+
+    Since most of the times packets come with headers, this is the typical class
+    that one would subclass when creating actual packet types. Note the correctness
+    of the header is automatically checked whenever an object is created.
+    """
+
+    HEADER = None
+
+    header: int
+
+    def __post_init__(self) -> None:
+        """Default post initialization, making sure that the header is correct.
+        """
+        if self.header != self.HEADER:
+            raise HeaderMismatchError(self.__class__, self.HEADER, self.header)
 
 
 
@@ -111,9 +150,9 @@ class PacketStatistics:
     """Small container class helping with the event handler bookkeeping.
     """
 
-    packets_processed : int = 0
-    packets_written : int = 0
-    bytes_written : int = 0
+    packets_processed: int = 0
+    packets_written: int = 0
+    bytes_written: int = 0
 
     def reset(self) -> None:
         """Reset the statistics.
