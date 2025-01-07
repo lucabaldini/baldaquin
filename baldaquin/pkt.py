@@ -156,6 +156,13 @@ def packetclass(cls: type) -> type:
             expected = getattr(cls, field, None)
             if expected is not None and expected != value:
                 raise FieldMismatchError(cls, field, expected, value)
+
+            #@property
+            #def _getter(self):
+            #    return value
+
+            #self.__setattr__(field, _getter.getter)
+
             self.__setattr__(field, value)
         if payload is None:
             payload = self.pack()
