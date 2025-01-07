@@ -19,7 +19,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from baldaquin.event import PacketBase
+from baldaquin.pkt import packetclass, FixedSizePacketBase
 
 
 
@@ -92,8 +92,8 @@ class HeaderMismatchError(RuntimeError):
 
 
 
-@dataclass
-class DigitalTransition(PacketBase):
+@packetclass
+class DigitalTransition(FixedSizePacketBase):
 
     """A plasduino digital transition is a 6-bit binary array containing:
 
@@ -102,34 +102,24 @@ class DigitalTransition(PacketBase):
     * byte(s) 2-5: the timestamp of the readout from micros().
     """
 
-    FORMAT = '>BBL'
-    SIZE = PacketBase.calculate_size(FORMAT)
-    HEADER_MARKER = Marker.DIGITAL_TRANSITION_HEADER.value
-
-    header: int
-    _info: int
-    timestamp: float
-    pin_number: int = 0
-    polarity: Polarity = Polarity.RISING
+    layout = '>'
+    header: 'B' = Marker.DIGITAL_TRANSITION_HEADER.value
+    info: 'B'
+    timestamp: 'L'
 
     def __post_init__(self) -> None:
         """Post initialization.
-
-        We make sure that the header is correct, unpack the _info field, and
-        convert the timestamp from us to s.
         """
-        if self.header != self.HEADER_MARKER:
-            raise HeaderMismatchError(self.__class__, self.HEADER_MARKER, self.header)
         # Note the _info field is packing into a single byte the polarity
         # (the MSB) and the pin number.
-        self.pin_number = self._info & 0x7F
-        self.polarity = (self._info >> 7) & 0x1
+        self.pin_number = self.info & 0x7F
+        self.polarity = (self.info >> 7) & 0x1
         self.timestamp /= 1.e6
 
 
 
-@dataclass
-class AnalogReadout(PacketBase):
+@packetclass
+class AnalogReadout(FixedSizePacketBase):
 
     """A plasduino analog readout is a 8-bit binary array containing:
 
@@ -139,21 +129,13 @@ class AnalogReadout(PacketBase):
     * byte(s) 6-7: the actual adc value.
     """
 
-    FORMAT = '>BBLH'
-    SIZE = PacketBase.calculate_size(FORMAT)
-    HEADER_MARKER = Marker.ANALOG_READOUT_HEADER.value
-
-    header: int
-    pin_number: int
-    timestamp: float
-    adc_value: int
+    layout = '>'
+    header: 'B' = Marker.ANALOG_READOUT_HEADER.value
+    pin_number: 'B'
+    timestamp: 'L'
+    adc_value: 'H'
 
     def __post_init__(self) -> None:
         """Post initialization.
-
-        We make sure that the header is correct, and we convert the timestamp
-        from ms to s.
         """
-        if self.header != self.HEADER_MARKER:
-            raise HeaderMismatchError(self.__class__, self.HEADER_MARKER, self.header)
         self.timestamp /= 1.e3

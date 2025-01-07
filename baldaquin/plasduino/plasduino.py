@@ -26,7 +26,8 @@ from baldaquin import plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
-from baldaquin.event import PacketBase, EventHandlerBase
+from baldaquin.event import EventHandlerBase
+from baldaquin.pkt import AbstractPacket, FixedSizePacketBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
@@ -218,10 +219,10 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             operation is effectively blocking, and this is the way we should operate
             in normal conditions.
         """
-        port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS).device
+        port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port, timeout=timeout)
+        self.serial_interface.connect(port.device, timeout=timeout)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
         sketch_id = self.serial_interface.read_and_unpack('B')
@@ -233,7 +234,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         """
         self.serial_interface.disconnect()
 
-    def process_packet(self, packet: PacketBase) -> None:
+    def process_packet(self, packet: AbstractPacket) -> None:
         """Overloaded method.
         """
         raise NotImplementedError
@@ -290,7 +291,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
             self.flush_buffer()
         self.serial_interface.read_run_end_marker()
 
-    def process_packet(self, packet: PacketBase) -> None:
+    def process_packet(self, packet: AbstractPacket) -> None:
         """Overloaded method.
         """
         raise NotImplementedError
@@ -307,7 +308,7 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         """
         return self.serial_interface.read(DigitalTransition.SIZE)
 
-    def process_packet(self, packet: PacketBase) -> None:
+    def process_packet(self, packet: AbstractPacket) -> None:
         """Overloaded method.
         """
         raise NotImplementedError

@@ -25,6 +25,7 @@ List of modules
    egu
    event
    hist
+   pkt
    runctrl
    serial_
    timeline

@@ -30,7 +30,7 @@ from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationParameter, ConfigurationBase
-from baldaquin.event import PacketStatistics
+from baldaquin.pkt import PacketStatistics
 from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
