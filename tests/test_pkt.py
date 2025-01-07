@@ -75,6 +75,9 @@ def test_readout():
     logger.info(packet)
     # Test the post-initialization.
     assert packet.seconds == packet.milliseconds / 1000.
+
+    #packet.header = 3
+
     # Make sure that pack/unpack do roundtrip.
     twin = Readout.unpack(packet.pack())
     logger.info(twin)

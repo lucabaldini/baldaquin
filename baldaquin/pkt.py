@@ -18,6 +18,7 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from enum import Enum
 import struct
 
 
@@ -50,6 +51,11 @@ class AbstractPacket(ABC):
     """
 
     def __post_init__(self) -> None:
+        pass
+
+    @property
+    @abstractmethod
+    def payload(self) -> bytes:
         pass
 
     @abstractmethod
@@ -137,7 +143,7 @@ def packetclass(cls: type) -> type:
     cls._size = struct.calcsize(cls._format)
 
     # Create the class constructor.
-    def _init(self, *args):
+    def _init(self, *args, payload: bytes = None):
         # Make sure we have the correct number of arguments---they should match
         # the class annotations.
         if len(args) != len(cls._fields):
@@ -151,7 +157,9 @@ def packetclass(cls: type) -> type:
             if expected is not None and expected != value:
                 raise FieldMismatchError(cls, field, expected, value)
             self.__setattr__(field, value)
-        self.__setattr__('payload', self.pack())
+        if payload is None:
+            payload = self.pack()
+        self.__setattr__('_payload', payload)
         # Make sure the post-initialization is correctly performed.
         self.__post_init__()
 
@@ -171,28 +179,22 @@ def packetclass(cls: type) -> type:
 @packetclass
 class FixedSizePacketBase(AbstractPacket):
 
+    @property
+    def payload(self) -> bytes:
+        return self._payload
+
     def __len__(self) -> int:
-        """Overloaded method
-        """
         return self._size
 
     def __iter__(self):
-        """Overloaded method
-        """
         return (getattr(self, field) for field in self._fields)
 
     def pack(self) -> bytes:
-        """Overloaded method.
-        """
         return struct.pack(self._format, *self)
 
     @classmethod
     def unpack(cls, data: bytes) -> AbstractPacket:
-        """Overloaded method.
-        """
-        packet = cls(*struct.unpack(cls._format, data))
-        packet.payload = data
-        return packet
+        return cls(*struct.unpack(cls._format, data), payload=data)
 
 
 
