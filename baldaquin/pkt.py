@@ -34,6 +34,16 @@ _DEFAULT_LAYOUT_CHAR = _LAYOUT_CHARS[0]
 
 
 
+class Edge(Enum):
+
+    """Small Enum class encapsulating the edge type of a transition on a digital line.
+    """
+
+    RISING = 1
+    FALLING = 0
+
+
+
 class AbstractPacket(ABC):
 
     """Abstract base class for binary packets.
