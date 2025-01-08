@@ -86,6 +86,46 @@ def test_readout():
         packet.header = 3
     logger.info(info.value)
 
+def test_docs():
+    """Small convenience function for the class docs---we copy/paste from here.
+    """
+
+    @packetclass
+    class Trigger(FixedSizePacketBase):
+
+        layout = '>'
+
+        header: 'B' = 0xff
+        pin_number: 'B'
+        timestamp: 'Q'
+
+    packet = Trigger(0xff, 1, 15426782)
+    print(packet)
+    print(len(packet))
+    print(isinstance(packet, AbstractPacket))
+
+    packet = Trigger.unpack(b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde')
+    print(packet)
+
+    with pytest.raises(AttributeError) as info:
+        packet.pin_number = 0
+    print(info)
+
+    @packetclass
+    class Trigger(FixedSizePacketBase):
+
+        layout = '>'
+
+        header: 'B' = 0xff
+        pin_number: 'B'
+        microseconds: 'Q'
+
+        def __post_init__(self):
+            self.seconds = self.microseconds / 1000000
+
+    packet = Trigger(0xff, 1, 15426782)
+    print(packet.seconds)
+
 
 def test_packets_statistics():
     """Small test for the PacketStatistics class.
