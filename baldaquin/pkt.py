@@ -156,12 +156,18 @@ def packetclass(cls: type) -> type:
             expected = getattr(cls, field, None)
             if expected is not None and expected != value:
                 raise FieldMismatchError(cls, field, expected, value)
-            self.__setattr__(field, value)
+            object.__setattr__(self, field, value)
         if payload is None:
             payload = self.pack()
-        self.__setattr__('_payload', payload)
+        object.__setattr__(self, '_payload', payload)
         # Make sure the post-initialization is correctly performed.
         self.__post_init__()
+
+    # Make class instances frozed (field-wise).
+    def _setattr(self, key, value):
+        if key in self._fields:
+            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
+        object.__setattr__(self, key, value)
 
     # Create the __str__ dunder method.
     def _str(self):
@@ -171,6 +177,7 @@ def packetclass(cls: type) -> type:
 
     # Attach the dunder methods to the class and we are good to go.
     cls.__init__ = _init
+    cls.__setattr__ = _setattr
     cls.__str__ = _str
     return cls
 

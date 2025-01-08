@@ -80,9 +80,10 @@ def test_readout():
     logger.info(twin)
     for val1, val2 in zip(packet, twin):
         assert val1 == val2
-    #
-    #packet.header = 3
-    #print(packet)
+    # Make sure that the packet fields cannot be modified.
+    with pytest.raises(AttributeError) as info:
+        packet.header = 3
+    logger.info(info.value)
 
 
 def test_packets_statistics():
