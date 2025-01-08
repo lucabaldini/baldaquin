@@ -58,6 +58,11 @@ class AbstractPacket(ABC):
     def payload(self) -> bytes:
         pass
 
+    @property
+    @abstractmethod
+    def fields(self) -> tuple[str]:
+        pass
+
     @abstractmethod
     def __len__(self) -> int:
         pass
@@ -137,14 +142,14 @@ def packetclass(cls: type) -> type:
     """
     _check_format_characters(cls)
     _check_layout_character(cls)
-
     # Cache all the necessary classvariables
     annotations = cls.__annotations__
     cls._fields = tuple(annotations.keys())
     cls._format = f'{cls.layout}{"".join(annotations.values())}'
     cls._size = struct.calcsize(cls._format)
+    # And here is a list of attributes we want to be frozen.
+    cls.__frozenattrs__ = ('_fields', '_format', '_size', '_payload') + cls._fields
 
-    # Create the class constructor.
     def _init(self, *args, payload: bytes = None):
         # Make sure we have the correct number of arguments---they should match
         # the class annotations.
@@ -177,11 +182,15 @@ class FixedSizePacketBase(AbstractPacket):
     def payload(self) -> bytes:
         return self._payload
 
+    @property
+    def fields(self) -> tuple[str]:
+        return self._fields
+
     def __len__(self) -> int:
         return self._size
 
     def __iter__(self):
-        return (getattr(self, field) for field in self._fields)
+        return (getattr(self, field) for field in self.fields)
 
     def pack(self) -> bytes:
         return struct.pack(self._format, *self)
@@ -193,7 +202,7 @@ class FixedSizePacketBase(AbstractPacket):
     def __setattr__(self, key, value) -> None:
        """Overloaded method to make class instances frozen.
        """
-       if key in self._fields:
+       if key in self.__class__.__frozenattrs__:
            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
        object.__setattr__(self, key, value)
 
