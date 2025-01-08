@@ -124,17 +124,19 @@ def _check_format_characters(cls: type) -> None:
             raise FormatCharacterError(character)
 
 
+def _check_layout_character(cls: type) -> None:
+    """Check that the class layout character is valid.
+    """
+    cls.layout = getattr(cls, 'layout', _DEFAULT_LAYOUT_CHAR)
+    if cls.layout not in _LAYOUT_CHARS:
+        raise LayoutCharacterError(cls.layout)
+
 
 def packetclass(cls: type) -> type:
     """Simple decorator to support automatic generation of fixed-length packet classes.
     """
-    # Check that the value of the annotations are valid format characters.
     _check_format_characters(cls)
-
-    # Make sure we have a proper packet layout.
-    cls.layout = getattr(cls, 'layout', _DEFAULT_LAYOUT_CHAR)
-    if cls.layout not in _LAYOUT_CHARS:
-        raise LayoutCharacterError(cls.layout)
+    _check_layout_character(cls)
 
     # Cache all the necessary classvariables
     annotations = cls.__annotations__
@@ -163,22 +165,7 @@ def packetclass(cls: type) -> type:
         # Make sure the post-initialization is correctly performed.
         self.__post_init__()
 
-    # Make class instances frozed (field-wise).
-    def _setattr(self, key, value):
-        if key in self._fields:
-            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
-        object.__setattr__(self, key, value)
-
-    # Create the __str__ dunder method.
-    def _str(self):
-        attrs = self._fields + ('payload', '_format')
-        info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
-        return f'{self.__class__.__name__}({info})'
-
-    # Attach the dunder methods to the class and we are good to go.
     cls.__init__ = _init
-    cls.__setattr__ = _setattr
-    cls.__str__ = _str
     return cls
 
 
@@ -202,6 +189,20 @@ class FixedSizePacketBase(AbstractPacket):
     @classmethod
     def unpack(cls, data: bytes) -> AbstractPacket:
         return cls(*struct.unpack(cls._format, data), payload=data)
+
+    def __setattr__(self, key, value) -> None:
+       """Overloaded method to make class instances frozen.
+       """
+       if key in self._fields:
+           raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
+       object.__setattr__(self, key, value)
+
+    def __str__(self):
+        """String formatting.
+        """
+        attrs = self._fields + ('payload', '_format')
+        info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
+        return f'{self.__class__.__name__}({info})'
 
 
 
