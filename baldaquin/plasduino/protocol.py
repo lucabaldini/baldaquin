@@ -105,7 +105,7 @@ class DigitalTransition(FixedSizePacketBase):
     layout = '>'
     header: 'B' = Marker.DIGITAL_TRANSITION_HEADER.value
     info: 'B'
-    timestamp: 'L'
+    microseconds: 'L'
 
     def __post_init__(self) -> None:
         """Post initialization.
@@ -114,7 +114,7 @@ class DigitalTransition(FixedSizePacketBase):
         # (the MSB) and the pin number.
         self.pin_number = self.info & 0x7F
         self.polarity = (self.info >> 7) & 0x1
-        self.timestamp /= 1.e6
+        self.seconds = 1.e-6 * self.seconds
 
 
 
@@ -132,10 +132,10 @@ class AnalogReadout(FixedSizePacketBase):
     layout = '>'
     header: 'B' = Marker.ANALOG_READOUT_HEADER.value
     pin_number: 'B'
-    timestamp: 'L'
+    milliseconds: 'L'
     adc_value: 'H'
 
     def __post_init__(self) -> None:
         """Post initialization.
         """
-        self.timestamp /= 1.e3
+        self.seconds = 1.e-3 * self.milliseconds

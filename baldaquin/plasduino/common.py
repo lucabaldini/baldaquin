@@ -249,7 +249,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
     def read_packet(self) -> int:
         """Read a single packet, that is, an analog readout.
         """
-        return self.serial_interface.read(AnalogReadout.SIZE)
+        return self.serial_interface.read(AnalogReadout._size)
 
     def wait_pending_packets(self, sleep_time: int = None) -> int:
         """Wait and read all the pending packets from the serial port, then consume
@@ -279,11 +279,11 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
             time.sleep(sleep_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
         # At this point we expect a number of events which is a multiple of
-        # AnalogReadout.SIZE, +1. If this is not the case, it might indicate that
+        # AnalogReadout._size, +1. If this is not the case, it might indicate that
         # we have not waited enough.
-        if num_bytes % AnalogReadout.SIZE != 1:
+        if num_bytes % AnalogReadout._size != 1:
             logger.warning(f'{num_bytes} pending on the serial port, expected 1, 9 or 17...')
-        num_packets = num_bytes // AnalogReadout.SIZE
+        num_packets = num_bytes // AnalogReadout._size
         if num_packets > 0:
             logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
             for _ in range(num_packets):

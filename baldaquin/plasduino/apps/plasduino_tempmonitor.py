@@ -22,7 +22,7 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
-from baldaquin.plasduino.plasduino import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
+from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
@@ -59,7 +59,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
 
     NAME = 'Temperature Monitor'
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
-    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'temperature_monitor.cfg'
+    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_tempmonitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _SAMPLING_INTERVAL = 500
     _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
@@ -83,7 +83,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         readout = AnalogReadout.unpack(packet)
-        self.strip_chart_dict[readout.pin_number].add_point(readout.timestamp,
+        self.strip_chart_dict[readout.pin_number].add_point(readout.seconds,
             self._converter(readout.adc_value))
 
 
