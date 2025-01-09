@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Mock application with data display.
+"""Silly application with Histogram display.
 """
 
 import numpy as np
