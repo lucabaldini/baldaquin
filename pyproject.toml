@@ -21,7 +21,7 @@ maintainers = [
   {name = "Luca Baldini", email = "luca.baldini@pi.infn.it"}
 ]
 description = "BALanced DAQ User INterface"
-readme = "README.rst"
+readme = "README.md"
 license = {file = "LICENSE.txt"}
 keywords = ["DAQ"]
 classifiers = [
