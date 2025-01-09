@@ -13,9 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 """System-wide facilities.
 """
+
+from __future__ import annotations
 
 import os
 from pathlib import Path
