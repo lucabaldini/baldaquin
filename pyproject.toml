@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "baldaquin"
+version = "0.0.0"
+dependencies = [
+  "loguru",
+  "matplotlib",
+  "numpy",
+  "pydata-sphinx-theme",
+  "pyserial",
+  "PySide6"
+]
+requires-python = ">=3.7"
+authors = [
+  {name = "Luca Baldini", email = "luca.baldini@pi.infn.it"},
+]
+maintainers = [
+  {name = "Luca Baldini", email = "luca.baldini@pi.infn.it"}
+]
+description = "BALanced DAQ User INterface"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+keywords = ["DAQ"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python"
+]
+
+# [project.optional-dependencies]
+# gui = ["PyQt5"]
+# cli = [
+#   "rich",
+#   "click",
+# ]
+
+[project.urls]
+Homepage = "https://github.com/lucabaldini/baldaquin"
+#Documentation = "https://readthedocs.org"
+Repository = "https://github.com/lucabaldini/baldaquin"
+#"Bug Tracker" = "https://github.com/me/spam/issues"
+#Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+
+# [project.scripts]
+# spam-cli = "spam:main_cli"
+#
+# [project.gui-scripts]
+# spam-gui = "spam:main_gui"
+#
+# [project.entry-points."spam.magical"]
+# tomatoes = "spam:main_tomatoes"
