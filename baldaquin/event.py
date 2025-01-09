@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,90 +28,7 @@ from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.buf import CircularBuffer
-
-
-
-@dataclass
-class EventBase:
-
-    """Virtual base class with possible event structure.
-
-    Concrete subclasses should define the relevant fields for the event, using
-    the dataclass machinery, and override the ``FORMAT_STRING`` class member
-
-    .. warning::
-
-       Mind that the ``FORMAT_STRING`` should match the type and the order of
-       the event fields fields. The format string is passed verbatim to the
-       Python ``struct`` module, and the related information is available at
-       https://docs.python.org/3/library/struct.html
-
-    The basic idea, here, is that the :meth:`pack() <baldaquin.event.EventBase.pack()>`
-    method returns a bytes object that can be written into a binary file,
-    while the :meth:`unpack() <baldaquin.event.EventBase.unpack()>` method does
-    the opposite, i.e., it constructs an event object from its binary representation
-    (the two are designed to round-trip). Additionally, the
-    :meth:`read_from_file() <baldaquin.event.EventBase.read_from_file()>`
-    method reads and unpack one event from file.
-    """
-
-    # pylint: disable=invalid-name
-    FORMAT_STRING = None
-
-    def attribute_values(self) -> tuple:
-        """Return the values for all the attributes, to be used, e.g., in the
-        ``pack()`` method.
-
-        See, e.g., https://stackoverflow.com/questions/69090253/ for more
-        information about how to programmatically iterate over dataclass fields.
-        Since this is not necessarily blazingly fast, we provide the functionality
-        wrapped in a small function, so that subclasses can overaload it if
-        needed.
-        """
-        return tuple(getattr(self, field.name) for field in dataclasses.fields(self))
-
-    def pack(self) -> bytes:
-        """Pack the event for supporting binary output to file.
-        """
-        return struct.pack(self.FORMAT_STRING, *self.attribute_values())
-
-    @classmethod
-    def unpack(cls, data : bytes) -> EventBase:
-        """Unpack some data into an event object.
-        """
-        return cls(*struct.unpack(cls.FORMAT_STRING, data))
-
-    @classmethod
-    def read_from_file(cls, input_file) -> EventBase:
-        """Read a single event from a file object open in binary mode.
-        """
-        return cls.unpack(input_file.read(struct.calcsize(cls.FORMAT_STRING)))
-
-
-
-@dataclass
-class EventStatistics:
-
-    """Small container class helping with the event handler bookkeeping.
-    """
-
-    events_processed : int = 0
-    events_written : int = 0
-    bytes_written : int = 0
-
-    def reset(self) -> None:
-        """Reset the statistics.
-        """
-        self.events_processed = 0
-        self.events_written = 0
-        self.bytes_written = 0
-
-    def update(self, events_processed, events_written, bytes_written) -> None:
-        """Update the event statistics.
-        """
-        self.events_processed += events_processed
-        self.events_written += events_written
-        self.bytes_written += bytes_written
+from baldaquin.pkt import PacketStatistics
 
 
 
@@ -153,11 +70,11 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         self.setAutoDelete(False)
         # Create the event buffer.
         self._buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
-        self._statistics = EventStatistics()
+        self._statistics = PacketStatistics()
         self.__running = False
 
-    def statistics(self) -> EventStatistics:
-        """Return the underlying EventStatistics object.
+    def statistics(self) -> PacketStatistics:
+        """Return the underlying PacketStatistics object.
         """
         return self._statistics
 
@@ -175,8 +92,24 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.
         """
-        events_written, bytes_written = self._buffer.flush()
-        self._statistics.update(0, events_written, bytes_written)
+        packets_written, bytes_written = self._buffer.flush()
+        self._statistics.update(0, packets_written, bytes_written)
+
+    def acquire_packet(self) -> None:
+        """Acquire a single packet.
+
+        This is the inner function that gets execute within the run() method, and
+        it is factored out so that, if necessary, it can be called in a stand-alone
+        fashion, rather than automatically when the data acquisition thread is
+        launched.
+        """
+        packet = self.read_packet()
+        self._buffer.put(packet)
+        self._statistics.update(1, 0, 0)
+        if self._buffer.flush_needed():
+            self.flush_buffer()
+        # We should make clear where this is defined.
+        self.process_packet(packet)
 
     def run(self):
         """Overloaded QRunnable method.
@@ -186,24 +119,25 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         if self._buffer.size() > 0:
             logger.warning('Event buffer is not empty at the start run, clearing it...')
             self._buffer.clear()
-        # Update the __running flag and enter the event loop.
         self.__running = True
         while self.__running:
-            event_data = self.read_event_data()
-            self._buffer.put(event_data)
-            self._statistics.update(1, 0, 0)
-            if self._buffer.flush_needed():
-                self.flush_buffer()
-            self.process_event_data(event_data)
+            self.acquire_packet()
 
     def stop(self) -> None:
         """Stop the event handler.
         """
         self.__running = False
 
-    def read_event_data(self) -> Any:
-        """Read a single event (must be overloaded in derived classes).
+    def read_packet(self) -> PacketBase:
+        """Read a single packet (must be overloaded in derived classes).
 
         This is the actual blocking function that gets a single event from the hardware.
+        """
+        raise NotImplementedError
+
+    def process_packet(self, packet: PacketBase) -> None:
+        """Process a single packet (must be overloaded in derived classes).
+
+        This is typically implemented downstream in the user application.
         """
         raise NotImplementedError

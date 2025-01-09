@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,27 +13,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Mock application with data display.
+"""Silly application with Histogram display.
 """
 
 import numpy as np
 
+from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.hist import Histogram1d
-from baldaquin.mock import MOCK_APP_CONFIG, MOCK_PROJECT_NAME
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
-    MockUserApplicationBase, MockEventServerConfiguration
+from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket,\
+    SillyUserApplicationBase, SillyConfiguration
 
 
 
-class MainWindow(MockMainWindow):
-
-    """Mock main window for testing purposes.
-    """
-
-    PROJECT_NAME = MOCK_PROJECT_NAME
-    # pylint: disable=c-extension-no-member
+class MainWindow(SillyMainWindow):
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
@@ -45,27 +39,18 @@ class MainWindow(MockMainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        plot_pha_hist = lambda : self.pha_tab.draw_histogram(user_application.pha_hist)
-        plot_pha_hist()
-        self.pha_tab.connect_slot(plot_pha_hist)
+        self.pha_tab.register(user_application.pha_hist)
 
 
 
-class Configuration(MockEventServerConfiguration):
-
-    """User application configuration.
-    """
-
-
-
-class UserApplication(MockUserApplicationBase):
+class SillyHist(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Readout and display'
-    CONFIGURATION_CLASS = Configuration
-    CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'display.cfg'
+    NAME = 'Silly histogram display'
+    CONFIGURATION_CLASS = SillyConfiguration
+    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / 'silly_hist.cfg'
 
     def __init__(self):
         """Overloaded constructor.
@@ -73,19 +58,13 @@ class UserApplication(MockUserApplicationBase):
         super().__init__()
         self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel='PHA [ADC counts]')
 
-    def configure(self):
-        """Overloaded method.
-        """
-        #pylint: disable=useless-super-delegation
-        super().configure()
-
-    def process_event_data(self, event_data):
+    def process_packet(self, data):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockEvent.unpack(event_data)
-        self.pha_hist.fill(event.pha)
+        packet = SillyPacket.unpack(data)
+        self.pha_hist.fill(packet.pha)
 
 
 
 if __name__ == '__main__':
-    bootstrap_window(MainWindow, MockRunControl(), UserApplication())
+    bootstrap_window(MainWindow, SillyRunControl(), SillyHist())

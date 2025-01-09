@@ -19,11 +19,15 @@ List of modules
    :caption: Core
 
    app
+   arduino_
    buf
    config
+   egu
    event
    hist
+   pkt
    runctrl
+   serial_
    timeline
 
 
@@ -31,7 +35,7 @@ List of modules
    :maxdepth: 2
    :caption: Utils
 
-   mock
+   silly
    profile
 
 

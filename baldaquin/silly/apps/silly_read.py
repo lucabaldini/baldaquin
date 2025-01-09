@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,34 +19,28 @@
 from loguru import logger
 
 from baldaquin.gui import bootstrap_window
-from baldaquin.mock import MOCK_APP_CONFIG
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockEvent,\
-    MockUserApplicationBase, MockEventServerConfiguration
-
-
-class Configuration(MockEventServerConfiguration):
-
-    """User application configuration.
-    """
+from baldaquin.silly import SILLY_APP_CONFIG
+from baldaquin.silly.common import SillyRunControl, SillyPacket,\
+    SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
 
 
 
-class UserApplication(MockUserApplicationBase):
+class SillyRead(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Simplest readout'
-    CONFIGURATION_CLASS = Configuration
-    CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
+    NAME = 'Silly readout'
+    CONFIGURATION_CLASS = SillyConfiguration
+    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'silly_read.cfg'
 
-    def process_event_data(self, event_data):
+    def process_packet(self, data):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockEvent.unpack(event_data)
-        logger.debug(f'{event} <- {event_data}')
+        packet = SillyPacket.unpack(data)
+        logger.debug(f'{packet} <- {data}')
 
 
 
 if __name__ == '__main__':
-    bootstrap_window(MockMainWindow, MockRunControl(), UserApplication())
+    bootstrap_window(SillyMainWindow, SillyRunControl(), SillyRead())

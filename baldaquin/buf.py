@@ -83,7 +83,7 @@ class BufferBase:
         """Return the proper keyword arguments (mode and encoding) for a generic
         open() call.
         """
-        kwargs = dict(mode=f'w{self._mode.value}')
+        kwargs = dict(mode=f'a{self._mode.value}')
         if self._mode == BufferWriteMode.TEXT:
             kwargs.update(encoding=self._DEFAULT_ENCODING)
         return kwargs

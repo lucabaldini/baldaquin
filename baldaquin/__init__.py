@@ -19,6 +19,7 @@
 
 import os
 from pathlib import Path
+import subprocess
 import sys
 
 from loguru import logger
@@ -26,13 +27,21 @@ from loguru import logger
 
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
-    format=">>> <level>{message}</level>")
+    format=">>> <level>[{level}] {message}</level>")
 
+def config_logger(file_path : str = None, extra=None):
+    """Configure the loguru logger.
+    """
+    handlers = [DEFAULT_LOGURU_HANDLER]
+    if file_path is not None:
+        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
+    logger.configure(handlers=handlers, levels=None, extra=extra)
+
+config_logger()
 
 # Basic package structure.
 BALDAQUIN_ROOT = Path(__file__).parent
 BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
-BALDAQUIN_CORE = BALDAQUIN_ROOT / 'core'
 BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
 BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
 BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'
@@ -44,7 +53,7 @@ BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 # Global flag to handle the Qt bindings in a consistent fashion, see the
 # __qt__ module for more context about this.
 AVAILABLE_BALDAQUIN_QT_WRAPPERS = ('PySide2', 'PySide6', 'PyQt5', 'PyQt6')
-DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide6'
+DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide2'
 try:
     BALDAQUIN_QT_WRAPPER = os.environ['BALDAQUIN_QT_WRAPPER']
     logger.info(f'$BALDAQUIN_QT_WRAPPER environmental variable set to {BALDAQUIN_QT_WRAPPER}')
@@ -54,6 +63,13 @@ if not BALDAQUIN_QT_WRAPPER in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
     logger.error(f'{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available')
     BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
 logger.info(f'Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}')
+
+
+def execute_shell_command(args):
+    """Execute a shell command.
+    """
+    logger.info(f'About to execute "{" ".join(args)}"...')
+    return subprocess.run(args)
 
 
 def _create_folder(folder_path : Path) -> None:
@@ -126,12 +142,3 @@ def setup_project(project_name : str) -> tuple[Path, Path]:
     for folder_path in folder_list:
         _create_folder(folder_path)
     return folder_list
-
-
-def config_logger(file_path : str = None, extra=None):
-    """Configure the loguru logger.
-    """
-    handlers = [DEFAULT_LOGURU_HANDLER]
-    if file_path is not None:
-        handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
-    logger.configure(handlers=handlers, levels=None, extra=extra)

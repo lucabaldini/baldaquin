@@ -1,4 +1,4 @@
-# Copyright (C) 2023 the baldaquin team.
+# Copyright (C) 2023--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 """Mock project.
 """
 
-from baldaquin import setup_project, _create_folder
+from baldaquin import setup_project
 
 
-MOCK_PROJECT_NAME = 'mock'
+PROJECT_NAME = 'silly'
 
-MOCK_CONFIG, MOCK_APP_CONFIG, MOCK_DATA = setup_project(MOCK_PROJECT_NAME)
+SILLY_CONFIG, SILLY_APP_CONFIG, SILLY_DATA = setup_project(PROJECT_NAME)

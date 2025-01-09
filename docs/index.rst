@@ -43,6 +43,6 @@ application.
    install
    technologies
 
-   xmaps
+   plasduino
 
    api

@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-# Copyright (C) 2023 the baldaquin team.
+# Copyright (C) 2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,19 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
+"""Test suite for egu.py
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+
+from baldaquin import egu
+from baldaquin.plasduino import PLASDUINO_SENSORS
 
 
-file_path = 'img.npy'
+def test_linear(slope: float = 2., intercept: float = 1.):
+    """Test a simple linear conversion.
+    """
+    converter = egu.LinearConversion(slope, intercept)
+    raw = np.linspace(0., 1., 11)
+    physical = converter(raw)
+    assert np.allclose(physical, slope * raw + intercept)
 
-
-data = np.load(file_path)
-print(data)
-plt.figure('Image display')
-plt.imshow(data)
-plt.colorbar()
-plt.show()
+def test_thermistor():
+    """Test a spline conversion.
+    """
+    file_path = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
+    converter = egu.ThermistorConversion.from_file(file_path, 10., 10, col_resistance=2)
