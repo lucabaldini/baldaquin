@@ -21,7 +21,7 @@ import pytest
 from loguru import logger
 
 #from baldaquin.app import UserAppNoOp
-from baldaquin.runctrl import FsmState, FiniteStateMachine, RunControlBase,\
+from baldaquin.runctrl import FsmState, FiniteStateMachineBase, RunControlBase,\
     InvalidFsmTransitionError
 
 
@@ -32,7 +32,7 @@ def test_finite_state_machine():
     the invalid ones.
     """
     # Create a virtual FSM.
-    fsm = FiniteStateMachine()
+    fsm = FiniteStateMachineBase()
     # Override all the necessary hooks to that we can actually have transitions.
     fsm.setup = lambda: True
     fsm.teardown = lambda: True

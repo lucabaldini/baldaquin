@@ -225,7 +225,7 @@ def setup():
     _set_rc_param('lines.linewidth', 1.5)
     _set_rc_param('lines.linestyle', '-')
     _set_rc_param('lines.color', DEFAULT_COLORS[0])
-    _set_rc_param('lines.marker', None)
+    #_set_rc_param('lines.marker', None)
     _set_rc_param('lines.markeredgewidth', 1.0)
     _set_rc_param('lines.markersize', 6)
     _set_rc_param('lines.dash_joinstyle', 'miter')

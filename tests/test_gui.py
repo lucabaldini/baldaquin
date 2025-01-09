@@ -18,13 +18,12 @@
 
 from loguru import logger
 
-from baldaquin.__qt__ import exec_qapp
+from baldaquin.__qt__ import exec_qapp, QtGui, QtCore, QtWidgets
 from baldaquin.config import SampleConfiguration
-from baldaquin._qt import QtGui, QtCore, QtWidgets
 from baldaquin.gui import ConfigurationWidget, RunControlCardField, MainWindow, bootstrap_window
 
 
-def test_main_window():
+def _test_main_window():
     """Create a test window to display a the relevant graphical elements.
     """
     app, window = bootstrap_window(MainWindow)
@@ -41,6 +40,6 @@ def test_main_window():
 
 
 if __name__ == '__main__':
-    qapp, window = test_main_window()
+    qapp, window = _test_main_window()
     window.show()
     exec_qapp(qapp)
