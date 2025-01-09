@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,22 +18,20 @@
 
 import numpy as np
 
+from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.hist import Histogram1d
-from baldaquin.mock import MOCK_APP_CONFIG, MOCK_PROJECT_NAME
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockPacket,\
-    MockUserApplicationBase, MockPacketServerConfiguration
+from baldaquin.silly.silly import SillyRunControl, SillyMainWindow, SillyPacket,\
+    SillyUserApplicationBase, SillyConfiguration
 
 
 
-class MainWindow(MockMainWindow):
+class MainWindow(SillyMainWindow):
 
     """Mock main window for testing purposes.
     """
 
-    PROJECT_NAME = MOCK_PROJECT_NAME
-    # pylint: disable=c-extension-no-member
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
@@ -45,27 +43,18 @@ class MainWindow(MockMainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        plot_pha_hist = lambda : self.pha_tab.draw_histogram(user_application.pha_hist)
-        plot_pha_hist()
-        self.pha_tab.connect_slot(plot_pha_hist)
+        self.pha_tab.register(user_application.pha_hist)
 
 
 
-class Configuration(MockPacketServerConfiguration):
-
-    """User application configuration.
-    """
-
-
-
-class UserApplication(MockUserApplicationBase):
+class SillyHist(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Readout and display'
-    CONFIGURATION_CLASS = Configuration
-    CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'display.cfg'
+    NAME = 'Silly Histogram'
+    CONFIGURATION_CLASS = SillyConfiguration
+    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / 'silly_hist.cfg'
 
     def __init__(self):
         """Overloaded constructor.
@@ -79,13 +68,13 @@ class UserApplication(MockUserApplicationBase):
         #pylint: disable=useless-super-delegation
         super().configure()
 
-    def process_packet(self, packet):
+    def process_packet(self, data):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockPacket.unpack(packet)
-        self.pha_hist.fill(event.pha)
+        packet = SillyPacket.unpack(data)
+        self.pha_hist.fill(packet.pha)
 
 
 
 if __name__ == '__main__':
-    bootstrap_window(MainWindow, MockRunControl(), UserApplication())
+    bootstrap_window(MainWindow, SillyRunControl(), SillyHist())

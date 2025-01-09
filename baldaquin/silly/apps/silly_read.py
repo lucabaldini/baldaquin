@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,19 +26,19 @@ from baldaquin.silly.silly import SillyRunControl, SillyPacket, SillyServer,\
 
 
 
-class UserApplication(SillyUserApplicationBase):
+class SillyRead(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Simplest readout'
+    NAME = 'Silly read'
     CONFIGURATION_CLASS = SillyConfiguration
-    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'simplest_readout.cfg'
+    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'silly_read.cfg'
 
-    def process_packet(self, payload):
+    def process_packet(self, data):
         """Dumb data processing routine---print out the actual event.
         """
-        packet = SillyPacket.unpack(payload)
+        packet = SillyPacket.unpack(data)
         logger.debug(f'{packet} <- {payload}')
 
 
