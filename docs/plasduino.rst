@@ -86,8 +86,8 @@ Loading the appropriate sketch
 Module documentation
 --------------------
 
+.. automodule:: baldaquin.plasduino.common
+
 .. automodule:: baldaquin.plasduino.protocol
 
 .. automodule:: baldaquin.plasduino.shields
-
-.. automodule:: baldaquin.plasduino.plasduino
