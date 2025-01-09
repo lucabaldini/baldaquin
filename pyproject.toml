@@ -11,7 +11,8 @@ dependencies = [
   "numpy",
   "pydata-sphinx-theme",
   "pyserial",
-  "PySide2"
+  "PySide2",
+  "scipy"
 ]
 requires-python = ">=3.7"
 authors = [

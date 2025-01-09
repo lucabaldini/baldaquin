@@ -4,3 +4,4 @@ numpy
 pydata-sphinx-theme
 pyserial
 PySide2
+scipy
