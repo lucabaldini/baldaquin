@@ -22,16 +22,12 @@ from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.hist import Histogram1d
-from baldaquin.silly.silly import SillyRunControl, SillyMainWindow, SillyPacket,\
+from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket,\
     SillyUserApplicationBase, SillyConfiguration
 
 
 
 class MainWindow(SillyMainWindow):
-
-    """Mock main window for testing purposes.
-    """
-
 
     def __init__(self, parent : QtWidgets.QWidget = None) -> None:
         """Constructor.
@@ -52,7 +48,7 @@ class SillyHist(SillyUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Silly Histogram'
+    NAME = 'Silly histogram display'
     CONFIGURATION_CLASS = SillyConfiguration
     CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / 'silly_hist.cfg'
 

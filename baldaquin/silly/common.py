@@ -36,9 +36,6 @@ from baldaquin.runctrl import RunControlBase
 @packetclass
 class SillyPacket(FixedSizePacketBase):
 
-    """Silly packet structure for testing purposes.
-    """
-
     trigger_id: 'L'
     seconds: 'L'
     microseconds: 'L'
@@ -81,7 +78,7 @@ class SillyServer:
         self.start_time = time.time()
 
     def next(self) -> bytes:
-        """Overloaded method.
+        """Return the next packet data.
         """
         self.trigger_id += 1
         time.sleep(random.expovariate(self.rate))
@@ -106,17 +103,12 @@ class SillyEventHandler(EventHandlerBase):
         """Constructor.
         """
         super().__init__()
-        self.packet_server = SillyServer()
-
-    def setup_server(self, rate : float, pha_mean : float, pha_sigma : float) -> None:
-        """Setup the event server.
-        """
-        self.packet_server.setup(rate, pha_mean, pha_sigma)
+        self.server = SillyServer()
 
     def read_packet(self):
         """Overloaded method.
         """
-        return self.packet_server.next()
+        return self.server.next()
 
 
 
@@ -147,7 +139,7 @@ class SillyUserApplicationBase(UserApplicationBase):
         rate = self.configuration.value('rate')
         pha_mean = self.configuration.value('pha_mean')
         pha_sigma = self.configuration.value('pha_sigma')
-        self.event_handler.setup_server(rate, pha_mean, pha_sigma)
+        self.event_handler.server.setup(rate, pha_mean, pha_sigma)
 
 
 

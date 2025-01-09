@@ -20,9 +20,8 @@ from loguru import logger
 
 from baldaquin.gui import bootstrap_window
 from baldaquin.silly import SILLY_APP_CONFIG
-from baldaquin.silly.silly import SillyRunControl, SillyPacket, SillyServer,\
+from baldaquin.silly.common import SillyRunControl, SillyPacket,\
     SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
-
 
 
 
@@ -31,7 +30,7 @@ class SillyRead(SillyUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Silly read'
+    NAME = 'Silly readout'
     CONFIGURATION_CLASS = SillyConfiguration
     CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'silly_read.cfg'
 
@@ -39,9 +38,9 @@ class SillyRead(SillyUserApplicationBase):
         """Dumb data processing routine---print out the actual event.
         """
         packet = SillyPacket.unpack(data)
-        logger.debug(f'{packet} <- {payload}')
+        logger.debug(f'{packet} <- {data}')
 
 
 
 if __name__ == '__main__':
-    bootstrap_window(SillyMainWindow, SillyRunControl(), UserApplication())
+    bootstrap_window(SillyMainWindow, SillyRunControl(), SillyRead())
