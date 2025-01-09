@@ -19,34 +19,29 @@
 from loguru import logger
 
 from baldaquin.gui import bootstrap_window
-from baldaquin.mock import MOCK_APP_CONFIG
-from baldaquin.mock.mock import MockRunControl, MockMainWindow, MockPacket,\
-    MockUserApplicationBase, MockPacketServerConfiguration
-
-
-class Configuration(MockPacketServerConfiguration):
-
-    """User application configuration.
-    """
+from baldaquin.silly import SILLY_APP_CONFIG
+from baldaquin.silly.silly import SillyRunControl, SillyPacket, SillyServer,\
+    SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
 
 
 
-class UserApplication(MockUserApplicationBase):
+
+class UserApplication(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
     NAME = 'Simplest readout'
-    CONFIGURATION_CLASS = Configuration
-    CONFIGURATION_FILE_PATH = MOCK_APP_CONFIG / 'simplest_readout.cfg'
+    CONFIGURATION_CLASS = SillyConfiguration
+    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'simplest_readout.cfg'
 
-    def process_packet(self, packet):
+    def process_packet(self, payload):
         """Dumb data processing routine---print out the actual event.
         """
-        event = MockPacket.unpack(packet)
-        logger.debug(f'{event} <- {packet}')
+        packet = SillyPacket.unpack(payload)
+        logger.debug(f'{packet} <- {payload}')
 
 
 
 if __name__ == '__main__':
-    bootstrap_window(MockMainWindow, MockRunControl(), UserApplication())
+    bootstrap_window(SillyMainWindow, SillyRunControl(), UserApplication())
