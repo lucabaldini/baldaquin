@@ -16,7 +16,7 @@
 """Mock project.
 """
 
-from baldaquin import setup_project, _create_folder
+from baldaquin import setup_project
 
 
 PROJECT_NAME = 'silly'
