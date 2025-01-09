@@ -62,12 +62,6 @@ class SillyHist(SillyUserApplicationBase):
         super().__init__()
         self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel='PHA [ADC counts]')
 
-    def configure(self):
-        """Overloaded method.
-        """
-        #pylint: disable=useless-super-delegation
-        super().configure()
-
     def process_packet(self, data):
         """Dumb data processing routine---print out the actual event.
         """
