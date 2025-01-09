@@ -54,8 +54,8 @@ format with a well-defined layout and with a fixed size. This module provides th
 :class:`FixedSizePacketBasePacket <baldaquin.pkt.FixedSizePacketBase>` base class
 to define concrete fixed-size packet structures.
 
-The :meth:`packetclass <baldaquin.pkt.packetclass>` decorator is loosely related
-to the Python ``dataclass`` decorator, and what it does is essentially providing
+The :meth:`packetclass <baldaquin.pkt.packetclass>` decorator is loosely inspired
+by the Python ``dataclass`` decorator, and what it does is essentially providing
 a class constructor based on class annotations. The basic contract is that for any
 annotation in the form of
 
@@ -118,12 +118,14 @@ the following snippet
         pin_number: 'B'
         timestamp: 'Q'
 
-defines a fully fledged packet class with three fields (big endian, standard size)
-that can be used as advertised
+defines a fully fledged packet class with three fields (big endian, standard size),
+where the header is required to be ``0xff`` (this is automatically checked at
+runtime) and that can be used as advertised:
 
 >>> packet = Trigger(0xff, 1, 15426782)
 >>> print(packet)
->>> Trigger(header=255, pin_number=1, timestamp=15426782, payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
+>>> Trigger(header=255, pin_number=1, timestamp=15426782,
+>>>         payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
 >>> print(len(packet))
 >>> 10
 >>> print(isinstance(packet, AbstractPacket))
@@ -137,7 +139,8 @@ find yourself unpacking things, i.e.,
 
 >>> packet = Trigger.unpack(b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde')
 >>> print(packet)
->>> Trigger(header=255, pin_number=1, timestamp=15426782, payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
+>>> Trigger(header=255, pin_number=1, timestamp=15426782,
+>>>         payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
 
 (i.e., you have binary data from your hardware, and you can seamlessly turned into
 a useful data structure that you can interact with.)
