@@ -67,19 +67,6 @@ class OpCode(Enum):
 
 
 
-class HeaderMismatchError(RuntimeError):
-
-    """RuntimeError subclass to signal that a header mismatch in a data structure.
-    """
-
-    def __init__(self, cls: type, expected: int, actual: int):
-        """Constructor.
-        """
-        super().__init__(f'{cls.__name__} header mismatch '
-            f'(expected {hex(expected)}, found {hex(actual)}).')
-
-
-
 @packetclass
 class DigitalTransition(FixedSizePacketBase):
 
