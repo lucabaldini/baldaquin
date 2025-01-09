@@ -16,8 +16,6 @@
 """Binary data packet utilities.
 """
 
-from __future__ import annotations
-
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -62,7 +60,7 @@ class AbstractPacket(ABC):
 
     @property
     @abstractmethod
-    def fields(self) -> tuple[str]:
+    def fields(self) -> tuple:
         pass
 
     @abstractmethod
@@ -185,7 +183,7 @@ class FixedSizePacketBase(AbstractPacket):
         return self._payload
 
     @property
-    def fields(self) -> tuple[str]:
+    def fields(self) -> tuple:
         return self._fields
 
     def __len__(self) -> int:
