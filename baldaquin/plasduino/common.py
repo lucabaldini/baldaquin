@@ -27,11 +27,11 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import AbstractPacket, FixedSizePacketBase
+from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
-from baldaquin.serial_ import list_com_ports, SerialInterface
+from baldaquin.serial_ import SerialInterface
 from baldaquin.strip import SlidingStripChart
 
 

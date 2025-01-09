@@ -16,7 +16,6 @@
 """Basic definition of the plasduino communication protocol.
 """
 
-from dataclasses import dataclass
 from enum import Enum
 
 from baldaquin.pkt import packetclass, FixedSizePacketBase
@@ -68,17 +67,6 @@ class OpCode(Enum):
 
 
 
-class Polarity(Enum):
-
-    """Polarity of a digital transition on the serial port---this indicate whether
-    the timestamp was acquired on the rising or falling edge of the input signal.
-    """
-
-    RISING = 1
-    FALLING = 0
-
-
-
 class HeaderMismatchError(RuntimeError):
 
     """RuntimeError subclass to signal that a header mismatch in a data structure.
@@ -98,7 +86,7 @@ class DigitalTransition(FixedSizePacketBase):
     """A plasduino digital transition is a 6-bit binary array containing:
 
     * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
-    * byte(s) 1  : the transition information (pin number and polarity);
+    * byte(s) 1  : the transition information (pin number and edge type);
     * byte(s) 2-5: the timestamp of the readout from micros().
     """
 
@@ -110,10 +98,10 @@ class DigitalTransition(FixedSizePacketBase):
     def __post_init__(self) -> None:
         """Post initialization.
         """
-        # Note the _info field is packing into a single byte the polarity
+        # Note the _info field is packing into a single byte the edge type
         # (the MSB) and the pin number.
         self.pin_number = self.info & 0x7F
-        self.polarity = (self.info >> 7) & 0x1
+        self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.seconds
 
 

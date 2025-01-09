@@ -17,7 +17,6 @@
 """
 
 from baldaquin import plasduino
-from baldaquin import logger
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
@@ -26,7 +25,6 @@ from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEvent
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
-from baldaquin.strip import SlidingStripChart
 
 
 
