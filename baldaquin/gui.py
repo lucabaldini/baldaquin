@@ -101,7 +101,7 @@ class Button(QtWidgets.QPushButton):
         """
         super().__init__()
         self.setFixedSize(size, size)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.set_icon(icon_name, icon_size)
         if tooltip:
             self.setToolTip(tooltip)
