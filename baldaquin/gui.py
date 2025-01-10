@@ -817,8 +817,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control = None
 
     def add_widget(self, widget: QtWidgets.QWidget, row: int, col: int,
-        row_span: int = 1, col_span: int = 1,
-        align: QtCore.Qt.Alignment = QtCore.Qt.Alignment()) -> None:
+        row_span: int = 1, col_span: int = 1) -> None:
         """Add a widget to the underlying layout.
 
         This is just a convenience method mimicking the corresponding hook of the
@@ -840,12 +839,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
         col_span: int, optional (default 1)
             The number of columns spanned by the widget.
-
-        align: QtCore.Qt.Alignment
-            The alignment for the widget.
         """
         #pylint: disable=too-many-arguments
-        self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
+        self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span)
 
     def add_tab(self, page: QtWidgets.QWidget, label: str,
         icon_name: str = None) -> QtWidgets.QWidget:
