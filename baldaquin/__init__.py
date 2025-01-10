@@ -25,6 +25,28 @@ import sys
 
 from loguru import logger
 
+from baldaquin.__version__ import TAG, BUILD_DATE
+
+
+def start_message() -> None:
+    """Print the start message.
+    """
+    msg = f"""
+    This is baldaquin version {TAG} (built on {BUILD_DATE}).
+
+    Copyright (C) 2022--2024, the baldaquin team.
+
+    baldaquin comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it under certain
+    conditions. See the LICENSE file for details.
+
+    Visit https://github.com/lucabaldini/baldaquin for more information.
+    """
+    print(msg)
+
+
+start_message()
+
 
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
@@ -51,6 +73,26 @@ BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'
 BALDAQUIN_DOCS = BALDAQUIN_BASE / 'docs'
 BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
 BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
+
+
+# Version information.
+BALDAQUIN_VERSION_FILE_PATH = os.path.join(BALDAQUIN_ROOT, '__version__.py')
+
+def version_info():
+    """Read the tag and build date straight from the appropriate file.
+
+    This is meant to be used when you don't want to import the module (i.e., at
+    release time, when the file is changed), so that you don't have to bother with
+    reloading stuff.
+    """
+    with open(BALDAQUIN_VERSION_FILE_PATH, 'r', encoding='utf8') as input_file:
+        tag = input_file.readline().split('=')[-1].strip(' \'\n')
+        build_date = input_file.readline().split('=')[-1].strip(' \'\n')
+    return tag, build_date
+
+
+# Release notes file.
+BALDAQUIN_RELEASE_NOTES_PATH = os.path.join(BALDAQUIN_DOCS, 'release_notes.rst')
 
 
 # Global flag to handle the Qt bindings in a consistent fashion, see the

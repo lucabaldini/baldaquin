@@ -18,12 +18,14 @@ sys.path.insert(0, os.path.abspath('../baldaquin'))
 
 # -- Project information -----------------------------------------------------
 
+from baldaquin.__version__ import TAG
+
 project = 'baldaquin'
-copyright = '2022, The baldaquin team'
+copyright = '2022--2024, The baldaquin team'
 author = 'The baldaquin team'
 
 # The full version, including alpha/beta/rc tags
-release = '0.0.0'
+release = TAG
 
 
 # -- General configuration ---------------------------------------------------
