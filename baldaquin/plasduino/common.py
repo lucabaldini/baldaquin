@@ -336,7 +336,7 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
     _SAMPLING_INTERVAL = None
 
     @staticmethod
-    def create_strip_charts(ylabel: str = 'ADC counts') -> dict[str: SlidingStripChart]:
+    def create_strip_charts(ylabel: str = 'ADC counts'):# -> dict[str: SlidingStripChart]:
         """Create all the strip charts for displaying real-time data.
         """
         kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
