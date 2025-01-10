@@ -98,7 +98,12 @@ def board_identifiers(*boards: ArduinoBoard) -> tuple:
     tuple
         A tuple of (vid, pid) tuples.
     """
-    return tuple(sum([list(board.identifiers) for board in boards], start=[]))
+    # If you are tempted to use a sum of lists with start=[], here, keep in mind
+    # this is not supported in Python 3.7.
+    identiers = ()
+    for board in boards:
+        identiers += board.identifiers
+    return identiers
 
 
 def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
