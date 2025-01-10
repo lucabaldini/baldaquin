@@ -99,7 +99,7 @@ def test_configuration():
     config.update(file_path)
     assert config.value('port') == 20003
 
-def test_configuration_display(port=9999):
+def _test_configuration_display(port=9999):
     """Test the widget displaying configuration objects.
     """
     config = SampleConfiguration()
@@ -116,6 +116,6 @@ def test_configuration_display(port=9999):
 
 
 if __name__ == '__main__':
-    qapp, widget = test_configuration_display()
+    qapp, widget = _test_configuration_display()
     widget.show()
     exec_qapp(qapp)
