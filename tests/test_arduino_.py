@@ -28,10 +28,12 @@ def test_supported_boards():
     for board in arduino_._SUPPORTED_BOARDS:
         print(board)
 
+
 def test_board_identifiers():
     """Test the board identiers.
     """
     assert arduino_.board_identifiers(arduino_.UNO) == _UNO_IDS
+
 
 def test_board_identify():
     """Test the board identification code.

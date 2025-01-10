@@ -16,12 +16,9 @@
 """Test suite for pkt.py
 """
 
-from dataclasses import dataclass
-
 import pytest
 
 from baldaquin import logger
-from baldaquin import BALDAQUIN_DATA
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
 from baldaquin.pkt import Layout, Format, FieldMismatchError
 
@@ -41,7 +38,6 @@ class Readout(FixedSizePacketBase):
         self.seconds = self.milliseconds / 1000.
 
 
-
 def test_format():
     """Test the check for the packet layout and format characters.
     """
@@ -53,12 +49,12 @@ def test_format():
 
     with pytest.raises(ValueError) as info:
         @packetclass
-        class Packet(FixedSizePacketBase):
-            trigger_id: 'W' # noqa: F821
+        class Packet(FixedSizePacketBase):  # noqa: F811
+            trigger_id: 'W'  # noqa: F821
     logger.info(info.value)
 
     with pytest.raises(FieldMismatchError) as info:
-        packet = Readout(0, 0, 0)
+        _ = Readout(0, 0, 0)
     logger.info(info.value)
 
 
@@ -85,6 +81,7 @@ def test_readout():
     with pytest.raises(AttributeError) as info:
         packet.header = 3
     logger.info(info.value)
+
 
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.

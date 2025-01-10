@@ -20,7 +20,7 @@ import os
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.__qt__ import exec_qapp
-from baldaquin.config import ConfigurationParameter, ConfigurationBase, SampleConfiguration
+from baldaquin.config import ConfigurationParameter, SampleConfiguration
 from baldaquin.gui import ConfigurationWidget, bootstrap_qapplication
 
 
@@ -30,11 +30,13 @@ def _test_base_match(type_name, value, **constraints):
     p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value == value
 
+
 def _test_base_mismatch(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
     p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
-    assert p.value == None
+    assert p.value is None
+
 
 def test_print_parameters():
     """Print some parameters.
@@ -44,6 +46,7 @@ def test_print_parameters():
     print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f'))
     print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f', min=0.))
 
+
 def test_parameter_bool():
     """Test possible setting for int parameters.
     """
@@ -51,6 +54,7 @@ def test_parameter_bool():
         _test_base_match('bool', value)
     for value in (1, 1., 'test'):
         _test_base_mismatch('bool', value)
+
 
 def test_parameter_int(value=100):
     """Test possible setting for int parameters.
@@ -65,6 +69,7 @@ def test_parameter_int(value=100):
     _test_base_mismatch('int', 100, step=13)
     _test_base_match('int', 100, min=87, step=13)
 
+
 def test_parameter_float(value=1.):
     """Test possible setting for int parameters.
     """
@@ -72,6 +77,7 @@ def test_parameter_float(value=1.):
     _test_base_match('float', 1., min=0., max=10.)
     _test_base_mismatch('float', 1., min=10.)
     _test_base_mismatch('float', 1., max=0.)
+
 
 def test_parameter_str():
     """Test possible setting for int parameters.
@@ -81,6 +87,7 @@ def test_parameter_str():
     _test_base_mismatch('str', 'ham', choices=('eggs', 'cheese'))
     for value in (True, 1, 1.):
         _test_base_mismatch('str', value)
+
 
 def test_configuration():
     """Test an actual, fully-fledged configuration.
@@ -99,6 +106,7 @@ def test_configuration():
     config.update(file_path)
     assert config.value('port') == 20003
 
+
 def _test_configuration_display(port=9999):
     """Test the widget displaying configuration objects.
     """
@@ -112,7 +120,6 @@ def _test_configuration_display(port=9999):
     print(config)
     assert config.value('port') == port
     return qapp, widget
-
 
 
 if __name__ == '__main__':

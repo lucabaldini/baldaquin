@@ -18,12 +18,7 @@
 
 import pytest
 
-from loguru import logger
-
-#from baldaquin.app import UserAppNoOp
-from baldaquin.runctrl import FsmState, FiniteStateMachineBase, RunControlBase,\
-    InvalidFsmTransitionError
-
+from baldaquin.runctrl import FiniteStateMachineBase, InvalidFsmTransitionError
 
 
 def test_finite_state_machine():

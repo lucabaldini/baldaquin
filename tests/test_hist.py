@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from baldaquin.hist import Histogram1d, Histogram2d
+from baldaquin.hist import Histogram1d
 from baldaquin.plt_ import plt
 
 
@@ -38,7 +38,6 @@ def test_hist1d(size=1000000, mean=10., sigma=2.):
     plt.figure('Histogram 1d')
     h.plot()
     h.stat_box()
-
 
 
 if __name__ == '__main__':

@@ -18,7 +18,7 @@
 
 from loguru import logger
 
-from baldaquin.__qt__ import exec_qapp, QtGui, QtCore, QtWidgets
+from baldaquin.__qt__ import exec_qapp
 from baldaquin.config import SampleConfiguration
 from baldaquin.gui import ConfigurationWidget, RunControlCardField, MainWindow, bootstrap_window
 
@@ -36,7 +36,6 @@ def _test_main_window():
     window.run_control_card.set(RunControlCardField.TEST_STAND_ID, 1)
     window.run_control_card.set(RunControlCardField.RUN_ID, 313)
     return app, window
-
 
 
 if __name__ == '__main__':
