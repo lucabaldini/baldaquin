@@ -23,7 +23,7 @@ import pytest
 from baldaquin import logger
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import LayoutCharacterError, FormatCharacterError, FieldMismatchError
+from baldaquin.pkt import LayoutChar, FormatChar, FieldMismatchError
 
 
 @packetclass
@@ -32,10 +32,10 @@ class Readout(FixedSizePacketBase):
     """Plausible data structure for testing purposes.
     """
 
-    layout = '>'
-    header: 'B' = 0xaa
-    milliseconds: 'L'
-    adc_value: 'H'
+    layout = LayoutChar.BIG_ENDIAN
+    header: FormatChar.UNSIGNED_CHAR = 0xaa
+    milliseconds: FormatChar.UNSIGNED_LONG
+    adc_value: FormatChar.UNSIGNED_SHORT
 
     def __post_init__(self) -> None:
         self.seconds = self.milliseconds / 1000.
@@ -45,13 +45,13 @@ class Readout(FixedSizePacketBase):
 def test_format():
     """Test the check for the packet layout and format characters.
     """
-    with pytest.raises(LayoutCharacterError) as info:
+    with pytest.raises(ValueError) as info:
         @packetclass
         class Packet(FixedSizePacketBase):
             layout = 'W'
     logger.info(info.value)
 
-    with pytest.raises(FormatCharacterError) as info:
+    with pytest.raises(ValueError) as info:
         @packetclass
         class Packet(FixedSizePacketBase):
             trigger_id: 'W'
@@ -93,11 +93,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = '>'
+        layout = LayoutChar.BIG_ENDIAN
 
-        header: 'B' = 0xff
-        pin_number: 'B'
-        timestamp: 'Q'
+        header: FormatChar.UNSIGNED_CHAR = 0xff
+        pin_number: FormatChar.UNSIGNED_CHAR
+        timestamp: FormatChar.UNSIGNED_LONG_LONG
 
     packet = Trigger(0xff, 1, 15426782)
     print(packet)
@@ -114,11 +114,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = '>'
+        layout = LayoutChar.BIG_ENDIAN
 
-        header: 'B' = 0xff
-        pin_number: 'B'
-        microseconds: 'Q'
+        header: FormatChar.UNSIGNED_CHAR = 0xff
+        pin_number: FormatChar.UNSIGNED_CHAR
+        microseconds: FormatChar.UNSIGNED_LONG_LONG
 
         def __post_init__(self):
             self.seconds = self.microseconds / 1000000

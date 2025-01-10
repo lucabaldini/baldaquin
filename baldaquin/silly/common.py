@@ -28,7 +28,7 @@ from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import packetclass, FixedSizePacketBase
+from baldaquin.pkt import packetclass, FixedSizePacketBase, FormatChar
 from baldaquin.runctrl import RunControlBase
 
 
@@ -36,10 +36,10 @@ from baldaquin.runctrl import RunControlBase
 @packetclass
 class SillyPacket(FixedSizePacketBase):
 
-    trigger_id: 'L'
-    seconds: 'L'
-    microseconds: 'L'
-    pha: 'L'
+    trigger_id: FormatChar.UNSIGNED_LONG
+    seconds: FormatChar.UNSIGNED_LONG
+    microseconds: FormatChar.UNSIGNED_LONG
+    pha: FormatChar.UNSIGNED_LONG
 
     def __post_init__(self) -> None:
         """Post-initialization.

@@ -18,7 +18,7 @@
 
 from enum import Enum
 
-from baldaquin.pkt import packetclass, FixedSizePacketBase
+from baldaquin.pkt import packetclass, FixedSizePacketBase, FormatChar, LayoutChar
 
 
 
@@ -77,10 +77,10 @@ class DigitalTransition(FixedSizePacketBase):
     * byte(s) 2-5: the timestamp of the readout from micros().
     """
 
-    layout = '>'
-    header: 'B' = Marker.DIGITAL_TRANSITION_HEADER.value
-    info: 'B'
-    microseconds: 'L'
+    layout = LayoutChar.BIG_ENDIAN
+    header: FormatChar.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER.value
+    info: FormatChar.UNSIGNED_CHAR
+    microseconds: FormatChar.UNSIGNED_LONG
 
     def __post_init__(self) -> None:
         """Post initialization.
@@ -104,11 +104,11 @@ class AnalogReadout(FixedSizePacketBase):
     * byte(s) 6-7: the actual adc value.
     """
 
-    layout = '>'
-    header: 'B' = Marker.ANALOG_READOUT_HEADER.value
-    pin_number: 'B'
-    milliseconds: 'L'
-    adc_value: 'H'
+    layout = LayoutChar.BIG_ENDIAN
+    header: FormatChar.UNSIGNED_CHAR = Marker.ANALOG_READOUT_HEADER.value
+    pin_number: FormatChar.UNSIGNED_CHAR
+    milliseconds: FormatChar.UNSIGNED_LONG
+    adc_value: FormatChar.UNSIGNED_SHORT
 
     def __post_init__(self) -> None:
         """Post initialization.

@@ -23,15 +23,44 @@ import struct
 
 
 
-# Full list of supported format characters, see
-# https://docs.python.org/3/library/struct.html#format-characters
-_FORMAT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q',
-    'n', 'N', 'e', 'f', 'd', 's', 'p', 'P')
+class FormatChar(Enum):
 
-# Characters specifying the byte order, size and alignment, as detailed in
-# https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
-_LAYOUT_CHARS = ('@', '=', '>', '<', '!')
-_DEFAULT_LAYOUT_CHAR = _LAYOUT_CHARS[0]
+    """Enum class encapsulating the supporte format characters from
+    https://docs.python.org/3/library/struct.html#format-characters
+    """
+
+    PAD_BTYE = 'x'
+    CHAR = 'c'
+    SIGNED_CHAR = 'b'
+    UNSIGNED_CHAR = 'B'
+    BOOL = '?'
+    SHORT = 'h'
+    UNSIGNED_SHORT = 'H'
+    INT = 'i'
+    UNSIGNED_INT = 'I'
+    LONG = 'l'
+    UNSIGNED_LONG = 'L'
+    LONG_LONG = 'q'
+    UNSIGNED_LONG_LONG = 'Q'
+    SSIZE_T = 'n'
+    SIZE_T = 'N'
+    FLOAT = 'f'
+    DOUBLE = 'd'
+
+
+
+class LayoutChar(Enum):
+
+    """Enum class encapsulating the supported layout characters from
+    https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
+    """
+
+    NATIVE_SIZE = '@'
+    NATIVE = '='
+    LITTLE_ENDIAN = '<'
+    BIG_ENDIAN = '>'
+    NETWORK = '!'
+    DEFAULT = '@'
 
 
 
@@ -82,32 +111,6 @@ class AbstractPacket(ABC):
 
 
 
-class LayoutCharacterError(ValueError):
-
-    """ValueError subclass to signal an unrecognized layout character.
-    """
-
-    def __init__(self, character: str) -> None:
-        """Constructor.
-        """
-        super().__init__(f'Unsupported layout character \'{character}\'; '
-            f'valid layout characters are {_LAYOUT_CHARS}')
-
-
-
-class FormatCharacterError(ValueError):
-
-    """ValueError subclass to signal an unrecognized format character.
-    """
-
-    def __init__(self, character: str) -> None:
-        """Constructor.
-        """
-        super().__init__(f'Unsupported format character \'{character}\'; '
-            f'valid format characters are {_FORMAT_CHARS}')
-
-
-
 class FieldMismatchError(RuntimeError):
 
     """RuntimeError subclass to signal a field mismatch in a data structure.
@@ -137,16 +140,17 @@ def _check_format_characters(cls: type) -> None:
     """Check that all the format characters in the class annotations are valid.
     """
     for character in _class_annotations(cls).values():
-        if character not in _FORMAT_CHARS:
-            raise FormatCharacterError(character)
+        if not isinstance(character, FormatChar):
+            raise ValueError(f'Format character {character} is not a FormatChar')
 
 
 def _check_layout_character(cls: type) -> None:
     """Check that the class layout character is valid.
     """
-    cls.layout = getattr(cls, 'layout', _DEFAULT_LAYOUT_CHAR)
-    if cls.layout not in _LAYOUT_CHARS:
-        raise LayoutCharacterError(cls.layout)
+    cls.layout = getattr(cls, 'layout', LayoutChar.DEFAULT)
+    if not isinstance(cls.layout, LayoutChar):
+        raise ValueError(f'Layout {cls.layout} is not a LayoutChar')
+
 
 
 def packetclass(cls: type) -> type:
@@ -157,7 +161,7 @@ def packetclass(cls: type) -> type:
     # Cache all the necessary classvariables
     annotations = _class_annotations(cls)
     cls._fields = tuple(annotations.keys())
-    cls._format = f'{cls.layout}{"".join(annotations.values())}'
+    cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
     cls._size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
     cls.__frozenattrs__ = ('_fields', '_format', '_size', '_payload') + cls._fields
