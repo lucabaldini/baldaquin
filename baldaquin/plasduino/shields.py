@@ -32,7 +32,7 @@ class Lab1:
     ANALOG_PIN_1 = 0
     ANALOG_PIN_2 = 1
     ANALOG_PINS = (ANALOG_PIN_1, ANALOG_PIN_2)
-    SHUNT_RESISTANCE = 10. # kOhm
+    SHUNT_RESISTANCE = 10.  # kOhm
     # Digital inputs for the time measurements.
     DIGITAL_PIN_1 = 0
     DIGITAL_PIN_2 = 0

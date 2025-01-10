@@ -17,7 +17,7 @@
 """
 
 # Need to understand why this is
-#from __future__ import annotations
+# from __future__ import annotations
 
 import random
 import time
@@ -28,24 +28,25 @@ from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import packetclass, FixedSizePacketBase
+from baldaquin.pkt import packetclass, FixedSizePacketBase, Format
 from baldaquin.runctrl import RunControlBase
-
 
 
 @packetclass
 class SillyPacket(FixedSizePacketBase):
 
-    trigger_id: 'L'
-    seconds: 'L'
-    microseconds: 'L'
-    pha: 'L'
+    """Silly packet definition.
+    """
+
+    trigger_id: Format.UNSIGNED_LONG
+    seconds: Format.UNSIGNED_LONG
+    microseconds: Format.UNSIGNED_LONG
+    pha: Format.UNSIGNED_LONG
 
     def __post_init__(self) -> None:
         """Post-initialization.
         """
         self.timestamp = self.seconds + 1.e-6 * self.microseconds
-
 
 
 class SillyServer:
@@ -57,7 +58,7 @@ class SillyServer:
     """
 
     def __init__(self, rate: float = 5., pha_mean: float = 1000.,
-        pha_sigma: float = 50.) -> None:
+                 pha_sigma: float = 50.) -> None:
         """Constructor.
         """
         self.rate = rate
@@ -90,7 +91,6 @@ class SillyServer:
         return packet.pack()
 
 
-
 class SillyEventHandler(EventHandlerBase):
 
     """Silly event handler for testing purpose.
@@ -111,7 +111,6 @@ class SillyEventHandler(EventHandlerBase):
         return self.server.next()
 
 
-
 class SillyConfiguration(ConfigurationBase):
 
     """Configuration structure for the mock user app.
@@ -123,7 +122,6 @@ class SillyConfiguration(ConfigurationBase):
             dict(min=500., max=10000.)),
         ('pha_sigma', 'float', 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
     )
-
 
 
 class SillyUserApplicationBase(UserApplicationBase):
@@ -142,14 +140,12 @@ class SillyUserApplicationBase(UserApplicationBase):
         self.event_handler.server.setup(rate, pha_mean, pha_sigma)
 
 
-
 class SillyRunControl(RunControlBase):
 
     """Silly run control for testing purposes.
     """
 
     _PROJECT_NAME = silly.PROJECT_NAME
-
 
 
 class SillyMainWindow(MainWindow):

@@ -31,7 +31,6 @@ from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationParameter, ConfigurationBase
 from baldaquin.pkt import PacketStatistics
-from baldaquin.hist import HistogramBase
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
 # This needs to stay *after* the from baldaquin.__qt__ import, in order for the
@@ -47,7 +46,7 @@ _DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
 
 
 def _icon_file_path(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
-    style: str = _DEFAULT_ICON_STYLE) -> str:
+                    style: str = _DEFAULT_ICON_STYLE) -> str:
     """Return the path to a given icon file.
 
     Note this is returning a string, rather than a Path object, as the function
@@ -58,7 +57,7 @@ def _icon_file_path(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 
 
 
 def load_icon(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
-    style: str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
+              style: str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
     """Load an icon from the given catalog.
     """
     return QtGui.QIcon(_icon_file_path(name, catalog, fmt, style))
@@ -69,7 +68,6 @@ def stylesheet_file_path(name: str = 'default') -> Path:
     """
     file_name = f'{name}.qss'
     return BALDAQUIN_SKINS / file_name
-
 
 
 class Button(QtWidgets.QPushButton):
@@ -93,15 +91,15 @@ class Button(QtWidgets.QPushButton):
 
     DEFAULT_SIZE: int = 40
     DEFAULT_ICON_SIZE: int = 25
-    #pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods
 
     def __init__(self, icon_name: str, tooltip: str = None, size: int = DEFAULT_SIZE,
-        icon_size: int = DEFAULT_ICON_SIZE) -> None:
+                 icon_size: int = DEFAULT_ICON_SIZE) -> None:
         """Constructor.
         """
         super().__init__()
         self.setFixedSize(size, size)
-        self.setFocusPolicy(QtCore.Qt.NoFocus)
+        self.setFocusPolicy(QtCore.Qt.FocusPolicy.NoFocus)
         self.set_icon(icon_name, icon_size)
         if tooltip:
             self.setToolTip(tooltip)
@@ -116,7 +114,6 @@ class Button(QtWidgets.QPushButton):
             icon_name = icon_name.value
         self.setIcon(load_icon(icon_name))
         self.setIconSize(QtCore.QSize(icon_size, icon_size))
-
 
 
 class DataWidgetBase(QtWidgets.QWidget):
@@ -148,7 +145,7 @@ class DataWidgetBase(QtWidgets.QWidget):
                  fmt: str = None, **kwargs) -> None:
         """Constructor
         """
-        #pylint: disable=not-callable, too-many-arguments
+        # pylint: disable=not-callable, too-many-arguments
         if title is None:
             title = name
         self.name = name
@@ -190,7 +187,6 @@ class DataWidgetBase(QtWidgets.QWidget):
         raise NotImplementedError
 
 
-
 class DisplayWidget(DataWidgetBase):
 
     """Simple widget to display a single piece of information in a read-only fashion.
@@ -208,7 +204,6 @@ class DisplayWidget(DataWidgetBase):
         """Return the value of the widget.
         """
         return self.text()
-
 
 
 class CardWidget(QtWidgets.QFrame):
@@ -275,7 +270,6 @@ class CardWidget(QtWidgets.QFrame):
         return QtCore.QSize(200, 400)
 
 
-
 class RunControlCardField(Enum):
 
     """Definition of the relevant fields for the run control card.
@@ -292,7 +286,6 @@ class RunControlCardField(Enum):
     UPTIME = 'Uptime'
 
 
-
 class RunControlCard(CardWidget):
 
     """Specialized card to display the run control information.
@@ -306,7 +299,6 @@ class RunControlCard(CardWidget):
         }
 
 
-
 class EventHandlerCardField(Enum):
 
     """Specialized card for the event handler.
@@ -318,7 +310,6 @@ class EventHandlerCardField(Enum):
     AVERAGE_EVENT_RATE = 'Average event rate'
     NUM_PACKETS_WRITTEN = 'Number of packets written to disk'
     NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
-
 
 
 class EventHandlerCard(CardWidget):
@@ -338,7 +329,6 @@ class EventHandlerCard(CardWidget):
         }
 
 
-
 class ParameterCheckBox(DataWidgetBase):
 
     """Check box data widget, mapping ``bool`` input parameters.
@@ -355,7 +345,6 @@ class ParameterCheckBox(DataWidgetBase):
         """Overloaded method.
         """
         self.value_widget.setChecked(value)
-
 
 
 class ParameterSpinBox(DataWidgetBase):
@@ -389,7 +378,6 @@ class ParameterSpinBox(DataWidgetBase):
         self.value_widget.setValue(value)
 
 
-
 class ParameterDoubleSpinBox(ParameterSpinBox):
 
     """Double spin box data widget, mapping ``float`` input parameters.
@@ -401,7 +389,6 @@ class ParameterDoubleSpinBox(ParameterSpinBox):
         """Overloaded method.
         """
         return self.value_widget.value()
-
 
 
 class ParameterLineEdit(DataWidgetBase):
@@ -421,7 +408,6 @@ class ParameterLineEdit(DataWidgetBase):
         """Overloaded method.
         """
         self.value_widget.setText(value)
-
 
 
 class ParameterComboBox(DataWidgetBase):
@@ -446,7 +432,6 @@ class ParameterComboBox(DataWidgetBase):
         """Overloaded method.
         """
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
-
 
 
 class ConfigurationWidget(QtWidgets.QWidget):
@@ -529,7 +514,6 @@ class ConfigurationWidget(QtWidgets.QWidget):
         return configuration
 
 
-
 class PlotCanvasWidget(FigureCanvas):
 
     """Custom widget to display a matplotlib canvas.
@@ -584,7 +568,6 @@ class PlotCanvasWidget(FigureCanvas):
         self._update()
 
 
-
 class LoggerDisplay(QtWidgets.QTextEdit):
 
     """Simple widget to display records from the application logger.
@@ -603,7 +586,7 @@ class LoggerDisplay(QtWidgets.QTextEdit):
         """Display a single message.
         """
         record = message.record
-        #icon = record["level"].icon
+        # icon = record["level"].icon
         text = f'[{record["time"]}] {record["message"]}\n'
         self.insertPlainText(text)
 
@@ -613,7 +596,6 @@ class LoggerDisplay(QtWidgets.QTextEdit):
         """
         # pylint: disable=invalid-name
         return QtCore.QSize(800, 400)
-
 
 
 class ControlBarIcon(Enum):
@@ -628,13 +610,12 @@ class ControlBarIcon(Enum):
     STOP = 'stop'
 
 
-
 class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
 
     """Control bar managing the run control.
     """
 
-    #pylint: disable=c-extension-no-member
+    # pylint: disable=c-extension-no-member
     set_reset_triggered = QtCore.Signal()
     set_stopped_triggered = QtCore.Signal()
     set_running_triggered = QtCore.Signal()
@@ -749,7 +730,6 @@ class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
         self.set_paused_triggered.emit()
 
 
-
 class SimpleControlBar(ControlBar):
 
     """Simpler version of a control bar, where essentially we prevent the possibility
@@ -780,7 +760,6 @@ class SimpleControlBar(ControlBar):
         self.stop_button.setEnabled(False)
 
 
-
 class MainWindow(QtWidgets.QMainWindow):
 
     """Base class for a DAQ main window.
@@ -807,7 +786,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control_card.set(RunControlCardField.PROJECT_NAME, self._PROJECT_NAME)
         self.add_widget(self.run_control_card, 0, 0)
         self.tab_widget = QtWidgets.QTabWidget()
-        #tab.setTabPosition(tab.TabPosition.West)
+        # tab.setTabPosition(tab.TabPosition.West)
         self.tab_widget.setIconSize(self._TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
@@ -817,8 +796,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control = None
 
     def add_widget(self, widget: QtWidgets.QWidget, row: int, col: int,
-        row_span: int = 1, col_span: int = 1,
-        align: QtCore.Qt.Alignment = QtCore.Qt.Alignment()) -> None:
+                   row_span: int = 1, col_span: int = 1) -> None:
         """Add a widget to the underlying layout.
 
         This is just a convenience method mimicking the corresponding hook of the
@@ -840,15 +818,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         col_span: int, optional (default 1)
             The number of columns spanned by the widget.
-
-        align: QtCore.Qt.Alignment
-            The alignment for the widget.
         """
-        #pylint: disable=too-many-arguments
-        self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span, align)
+        # pylint: disable=too-many-arguments
+        self.centralWidget().layout().addWidget(widget, row, col, row_span, col_span)
 
     def add_tab(self, page: QtWidgets.QWidget, label: str,
-        icon_name: str = None) -> QtWidgets.QWidget:
+                icon_name: str = None) -> QtWidgets.QWidget:
         """Add a page to the tab widget.
 
         Arguments
@@ -923,9 +898,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_event_handler_stats(self, statistics: PacketStatistics, event_rate: float) -> None:
         """Update the data taking statistics in the event handler card.
         """
-        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_PROCESSED, statistics.packets_processed)
-        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_WRITTEN, statistics.packets_written)
-        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, statistics.bytes_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_PROCESSED,
+                                    statistics.packets_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_WRITTEN,
+                                    statistics.packets_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN,
+                                    statistics.bytes_written)
         self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, event_rate)
 
     def set_run_control(self, run_control: RunControlBase) -> None:
@@ -984,11 +962,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control.set_running()
 
 
-
 def bootstrap_qapplication():
     """Create a QApplication object and apply the proper stypesheet.
     """
-    #pylint: disable=unspecified-encoding
+    # pylint: disable=unspecified-encoding
     qapp = QtWidgets.QApplication(sys.argv)
     with open(stylesheet_file_path(), 'r') as stylesheet:
         qapp.setStyleSheet(stylesheet.read())
@@ -996,7 +973,7 @@ def bootstrap_qapplication():
 
 
 def bootstrap_window(window_class, run_control: RunControlBase = None,
-    user_application: UserApplicationBase = None) -> None:
+                     user_application: UserApplicationBase = None) -> None:
     """Bootstrap a main window.
 
     This is creating a QApplication, applying the relevant stylesheet, and

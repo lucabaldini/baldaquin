@@ -24,7 +24,6 @@ from typing import Any
 from loguru import logger
 
 
-
 class ParameterValidationError(enum.IntEnum):
 
     """Enum class for the possible errors occurring while checking the input
@@ -38,7 +37,6 @@ class ParameterValidationError(enum.IntEnum):
     INVALID_CHOICE = enum.auto()
     INVALID_STEP = enum.auto()
     GENERIC_ERROR = enum.auto()
-
 
 
 class ConfigurationParameter:
@@ -79,13 +77,13 @@ class ConfigurationParameter:
     """
 
     VALID_CONSTRAINTS = {
-        'int' : ('choices', 'step', 'min', 'max'),
-        'float' : ('min', 'max'),
+        'int': ('choices', 'step', 'min', 'max'),
+        'float': ('min', 'max'),
         'str': ('choices',)
     }
 
-    def __init__(self, name : str, type_name : str, value : Any, intent : str,
-                 units : str = None, fmt : None = None, **constraints) -> None:
+    def __init__(self, name: str, type_name: str, value: Any, intent: str,
+                 units: str = None, fmt: None = None, **constraints) -> None:
         """Constructor.
         """
         self.name = name
@@ -106,15 +104,15 @@ class ConfigurationParameter:
         """
         return self.value is None
 
-    def _validation_error(self, value : Any, error_code : ParameterValidationError) \
-        -> ParameterValidationError:
+    def _validation_error(self, value: Any,
+                          error_code: ParameterValidationError) -> ParameterValidationError:
         """Utility function to log a parameter error (and forward the error code).
         """
         logger.error(f'Value {value} invalid for {self.name} {self.constraints}: {error_code.name}')
         logger.error('Parameter value will not be set')
         return error_code
 
-    def _check_range(self, value : Any) -> ParameterValidationError:
+    def _check_range(self, value: Any) -> ParameterValidationError:
         """Generic function to check that a given value is within a specified range.
 
         This is used for validating int and float parameters.
@@ -125,7 +123,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.NUMBER_TOO_LARGE)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_choice(self, value : Any) -> ParameterValidationError:
+    def _check_choice(self, value: Any) -> ParameterValidationError:
         """Generic function to check that a parameter value is within the
         allowed choices.
         """
@@ -133,7 +131,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.INVALID_CHOICE)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_step(self, value : int) -> ParameterValidationError:
+    def _check_step(self, value: int) -> ParameterValidationError:
         """Generic function to check the step size for an integer.
         """
         delta = value - self.constraints.get('min', 0)
@@ -141,7 +139,7 @@ class ConfigurationParameter:
             return self._validation_error(value, ParameterValidationError.INVALID_STEP)
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_int(self, value : int) -> ParameterValidationError:
+    def _check_int(self, value: int) -> ParameterValidationError:
         """Validate an integer parameter value.
 
         Note we check the choice specification first, and all the others after that
@@ -154,17 +152,17 @@ class ConfigurationParameter:
                 return error_code
         return ParameterValidationError.PARAMETER_VALID
 
-    def _check_float(self, value : float) -> ParameterValidationError:
+    def _check_float(self, value: float) -> ParameterValidationError:
         """Validate a floating-point parameter value.
         """
         return self._check_range(value)
 
-    def _check_str(self, value : str) -> ParameterValidationError:
+    def _check_str(self, value: str) -> ParameterValidationError:
         """Validate a string parameter value.
         """
         return self._check_choice(value)
 
-    def set_value(self, value : Any) -> ParameterValidationError:
+    def set_value(self, value: Any) -> ParameterValidationError:
         """Set the paramater value.
         """
         # Make sure that type(value) matches the expectations.
@@ -189,7 +187,6 @@ class ConfigurationParameter:
         if len(self.constraints):
             text = f'{text} {self.constraints}'
         return text
-
 
 
 class ConfigurationBase(dict):
@@ -230,6 +227,7 @@ class ConfigurationBase(dict):
         """
         return self[key].value
 
+    # pylint: disable=inconsistent-return-statements
     def update_value(self, key, value) -> ParameterValidationError:
         """Update the value of a configuration parameter.
         """
@@ -238,7 +236,7 @@ class ConfigurationBase(dict):
             return
         return self[key].set_value(value)
 
-    def update(self, file_path : str) -> None:
+    def update(self, file_path: str) -> None:
         """Update the configuration parameters from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
@@ -261,7 +259,7 @@ class ConfigurationBase(dict):
             output_file.write(self.to_json())
 
     @staticmethod
-    def terminal_line(character : str = '-', default_length : int = 50) -> str:
+    def terminal_line(character: str = '-', default_length: int = 50) -> str:
         """Concatenate a series of characters as long as the terminal line.
 
         Note that we need the try/except block to get this thing working into
@@ -273,7 +271,7 @@ class ConfigurationBase(dict):
             return character * default_length
 
     @staticmethod
-    def title(text : str) -> str:
+    def title(text: str) -> str:
         """Pretty-print title.
         """
         line = ConfigurationBase.terminal_line()
@@ -288,19 +286,24 @@ class ConfigurationBase(dict):
         return f'{title}\n{data}{line}'
 
 
-
 class EmptyConfiguration(ConfigurationBase):
+
+    """Empty configuration.
+    """
 
     TITLE = 'Empty configuration'
 
 
-
 class SampleConfiguration(ConfigurationBase):
+
+    """Sample configuration.
+    """
 
     TITLE = 'A simple test configuration'
     PARAMETER_SPECS = (
         ('enabled', 'bool', True, 'Enable connection', None, None, {}),
-        ('protocol', 'str', 'UDP', 'Communication protocol', None, None, dict(choices=('UDP', 'TCP/IP'))),
+        ('protocol', 'str', 'UDP', 'Communication protocol', None, None,
+            dict(choices=('UDP', 'TCP/IP'))),
         ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
         ('port', 'int', 20004, 'Port', None, None, dict(min=1024, max=65535)),
         ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))

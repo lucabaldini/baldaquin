@@ -25,7 +25,6 @@ from baldaquin import logger
 from baldaquin.plt_ import plt, setup_gca
 
 
-
 class ConversionBase:
 
     """Abstract base class for a generic conversion.
@@ -42,7 +41,6 @@ class ConversionBase:
         """Special dunder method for executing the actual conversion.
         """
         return self._conversion_function(raw)
-
 
 
 class LinearConversion(ConversionBase):
@@ -64,14 +62,12 @@ class LinearConversion(ConversionBase):
         return self.slope * raw + self.intercept
 
 
-
 # class PolynomialConversion(ConversionBase):
 #
 #     """Polynomial conversion.
 #     """
 #
 #     pass
-
 
 
 class SplineConversion(ConversionBase):
@@ -137,13 +133,13 @@ class SplineConversion(ConversionBase):
         """
         logger.info(f'Reading conversion data from {file_path}...')
         raw, physical = np.loadtxt(file_path, usecols=(col_raw, col_physical),
-            unpack=True, **kwargs)
+                                   unpack=True, **kwargs)
         logger.info(f'Done, {len(raw)} data point(s) found.')
         return raw, physical
 
     @classmethod
     def from_file(cls, file_path: str, col_raw: int = 0, col_physical: int = 1,
-        k: int = 3) -> None:
+                  k: int = 3) -> None:
         """Read the data points for the spline from a file.
         """
         data = cls.read_data(file_path, col_raw, col_physical)
@@ -161,14 +157,13 @@ class SplineConversion(ConversionBase):
         return self._spline(raw)
 
 
-
 class ThermistorConversion(SplineConversion):
 
     """Specific conversion for a thermistor.
     """
 
     def __init__(self, temperature: np.array, resistance: np.array, shunt_resistance: float,
-        adc_num_bits: int, k: int = 3) -> None:
+                 adc_num_bits: int, k: int = 3) -> None:
         """Constructor.
         """
         # pylint: disable=too-many-arguments
@@ -177,7 +172,7 @@ class ThermistorConversion(SplineConversion):
 
     @classmethod
     def from_file(cls, file_path: str, shunt_resistance: float, adc_num_bits: int,
-        col_temperature: int = 0, col_resistance: int = 1, k: int = 3) -> None:
+                  col_temperature: int = 0, col_resistance: int = 1, k: int = 3) -> None:
         """Read the data points for the spline from file.
         """
         # pylint: disable=arguments-renamed, too-many-arguments

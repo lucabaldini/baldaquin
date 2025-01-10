@@ -21,7 +21,6 @@ from baldaquin import logger
 from baldaquin.silly.common import SillyPacket, SillyServer, SillyConfiguration
 
 
-
 def test_packet():
     """Test the basic packet structure.
     """

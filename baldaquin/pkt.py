@@ -22,17 +22,43 @@ from enum import Enum
 import struct
 
 
+class Format(Enum):
 
-# Full list of supported format characters, see
-# https://docs.python.org/3/library/struct.html#format-characters
-_FORMAT_CHARS = ('x', 'c', 'b', 'B', '?', 'h', 'H', 'i', 'I', 'l', 'L', 'q', 'Q',
-    'n', 'N', 'e', 'f', 'd', 's', 'p', 'P')
+    """Enum class encapsulating the supporte format characters from
+    https://docs.python.org/3/library/struct.html#format-characters
+    """
 
-# Characters specifying the byte order, size and alignment, as detailed in
-# https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
-_LAYOUT_CHARS = ('@', '=', '>', '<', '!')
-_DEFAULT_LAYOUT_CHAR = _LAYOUT_CHARS[0]
+    PAD_BTYE = 'x'
+    CHAR = 'c'
+    SIGNED_CHAR = 'b'
+    UNSIGNED_CHAR = 'B'
+    BOOL = '?'
+    SHORT = 'h'
+    UNSIGNED_SHORT = 'H'
+    INT = 'i'
+    UNSIGNED_INT = 'I'
+    LONG = 'l'
+    UNSIGNED_LONG = 'L'
+    LONG_LONG = 'q'
+    UNSIGNED_LONG_LONG = 'Q'
+    SSIZE_T = 'n'
+    SIZE_T = 'N'
+    FLOAT = 'f'
+    DOUBLE = 'd'
 
+
+class Layout(Enum):
+
+    """Enum class encapsulating the supported layout characters from
+    https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
+    """
+
+    NATIVE_SIZE = '@'
+    NATIVE = '='
+    LITTLE_ENDIAN = '<'
+    BIG_ENDIAN = '>'
+    NETWORK = '!'
+    DEFAULT = '@'
 
 
 class Edge(Enum):
@@ -44,68 +70,47 @@ class Edge(Enum):
     FALLING = 0
 
 
-
 class AbstractPacket(ABC):
 
     """Abstract base class for binary packets.
     """
 
     def __post_init__(self) -> None:
-        pass
+        """Hook for post-initialization.
+        """
 
     @property
     @abstractmethod
     def payload(self) -> bytes:
-        pass
+        """Return the packet binary data.
+        """
 
     @property
     @abstractmethod
     def fields(self) -> tuple:
-        pass
+        """Return the packet fields.
+        """
 
     @abstractmethod
     def __len__(self) -> int:
-        pass
+        """Return the length of the binary data in bytes.
+        """
 
     @abstractmethod
     def __iter__(self):
-        pass
+        """Iterate over the field values.
+        """
 
     @abstractmethod
     def pack(self) -> bytes:
-        pass
+        """Pack the field values into the corresponding binary data.
+        """
 
     @classmethod
     @abstractmethod
     def unpack(cls, data: bytes):
-        pass
-
-
-
-class LayoutCharacterError(ValueError):
-
-    """ValueError subclass to signal an unrecognized layout character.
-    """
-
-    def __init__(self, character: str) -> None:
-        """Constructor.
+        """Unpack the binary data into the corresponding field values.
         """
-        super().__init__(f'Unsupported layout character \'{character}\'; '
-            f'valid layout characters are {_LAYOUT_CHARS}')
-
-
-
-class FormatCharacterError(ValueError):
-
-    """ValueError subclass to signal an unrecognized format character.
-    """
-
-    def __init__(self, character: str) -> None:
-        """Constructor.
-        """
-        super().__init__(f'Unsupported format character \'{character}\'; '
-            f'valid format characters are {_FORMAT_CHARS}')
-
 
 
 class FieldMismatchError(RuntimeError):
@@ -117,24 +122,36 @@ class FieldMismatchError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'{cls.__name__} mismatch for field "{field}" '
-            f'(expected {hex(expected)}, found {hex(actual)})')
+                         f'(expected {hex(expected)}, found {hex(actual)})')
 
+
+def _class_annotations(cls) -> dict:
+    """Small convienience function to retrieve the class annotations.
+
+    This is needed because in Python 3.7 cls.__annotations__ is not defined
+    when a class has no annotations, while in subsequent Python versions an empty
+    dictionary is returned, instead.
+    """
+    try:
+        return cls.__annotations__
+    except AttributeError:
+        return {}
 
 
 def _check_format_characters(cls: type) -> None:
     """Check that all the format characters in the class annotations are valid.
     """
-    for character in cls.__annotations__.values():
-        if character not in _FORMAT_CHARS:
-            raise FormatCharacterError(character)
+    for character in _class_annotations(cls).values():
+        if not isinstance(character, Format):
+            raise ValueError(f'Format character {character} is not a Format value')
 
 
 def _check_layout_character(cls: type) -> None:
     """Check that the class layout character is valid.
     """
-    cls.layout = getattr(cls, 'layout', _DEFAULT_LAYOUT_CHAR)
-    if cls.layout not in _LAYOUT_CHARS:
-        raise LayoutCharacterError(cls.layout)
+    cls.layout = getattr(cls, 'layout', Layout.DEFAULT)
+    if not isinstance(cls.layout, Layout):
+        raise ValueError(f'Layout character {cls.layout} is not a Layout value')
 
 
 def packetclass(cls: type) -> type:
@@ -143,9 +160,9 @@ def packetclass(cls: type) -> type:
     _check_format_characters(cls)
     _check_layout_character(cls)
     # Cache all the necessary classvariables
-    annotations = cls.__annotations__
+    annotations = _class_annotations(cls)
     cls._fields = tuple(annotations.keys())
-    cls._format = f'{cls.layout}{"".join(annotations.values())}'
+    cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
     cls._size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
     cls.__frozenattrs__ = ('_fields', '_format', '_size', '_payload') + cls._fields
@@ -155,7 +172,7 @@ def packetclass(cls: type) -> type:
         # the class annotations.
         if len(args) != len(cls._fields):
             raise TypeError(f'{cls.__name__}.__init__() expected {len(cls._fields)} '
-                f'arguments {cls._fields}, got {len(args)}')
+                            f'arguments {cls._fields}, got {len(args)}')
         # Loop over the annotations and create all the instance variables.
         for field, value in zip(cls._fields, args):
             # If a given annotation has a value attched to it, make sure we are
@@ -174,9 +191,11 @@ def packetclass(cls: type) -> type:
     return cls
 
 
-
 @packetclass
 class FixedSizePacketBase(AbstractPacket):
+
+    """Class describing a packet with fixed size.
+    """
 
     @property
     def payload(self) -> bytes:
@@ -200,11 +219,11 @@ class FixedSizePacketBase(AbstractPacket):
         return cls(*struct.unpack(cls._format, data), payload=data)
 
     def __setattr__(self, key, value) -> None:
-       """Overloaded method to make class instances frozen.
-       """
-       if key in self.__class__.__frozenattrs__:
-           raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
-       object.__setattr__(self, key, value)
+        """Overloaded method to make class instances frozen.
+        """
+        if key in self.__class__.__frozenattrs__:
+            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
+        object.__setattr__(self, key, value)
 
     def __str__(self):
         """String formatting.
@@ -212,7 +231,6 @@ class FixedSizePacketBase(AbstractPacket):
         attrs = self._fields + ('payload', '_format')
         info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
         return f'{self.__class__.__name__}({info})'
-
 
 
 @dataclass

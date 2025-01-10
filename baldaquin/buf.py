@@ -36,9 +36,8 @@ class BufferWriteMode(enum.Enum):
     """Enum for the mode in which the output file is opened.
     """
 
-    BINARY : str = 'b'
+    BINARY: str = 'b'
     TEXT: str = 't'
-
 
 
 class BufferBase:
@@ -68,8 +67,8 @@ class BufferBase:
 
     _DEFAULT_ENCODING = 'utf-8'
 
-    def __init__(self, max_size : int, flush_size : int, flush_interval : float,
-        mode : BufferWriteMode) -> None:
+    def __init__(self, max_size: int, flush_size: int, flush_interval: float,
+                 mode: BufferWriteMode) -> None:
         """Constructor.
         """
         if max_size is not None and flush_size is not None and max_size <= flush_size:
@@ -90,7 +89,7 @@ class BufferBase:
             kwargs.update(encoding=self._DEFAULT_ENCODING)
         return kwargs
 
-    def set_output_file(self, file_path : Path) -> None:
+    def set_output_file(self, file_path: Path) -> None:
         """Set the output file for flushing the buffer.
         """
         # If we're targeting the current file path, then there is nothing to do.
@@ -161,7 +160,7 @@ class BufferBase:
         logger.info(f'Done, {num_bytes} Bytes written to disk.')
         return (num_events, num_bytes)
 
-    def put(self, item : Any) -> None:
+    def put(self, item: Any) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
         """
         raise NotImplementedError
@@ -189,7 +188,6 @@ class BufferBase:
         raise NotImplementedError
 
 
-
 class FIFO(queue.Queue, BufferBase):
 
     """Implementation of a FIFO.
@@ -203,8 +201,8 @@ class FIFO(queue.Queue, BufferBase):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, max_size : int = None, flush_size : int = None,
-        flush_interval : float = 1., mode : BufferWriteMode = BufferWriteMode.BINARY) -> None:
+    def __init__(self, max_size: int = None, flush_size: int = None, flush_interval: float = 1.,
+                 mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
@@ -215,7 +213,7 @@ class FIFO(queue.Queue, BufferBase):
         queue.Queue.__init__(self, max_size)
         BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
 
-    def put(self, item : Any, block : bool = True, timeout : float = None) -> None:
+    def put(self, item: Any, block: bool = True, timeout: float = None) -> None:
         """Overloaded method.
 
         See https://docs.python.org/3/library/queue.html as for the meaning
@@ -239,7 +237,6 @@ class FIFO(queue.Queue, BufferBase):
         self.queue.clear()
 
 
-
 class CircularBuffer(collections.deque, BufferBase):
 
     """Implementation of a simple circular buffer.
@@ -255,14 +252,14 @@ class CircularBuffer(collections.deque, BufferBase):
     comes from https://stackoverflow.com/questions/4151320
     """
 
-    def __init__(self, max_size : int = None, flush_interval : float = 1.,
-        flush_size : int = None, mode : BufferWriteMode = BufferWriteMode.BINARY) -> None:
+    def __init__(self, max_size: int = None, flush_interval: float = 1.,
+                 flush_size: int = None, mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
         """Constructor.
         """
         collections.deque.__init__(self, [], max_size)
         BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
 
-    def put(self, item : Any) -> None:
+    def put(self, item: Any) -> None:
         """Overloaded method.
         """
         self.append(item)

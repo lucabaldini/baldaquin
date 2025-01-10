@@ -19,7 +19,8 @@
 from baldaquin import arduino_
 
 
-_UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243), (0x2341, 0x006A))
+_UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
+            (0x2341, 0x0243), (0x2341, 0x006A))
 
 
 def test_supported_boards():
@@ -28,10 +29,12 @@ def test_supported_boards():
     for board in arduino_._SUPPORTED_BOARDS:
         print(board)
 
+
 def test_board_identifiers():
     """Test the board identiers.
     """
     assert arduino_.board_identifiers(arduino_.UNO) == _UNO_IDS
+
 
 def test_board_identify():
     """Test the board identification code.

@@ -27,7 +27,7 @@ def diagram_figure(figure_name):
     plt.axis('off')
 
 
-def diagram_box(x : float, y : float, text : str, **kwargs) -> None:
+def diagram_box(x: float, y: float, text: str, **kwargs) -> None:
     """Draw a text box.
     """
     kwargs.setdefault('color', 'black')
@@ -36,7 +36,7 @@ def diagram_box(x : float, y : float, text : str, **kwargs) -> None:
     plt.text(x, y, text, bbox=bbox, **kwargs)
 
 
-def text(x : float, y : float, text : str, **kwargs):
+def text(x: float, y: float, text: str, **kwargs):
     """
     """
     kwargs.setdefault('ha', 'center')
@@ -44,11 +44,11 @@ def text(x : float, y : float, text : str, **kwargs):
     plt.text(x, y, text, **kwargs)
 
 
-def arrow(start, end, connectionstyle : str = 'arc3,rad=-0.2'):
+def arrow(start, end, connectionstyle: str = 'arc3,rad=-0.2'):
     """
     """
-    _arrowprops=dict(arrowstyle="->", color="0.5", shrinkA=5, shrinkB=5,
-        patchA=None, patchB=None, connectionstyle=connectionstyle)
+    _arrowprops = dict(arrowstyle="->", color="0.5", shrinkA=5, shrinkB=5,
+                       patchA=None, patchB=None, connectionstyle=connectionstyle)
     plt.annotate('', xy=end, xytext=start, arrowprops=_arrowprops)
 
 
@@ -74,7 +74,6 @@ def fsm() -> None:
     text(0.775, 0.5, 'resume()')
     arrow((0.575, 0.25), (0.45, 0.7))
     text(0.475, 0.45, 'stop()')
-
 
 
 if __name__ == '__main__':

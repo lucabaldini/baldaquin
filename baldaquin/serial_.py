@@ -32,7 +32,6 @@ STANDARD_BAUD_RATES = serial.Serial.BAUDRATES
 DEFAULT_BAUD_RATE = 115200
 
 
-
 def _fmt_port(port: serial.tools.list_ports_common.ListPortInfo) -> str:
     """Small convenience function to print out some pretty-printed serial port info.
     """
@@ -77,7 +76,6 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     for port in ports:
         logger.debug(_fmt_port(port))
     return ports
-
 
 
 class SerialInterface(serial.Serial):
@@ -129,7 +127,7 @@ class SerialInterface(serial.Serial):
               were received until then.
         """
         logger.debug(f'Configuring serial connection (port = {port}, '
-            f'baudarate = {baudrate}, timeout = {timeout})...')
+                     f'baudarate = {baudrate}, timeout = {timeout})...')
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout

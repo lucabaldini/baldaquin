@@ -24,7 +24,6 @@ from baldaquin.silly.common import SillyRunControl, SillyPacket,\
     SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
 
 
-
 class SillyRead(SillyUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
@@ -39,7 +38,6 @@ class SillyRead(SillyUserApplicationBase):
         """
         packet = SillyPacket.unpack(data)
         logger.debug(f'{packet} <- {data}')
-
 
 
 if __name__ == '__main__':

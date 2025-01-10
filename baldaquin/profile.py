@@ -22,13 +22,13 @@ import time
 from loguru import logger
 
 
-def timing(f):
+def timing(func):
     """Small decorator to time a generic function.
     """
-    @wraps(f)
+    @wraps(func)
     def wrap(*args, **kwargs):
         start_time = time.time()
-        result = f(*args, **kwargs)
-        logger.debug(f'Running time for {f.__name__}(): {time.time() - start_time:.6f} s')
+        result = func(*args, **kwargs)
+        logger.debug(f'Running time for {func.__name__}(): {time.time() - start_time:.6f} s')
         return result
     return wrap

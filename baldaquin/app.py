@@ -29,7 +29,7 @@ class UserApplicationBase:
     """Base class for user applications.
     """
 
-    #pylint: disable=c-extension-no-member
+    # pylint: disable=c-extension-no-member
     NAME = 'User application'
     EVENT_HANDLER_CLASS = None
     CONFIGURATION_CLASS = None
@@ -38,7 +38,7 @@ class UserApplicationBase:
     def __init__(self) -> None:
         """Constructor.
         """
-        #pylint: disable=not-callable
+        # pylint: disable=not-callable
         self.event_handler = self.EVENT_HANDLER_CLASS()
         # We should think about whether there is a more elegant way to do this.
         # Pass the user application to the child event handler? Use inheritance
@@ -51,7 +51,7 @@ class UserApplicationBase:
             else:
                 self.configuration.save(self.CONFIGURATION_FILE_PATH)
 
-    def apply_configuration(self, configuration : ConfigurationBase):
+    def apply_configuration(self, configuration: ConfigurationBase):
         """Set the configuration for the user application.
         """
         self.configuration = configuration
@@ -59,7 +59,7 @@ class UserApplicationBase:
             self.configuration.save(self.CONFIGURATION_FILE_PATH)
         self.configure()
 
-    def set_data_file_path(self, file_path : Path) -> None:
+    def set_data_file_path(self, file_path: Path) -> None:
         """Set the file path for the event handler.
         """
         self.event_handler.set_output_file(file_path)
@@ -95,7 +95,7 @@ class UserApplicationBase:
         self.event_handler.flush_buffer()
 
     def pause(self) -> None:
-        """
+        """Pause the event handler.
         """
         logger.info(f'Pausing {self.NAME} user application...')
         self.event_handler.stop()
@@ -103,13 +103,13 @@ class UserApplicationBase:
         self.event_handler.flush_buffer()
 
     def resume(self) -> None:
-        """
+        """Resume the event handler.
         """
         logger.info(f'Resuming {self.NAME} user application...')
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
-        """
+        """Stop the event handler.
         """
         self.stop_run()
 

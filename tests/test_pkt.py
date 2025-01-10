@@ -16,14 +16,11 @@
 """Test suite for pkt.py
 """
 
-from dataclasses import dataclass
-
 import pytest
 
 from baldaquin import logger
-from baldaquin import BALDAQUIN_DATA
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import LayoutCharacterError, FormatCharacterError, FieldMismatchError
+from baldaquin.pkt import Layout, Format, FieldMismatchError
 
 
 @packetclass
@@ -32,33 +29,32 @@ class Readout(FixedSizePacketBase):
     """Plausible data structure for testing purposes.
     """
 
-    layout = '>'
-    header: 'B' = 0xaa
-    milliseconds: 'L'
-    adc_value: 'H'
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = 0xaa
+    milliseconds: Format.UNSIGNED_LONG
+    adc_value: Format.UNSIGNED_SHORT
 
     def __post_init__(self) -> None:
         self.seconds = self.milliseconds / 1000.
 
 
-
 def test_format():
     """Test the check for the packet layout and format characters.
     """
-    with pytest.raises(LayoutCharacterError) as info:
+    with pytest.raises(ValueError) as info:
         @packetclass
         class Packet(FixedSizePacketBase):
             layout = 'W'
     logger.info(info.value)
 
-    with pytest.raises(FormatCharacterError) as info:
+    with pytest.raises(ValueError) as info:
         @packetclass
-        class Packet(FixedSizePacketBase):
-            trigger_id: 'W'
+        class Packet(FixedSizePacketBase):  # noqa: F811
+            trigger_id: 'W'  # noqa: F821
     logger.info(info.value)
 
     with pytest.raises(FieldMismatchError) as info:
-        packet = Readout(0, 0, 0)
+        _ = Readout(0, 0, 0)
     logger.info(info.value)
 
 
@@ -86,6 +82,7 @@ def test_readout():
         packet.header = 3
     logger.info(info.value)
 
+
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.
     """
@@ -93,11 +90,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = '>'
+        layout = Layout.BIG_ENDIAN
 
-        header: 'B' = 0xff
-        pin_number: 'B'
-        timestamp: 'Q'
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        timestamp: Format.UNSIGNED_LONG_LONG
 
     packet = Trigger(0xff, 1, 15426782)
     print(packet)
@@ -114,11 +111,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = '>'
+        layout = Layout.BIG_ENDIAN
 
-        header: 'B' = 0xff
-        pin_number: 'B'
-        microseconds: 'Q'
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        microseconds: Format.UNSIGNED_LONG_LONG
 
         def __post_init__(self):
             self.seconds = self.microseconds / 1000000

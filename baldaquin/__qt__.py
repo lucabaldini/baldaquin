@@ -49,6 +49,7 @@ from baldaquin import BALDAQUIN_QT_WRAPPER
 
 # pylint: disable=unused-import, import-error
 
+
 def _exec_qapp_old_style(qapp):
     """Old-style QApplication bootstrap call (with the final underscore).
     """
@@ -77,15 +78,19 @@ if BALDAQUIN_QT_WRAPPER == 'PySide6':
 
 
 if BALDAQUIN_QT_WRAPPER == 'PySide2':
-    from PySide2 import QtCore, QtGui, QtWidgets
+    from PySide2 import QtCore, QtGui, QtWidgets  # noqa F811
     exec_qapp = _exec_qapp_old_style
 
 
 if BALDAQUIN_QT_WRAPPER == 'PyQt6':
-    from PyQt6 import QtCore, QtGui, QtWidgets
+    from PyQt6 import QtCore, QtGui, QtWidgets  # noqa F811
+    QtCore.Signal = QtCore.pyqtSignal
+    QtCore.Slot = QtCore.pyqtSlot
     exec_qapp = _exec_qapp_new_style
 
 
 if BALDAQUIN_QT_WRAPPER == 'PyQt5':
-    from PyQt5 import QtCore, QtGui, QtWidgets
+    from PyQt5 import QtCore, QtGui, QtWidgets  # noqa F811
+    QtCore.Signal = QtCore.pyqtSignal
+    QtCore.Slot = QtCore.pyqtSlot
     exec_qapp = _exec_qapp_old_style

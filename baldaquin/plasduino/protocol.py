@@ -18,8 +18,7 @@
 
 from enum import Enum
 
-from baldaquin.pkt import packetclass, FixedSizePacketBase
-
+from baldaquin.pkt import packetclass, FixedSizePacketBase, Format, Layout
 
 
 class Marker(Enum):
@@ -37,7 +36,6 @@ class Marker(Enum):
     ANALOG_READOUT_HEADER = 0xA2
     GPS_MEASSGE_HEADER = 0xA3
     RUN_END_MARKER = 0xB0
-
 
 
 class OpCode(Enum):
@@ -66,7 +64,6 @@ class OpCode(Enum):
     OP_CODE_TOGGLE_DIGITAL_PIN = 0x0D
 
 
-
 @packetclass
 class DigitalTransition(FixedSizePacketBase):
 
@@ -77,10 +74,10 @@ class DigitalTransition(FixedSizePacketBase):
     * byte(s) 2-5: the timestamp of the readout from micros().
     """
 
-    layout = '>'
-    header: 'B' = Marker.DIGITAL_TRANSITION_HEADER.value
-    info: 'B'
-    microseconds: 'L'
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER.value
+    info: Format.UNSIGNED_CHAR
+    microseconds: Format.UNSIGNED_LONG
 
     def __post_init__(self) -> None:
         """Post initialization.
@@ -90,7 +87,6 @@ class DigitalTransition(FixedSizePacketBase):
         self.pin_number = self.info & 0x7F
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.seconds
-
 
 
 @packetclass
@@ -104,11 +100,11 @@ class AnalogReadout(FixedSizePacketBase):
     * byte(s) 6-7: the actual adc value.
     """
 
-    layout = '>'
-    header: 'B' = Marker.ANALOG_READOUT_HEADER.value
-    pin_number: 'B'
-    milliseconds: 'L'
-    adc_value: 'H'
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = Marker.ANALOG_READOUT_HEADER.value
+    pin_number: Format.UNSIGNED_CHAR
+    milliseconds: Format.UNSIGNED_LONG
+    adc_value: Format.UNSIGNED_SHORT
 
     def __post_init__(self) -> None:
         """Post initialization.

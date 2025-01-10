@@ -30,8 +30,9 @@ def test_linear(slope: float = 2., intercept: float = 1.):
     physical = converter(raw)
     assert np.allclose(physical, slope * raw + intercept)
 
+
 def test_thermistor():
     """Test a spline conversion.
     """
     file_path = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
-    converter = egu.ThermistorConversion.from_file(file_path, 10., 10, col_resistance=2)
+    _ = egu.ThermistorConversion.from_file(file_path, 10., 10, col_resistance=2)

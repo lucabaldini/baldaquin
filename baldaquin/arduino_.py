@@ -68,9 +68,9 @@ class ArduinoBoard:
         return f'{self.vendor}:{self.architecture}:{self.board_id}'
 
 
-
 UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
-    ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243), (0x2341, 0x006A)))
+                   ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243),
+                    (0x2341, 0x006A)))
 
 
 _SUPPORTED_BOARDS = (UNO,)
@@ -98,7 +98,12 @@ def board_identifiers(*boards: ArduinoBoard) -> tuple:
     tuple
         A tuple of (vid, pid) tuples.
     """
-    return tuple(sum([list(board.identifiers) for board in boards], start=[]))
+    # If you are tempted to use a sum of lists with start=[], here, keep in mind
+    # this is not supported in Python 3.7.
+    identiers = ()
+    for board in boards:
+        identiers += board.identifiers
+    return identiers
 
 
 def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
@@ -172,7 +177,6 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_c
     return port
 
 
-
 class ArduinoProgrammingInterfaceBase:
 
     """Basic class for concrete interfaces for programming Arduino devices.
@@ -185,7 +189,7 @@ class ArduinoProgrammingInterfaceBase:
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
-        **kwargs) -> subprocess.CompletedProcess:
+               **kwargs) -> subprocess.CompletedProcess:
         """Do nothing method, to be reimplented in derived classes.
         """
         raise NotImplementedError
@@ -220,7 +224,6 @@ class ArduinoProgrammingInterfaceBase:
         return status
 
 
-
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
 
     """Poor-man Python interface to the Arduino-CLI.
@@ -246,7 +249,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
-        verbose: bool = False) -> subprocess.CompletedProcess:
+               verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
 
         Note this is using avrdude under the hood, so one might wonder why we
@@ -291,7 +294,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
                   --log-level string          Messages with this level and above will be logged. Valid levels are: trace, debug, info, warn, error, fatal, panic (default "info")
                   --no-color                  Disable colored output.
 
-        """
+        """  # noqa F811
         args = [
             ArduinoCli.PROGRAM_NAME, 'upload',
             '--port', port,
@@ -301,7 +304,6 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         if verbose:
             args.append('--verbose')
         return ArduinoCli._execute(args)
-
 
 
 class AvrDude(ArduinoProgrammingInterfaceBase):
@@ -351,7 +353,7 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
-        verbose: bool = False) -> subprocess.CompletedProcess:
+               verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
         """
         args = [
@@ -365,7 +367,6 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
         if verbose:
             args.append('-v')
         AvrDude._execute(args)
-
 
 
 # if __name__ == '__main__':

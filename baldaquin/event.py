@@ -18,18 +18,13 @@
 
 from __future__ import annotations
 
-import dataclasses
-from dataclasses import dataclass
 from pathlib import Path
-import struct
-from typing import Any
 
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.buf import CircularBuffer
-from baldaquin.pkt import PacketStatistics
-
+from baldaquin.pkt import AbstractPacket, PacketStatistics
 
 
 class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
@@ -46,7 +41,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     BUFFER_CLASS = CircularBuffer
     BUFFER_KWARGS = {}
 
-    #pylint: disable=c-extension-no-member
+    # pylint: disable=c-extension-no-member
     output_file_set = QtCore.Signal(Path)
 
     def __init__(self) -> None:
@@ -83,7 +78,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self._statistics.reset()
 
-    def set_output_file(self, file_path : Path) -> None:
+    def set_output_file(self, file_path: Path) -> None:
         """Set the path to the output file.
         """
         self._buffer.set_output_file(file_path)
@@ -128,14 +123,14 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self.__running = False
 
-    def read_packet(self) -> PacketBase:
+    def read_packet(self) -> AbstractPacket:
         """Read a single packet (must be overloaded in derived classes).
 
         This is the actual blocking function that gets a single event from the hardware.
         """
         raise NotImplementedError
 
-    def process_packet(self, packet: PacketBase) -> None:
+    def process_packet(self, packet: AbstractPacket) -> None:
         """Process a single packet (must be overloaded in derived classes).
 
         This is typically implemented downstream in the user application.

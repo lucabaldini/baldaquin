@@ -41,7 +41,6 @@ class FsmState(Enum):
     PAUSED = 'Paused'
 
 
-
 class InvalidFsmTransitionError(RuntimeError):
 
     """RuntimeError subclass to signal an invalid FSM transition.
@@ -51,7 +50,6 @@ class InvalidFsmTransitionError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'Invalid FSM transition {src.name} -> {dest.name}.')
-
 
 
 class FiniteStateMachineLogic:
@@ -69,7 +67,7 @@ class FiniteStateMachineLogic:
         """
         return self._state
 
-    def set_state(self, state : FsmState) -> None:
+    def set_state(self, state: FsmState) -> None:
         """Set the state of the FSM.
         """
         self._state = state
@@ -189,7 +187,6 @@ class FiniteStateMachineLogic:
         self.set_state(target_state)
 
 
-
 class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
 
     """Definition of the finite-state machine (FSM) underlying the run control.
@@ -200,7 +197,7 @@ class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
     order for the underlying QObject structure to be properly initialized.)
     """
 
-    #pylint: disable=c-extension-no-member, abstract-method
+    # pylint: disable=c-extension-no-member, abstract-method
     state_changed = QtCore.Signal(FsmState)
 
     def __init__(self) -> None:
@@ -209,13 +206,12 @@ class FiniteStateMachineBase(QtCore.QObject, FiniteStateMachineLogic):
         QtCore.QObject.__init__(self)
         FiniteStateMachineLogic.__init__(self)
 
-    def set_state(self, state : FsmState) -> None:
+    def set_state(self, state: FsmState) -> None:
         """Set the state of the FSM and emit a ``state_changed()`` signal with the
         proper state after the change.
         """
         self._state = state
         self.state_changed.emit(self._state)
-
 
 
 class AppNotLoadedError(RuntimeError):
@@ -227,7 +223,6 @@ class AppNotLoadedError(RuntimeError):
         """Constructor.
         """
         super().__init__('User application not loaded.')
-
 
 
 class RunControlBase(FiniteStateMachineBase):
@@ -254,7 +249,7 @@ class RunControlBase(FiniteStateMachineBase):
     uptime_updated = QtCore.Signal(float)
     event_handler_stats_updated = QtCore.Signal(PacketStatistics, float)
 
-    def __init__(self, refresh_interval : int = _DEFAULT_REFRESH_INTERVAL) -> None:
+    def __init__(self, refresh_interval: int = _DEFAULT_REFRESH_INTERVAL) -> None:
         """Constructor.
         """
         if self._PROJECT_NAME is None:
@@ -282,7 +277,7 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return self._run_id
 
-    def set_refresh_interval(self, refresh_interval : int) -> None:
+    def set_refresh_interval(self, refresh_interval: int) -> None:
         """Set the timeout for the underlying refresh QTimer object.
 
         Arguments
@@ -292,7 +287,7 @@ class RunControlBase(FiniteStateMachineBase):
         """
         self._update_timer.setInterval(refresh_interval)
 
-    def _config_file_path(self, file_name : str) -> Path:
+    def _config_file_path(self, file_name: str) -> Path:
         """Return the path to a generic configuration file.
 
         Arguments
@@ -312,7 +307,7 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return self._config_file_path('run.cfg')
 
-    def _file_name_base(self, label : str = None, extension : str = None) -> str:
+    def _file_name_base(self, label: str = None, extension: str = None) -> str:
         """Generic function implementing a file name factory, given the
         test stand and the run ID.
 
@@ -363,7 +358,7 @@ class RunControlBase(FiniteStateMachineBase):
         return self.data_folder_path() / self.log_file_name()
 
     @staticmethod
-    def _read_config_file(file_path : Path, default : int) -> int:
+    def _read_config_file(file_path: Path, default: int) -> int:
         """Read a single integer value from a given configuration file.
 
         If the file is not found, a new one is created, holding the default value,
@@ -387,7 +382,7 @@ class RunControlBase(FiniteStateMachineBase):
         return value
 
     @staticmethod
-    def _write_config_file(file_path : Path, value : int) -> None:
+    def _write_config_file(file_path: Path, value: int) -> None:
         """Write a single integer value to a given configuration file.
 
         Arguments
@@ -401,7 +396,7 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info(f'Writing {value} to config file {file_path}...')
         file_path.write_text(f'{value}')
 
-    def _read_test_stand_id(self, default : int = 101) -> int:
+    def _read_test_stand_id(self, default: int = 101) -> int:
         """Read the test stand id from the proper configuration file.
         """
         return self._read_config_file(self._test_stand_id_file_path(), default)
@@ -461,7 +456,7 @@ class RunControlBase(FiniteStateMachineBase):
         self.uptime_updated.emit(elapsed_time)
         self.event_handler_stats_updated.emit(statistics, event_rate)
 
-    def load_user_application(self, user_application : UserApplicationBase) -> None:
+    def load_user_application(self, user_application: UserApplicationBase) -> None:
         """Set the user application to be run.
         """
         logger.info('Loading user application...')
@@ -482,7 +477,7 @@ class RunControlBase(FiniteStateMachineBase):
         if self._user_application is None:
             raise AppNotLoadedError
 
-    def configure_user_application(self, configuration : ConfigurationBase) -> None:
+    def configure_user_application(self, configuration: ConfigurationBase) -> None:
         """Apply a given configuration to the current user application.
         """
         self._check_user_application()

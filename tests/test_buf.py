@@ -16,18 +16,15 @@
 """Test suite for buf.py
 """
 
-import os
 
 import pytest
 
-from baldaquin import BALDAQUIN_DATA
 from baldaquin.buf import FIFO, CircularBuffer
 
 
-def _test_buffer_base(buffer_class, num_items : int = 100, **kwargs):
+def _test_buffer_base(buffer_class, num_items: int = 100, **kwargs):
     """Base function to test a generic, concrete subclass
     """
-    file_path = os.path.join(BALDAQUIN_DATA, 'test_buffer.dat')
     buffer = buffer_class(**kwargs)
     for i in range(num_items):
         buffer.put(i)
@@ -35,6 +32,7 @@ def _test_buffer_base(buffer_class, num_items : int = 100, **kwargs):
     with pytest.raises(RuntimeError):
         buffer.flush()
     buffer.clear()
+
 
 def test_fifo():
     """Test a FIFO

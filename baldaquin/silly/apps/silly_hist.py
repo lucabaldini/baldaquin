@@ -26,10 +26,9 @@ from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket
     SillyUserApplicationBase, SillyConfiguration
 
 
-
 class MainWindow(SillyMainWindow):
 
-    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
         super().__init__()
@@ -40,7 +39,6 @@ class MainWindow(SillyMainWindow):
         """
         super().setup_user_application(user_application)
         self.pha_tab.register(user_application.pha_hist)
-
 
 
 class SillyHist(SillyUserApplicationBase):
@@ -63,7 +61,6 @@ class SillyHist(SillyUserApplicationBase):
         """
         packet = SillyPacket.unpack(data)
         self.pha_hist.fill(packet.pha)
-
 
 
 if __name__ == '__main__':
