@@ -27,7 +27,6 @@ from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 
 
-
 class AppMainWindow(MainWindow):
 
     """Application graphical user interface.
@@ -36,7 +35,7 @@ class AppMainWindow(MainWindow):
     _PROJECT_NAME = plasduino.PROJECT_NAME
     _CONTROL_BAR_CLASS = SimpleControlBar
 
-    def __init__(self, parent : QtWidgets.QWidget = None) -> None:
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
         """Constructor.
         """
         super().__init__()
@@ -47,7 +46,6 @@ class AppMainWindow(MainWindow):
         """
         super().setup_user_application(user_application)
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
-
 
 
 class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
@@ -81,9 +79,8 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         readout = AnalogReadout.unpack(packet)
-        self.strip_chart_dict[readout.pin_number].add_point(readout.seconds,
-            self._converter(readout.adc_value))
-
+        x, y = readout.seconds, self._converter(readout.adc_value)
+        self.strip_chart_dict[readout.pin_number].add_point(x, y)
 
 
 if __name__ == '__main__':

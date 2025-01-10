@@ -35,10 +35,8 @@ from baldaquin.serial_ import SerialInterface
 from baldaquin.strip import SlidingStripChart
 
 
-
 # List of supported boards, i.e., only the arduino uno at the moment.
 _SUPPORTED_BOARDS = (arduino_.UNO, )
-
 
 
 class PlasduinoSerialInterface(SerialInterface):
@@ -74,7 +72,7 @@ class PlasduinoSerialInterface(SerialInterface):
         marker = self.read_and_unpack('B')
         if not marker == Marker.RUN_END_MARKER.value:
             raise RuntimeError(f'Run end marker mismatch '
-                f'(expected {hex(Marker.RUN_END_MARKER.value)}, found {hex(marker)}).')
+                  f'(expected {hex(Marker.RUN_END_MARKER.value)}, found {hex(marker)}).')
         logger.info('Run end marker correctly read.')
 
     def read_until_run_end_marker(self, timeout: float = None) -> None:
@@ -175,14 +173,12 @@ class PlasduinoSerialInterface(SerialInterface):
         self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
 
 
-
 class PlasduinoRunControl(RunControlBase):
 
     """Specialized plasduino run control.
     """
 
     _PROJECT_NAME = plasduino.PROJECT_NAME
-
 
 
 class PlasduinoEventHandlerBase(EventHandlerBase):
@@ -238,7 +234,6 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         """Overloaded method.
         """
         raise NotImplementedError
-
 
 
 class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
@@ -297,7 +292,6 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         raise NotImplementedError
 
 
-
 class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
     """Event handler for the plasduino sketches reading digital data.
@@ -314,7 +308,6 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         raise NotImplementedError
 
 
-
 class PlasduinoAnalogConfiguration(ConfigurationBase):
 
     """User application configuration for plasduino analog applications.
@@ -326,7 +319,6 @@ class PlasduinoAnalogConfiguration(ConfigurationBase):
     )
 
 
-
 class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
 
     """Specialized base class for plasduino user applications relying on the
@@ -336,7 +328,7 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
     _SAMPLING_INTERVAL = None
 
     @staticmethod
-    def create_strip_charts(ylabel: str = 'ADC counts'):# -> dict[str: SlidingStripChart]:
+    def create_strip_charts(ylabel: str = 'ADC counts'):
         """Create all the strip charts for displaying real-time data.
         """
         kwargs = dict(xlabel='Time [s]', ylabel=ylabel)

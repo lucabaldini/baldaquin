@@ -18,8 +18,7 @@
 
 import numpy as np
 
-from baldaquin.plt_ import matplotlib, plt, setup_gca, setup_axes, PlotCard
-
+from baldaquin.plt_ import matplotlib, plt, setup_axes, PlotCard
 
 
 class InvalidShapeError(RuntimeError):
@@ -31,8 +30,6 @@ class InvalidShapeError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'Invalid array shape: {expected} expected, got {actual}')
-
-
 
 
 class HistogramBase:
@@ -76,25 +73,25 @@ class HistogramBase:
         self.entries = self._zeros()
         self._sumw2 = self._zeros()
 
-    def _zeros(self, dtype : type = float):
+    def _zeros(self, dtype: type = float):
         """Return an array of zeros of the proper shape for the underlying
         histograms quantities.
         """
         return np.zeros(shape=self._shape, dtype=dtype)
 
-    def reset(self) ->  None:
+    def reset(self) -> None:
         """Reset the histogram.
         """
         self.content = self._zeros()
         self.entries = self._zeros()
         self._sumw2 = self._zeros()
 
-    def bin_centers(self, axis : int = 0) -> np.array:
+    def bin_centers(self, axis: int = 0) -> np.array:
         """Return the bin centers for a specific axis.
         """
         return 0.5 * (self.binning[axis][1:] + self.binning[axis][:-1])
 
-    def bin_widths(self, axis : int = 0) -> np.array:
+    def bin_widths(self, axis: int = 0) -> np.array:
         """Return the bin widths for a specific axis.
         """
         return np.diff(self.binning[axis])
@@ -104,13 +101,13 @@ class HistogramBase:
         """
         return np.sqrt(self._sumw2)
 
-    def set_axis_label(self, axis : int, label : str) -> None:
+    def set_axis_label(self, axis: int, label: str) -> None:
         """Set the label for a given axis.
         """
         self.labels[axis] = label
 
     @staticmethod
-    def calculate_axis_statistics(bin_centers : np.array, content : np.array) -> dict:
+    def calculate_axis_statistics(bin_centers: np.array, content: np.array) -> dict:
         """Calculate the basic statistics (normalization, mean and rms) for a
         given set of binned data.
         """
@@ -123,13 +120,13 @@ class HistogramBase:
             rms = np.sqrt(((bin_centers - mean)**2. * content).sum() / sumw)
         return {'Sum of weights': sumw, 'Mean':  mean, 'RMS': rms}
 
-    def _check_array_shape(self, data : np.array) -> None:
+    def _check_array_shape(self, data: np.array) -> None:
         """Check the shape of a given array used to update the histogram.
         """
         if data.shape == self._shape:
             raise InvalidShapeError(self._shape, data.shape)
 
-    def set_errors(self, errors : np.array) -> None:
+    def set_errors(self, errors: np.array) -> None:
         """Set the proper value for the _sumw2 underlying array, given the
         errors on the bin content.
         """
@@ -156,7 +153,7 @@ class HistogramBase:
         self._sumw2 += sumw2
         return self
 
-    def set_content(self, content : np.array, entries : np.array = None, errors : np.array = None):
+    def set_content(self, content: np.array, entries: np.array = None, errors: np.array = None):
         """Set the bin contents programmatically from binned data.
 
         Note this method is returning the histogram instance, so that the function
@@ -172,7 +169,7 @@ class HistogramBase:
         return self
 
     @staticmethod
-    def bisect(binning : np.array, values : np.array, side : str = 'left') -> np.array:
+    def bisect(binning: np.array, values: np.array, side: str = 'left') -> np.array:
         """Return the indices corresponding to a given array of values for a
         given binning.
         """
@@ -193,7 +190,7 @@ class HistogramBase:
         """
         return self.content[self.find_bin(*coords)]
 
-    def normalization(self, axis : int = None):
+    def normalization(self, axis: int = None):
         """return the sum of weights in the histogram.
         """
         return self.content.sum(axis)
@@ -215,7 +212,7 @@ class HistogramBase:
         """
         hist = self.empty_copy()
         hist.set_content(self.content + other.content, self.entries + other.entries,
-            np.sqrt(self._sumw2 + other._sumw2))
+                         np.sqrt(self._sumw2 + other._sumw2))
         return hist
 
     def __sub__(self, other):
@@ -223,7 +220,7 @@ class HistogramBase:
         """
         hist = self.empty_copy()
         hist.set_content(self.content - other.content, self.entries + other.entries,
-            np.sqrt(self._sumw2 + other._sumw2))
+                         np.sqrt(self._sumw2 + other._sumw2))
         return hist
 
     def __mul__(self, value):
@@ -254,7 +251,6 @@ class HistogramBase:
         setup_axes(axes, xlabel=self.labels[0], ylabel=self.labels[1])
 
 
-
 class Histogram1d(HistogramBase):
 
     """A one-dimensional histogram.
@@ -262,7 +258,7 @@ class Histogram1d(HistogramBase):
 
     PLOT_OPTIONS = dict(lw=1.25, alpha=0.4, histtype='stepfilled')
 
-    def __init__(self, xbinning : np.array, xlabel : str = '', ylabel : str ='Entries/bin') -> None:
+    def __init__(self, xbinning: np.array, xlabel: str = '', ylabel: str = 'Entries/bin') -> None:
         """Constructor.
         """
         HistogramBase.__init__(self, (xbinning, ), [xlabel, ylabel])
@@ -281,7 +277,6 @@ class Histogram1d(HistogramBase):
         """Overloaded make_plot() method.
         """
         axes.hist(self.bin_centers(0), self.binning[0], weights=self.content, **kwargs)
-
 
 
 class Histogram2d(HistogramBase):
@@ -317,19 +312,19 @@ class Histogram2d(HistogramBase):
         if self.labels[2] is not None:
             color_bar.set_label(self.labels[2])
 
-    def slice(self, bin_index : int, axis : int = 0):
+    def slice(self, bin_index: int, axis: int = 0):
         """Return a slice of the two-dimensional histogram along the given axis.
         """
         hist = Histogram1d(self.binning[axis], self.labels[axis])
         hist.set_content(self.content[:, bin_index], self.entries[:, bin_index])
         return hist
 
-    def slices(self, axis : int = 0):
+    def slices(self, axis: int = 0):
         """Return all the slices along a given axis.
         """
         return tuple(self.slice(bin_index, axis) for bin_index in range(self._shape[axis]))
 
-    def hslice(self, bin_index : int):
+    def hslice(self, bin_index: int):
         """Return the horizontal slice for a given bin.
         """
         return self.slice(bin_index, 0)
@@ -339,7 +334,7 @@ class Histogram2d(HistogramBase):
         """
         return self.slices(0)
 
-    def hbisect(self, y : float):
+    def hbisect(self, y: float):
         """Return the horizontal slice corresponding to a given y value.
         """
         return self.hslice(self.bisect(self.binning[1], y))

@@ -28,15 +28,17 @@ from loguru import logger
 
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
-    format=">>> <level>[{level}] {message}</level>")
+                              format=">>> <level>[{level}] {message}</level>")
 
-def config_logger(file_path : str = None, extra=None):
+
+def config_logger(file_path: str = None, extra=None):
     """Configure the loguru logger.
     """
     handlers = [DEFAULT_LOGURU_HANDLER]
     if file_path is not None:
         handlers.append(dict(sink=file_path, enqueue=True, serialize=True))
     logger.configure(handlers=handlers, levels=None, extra=extra)
+
 
 config_logger()
 
@@ -60,7 +62,7 @@ try:
     logger.info(f'$BALDAQUIN_QT_WRAPPER environmental variable set to {BALDAQUIN_QT_WRAPPER}')
 except KeyError:
     BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
-if not BALDAQUIN_QT_WRAPPER in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
+if BALDAQUIN_QT_WRAPPER not in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
     logger.error(f'{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available')
     BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
 logger.info(f'Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}')
@@ -73,7 +75,7 @@ def execute_shell_command(args):
     return subprocess.run(args)
 
 
-def _create_folder(folder_path : Path) -> None:
+def _create_folder(folder_path: Path) -> None:
     """Create a given folder if it does not exist.
 
     This is a small utility function to ensure that the relevant directories
@@ -102,7 +104,7 @@ BALDAQUIN_CONFIG = Path.home() / '.baldaquin'
 _create_folder(BALDAQUIN_CONFIG)
 
 
-def config_folder_path(project_name : str) -> Path:
+def config_folder_path(project_name: str) -> Path:
     """Return the path to the configuration folder for a given project.
 
     Arguments
@@ -113,7 +115,7 @@ def config_folder_path(project_name : str) -> Path:
     return BALDAQUIN_CONFIG / project_name
 
 
-def data_folder_path(project_name : str) -> Path:
+def data_folder_path(project_name: str) -> Path:
     """Return the path to the data folder for a given project.
 
     Arguments
@@ -124,7 +126,7 @@ def data_folder_path(project_name : str) -> Path:
     return BALDAQUIN_DATA / project_name
 
 
-def setup_project(project_name : str) -> tuple[Path, Path]:
+def setup_project(project_name: str) -> tuple[Path, Path]:
     """Setup the folder structure for a given project.
 
     This is essentially creating a folder for the configuration files and

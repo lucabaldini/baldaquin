@@ -18,10 +18,7 @@
 
 import collections
 
-import matplotlib.dates
-
 from baldaquin.plt_ import plt, setup_axes
-from baldaquin.timeline import Timeline
 
 
 class SlidingStripChart:
@@ -39,7 +36,7 @@ class SlidingStripChart:
     # pylint: disable=invalid-name
 
     def __init__(self, max_length: int = None, label: str = '', xoffset: float = 0.,
-        xlabel: str = None, ylabel: str = None) -> None:
+                 xlabel: str = None, ylabel: str = None) -> None:
         """Constructor.
         """
         self.label = label

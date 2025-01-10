@@ -21,7 +21,6 @@ from enum import Enum
 from baldaquin.pkt import packetclass, FixedSizePacketBase, Format, Layout
 
 
-
 class Marker(Enum):
 
     """Relevant protocol markers, verbatim from
@@ -37,7 +36,6 @@ class Marker(Enum):
     ANALOG_READOUT_HEADER = 0xA2
     GPS_MEASSGE_HEADER = 0xA3
     RUN_END_MARKER = 0xB0
-
 
 
 class OpCode(Enum):
@@ -66,7 +64,6 @@ class OpCode(Enum):
     OP_CODE_TOGGLE_DIGITAL_PIN = 0x0D
 
 
-
 @packetclass
 class DigitalTransition(FixedSizePacketBase):
 
@@ -90,7 +87,6 @@ class DigitalTransition(FixedSizePacketBase):
         self.pin_number = self.info & 0x7F
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.seconds
-
 
 
 @packetclass

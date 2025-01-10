@@ -24,10 +24,9 @@ import datetime
 import time
 
 
-
 class tzoffset(datetime.tzinfo):
 
-    #pylint: disable=invalid-name
+    # pylint: disable=invalid-name
 
     """Minimal tzinfo class factory to create time-aware datetime objects.
 
@@ -43,18 +42,18 @@ class tzoffset(datetime.tzinfo):
         The UTC offset in seconds.
     """
 
-    def __init__(self, name : str, offset : float) -> None:
+    def __init__(self, name: str, offset: float) -> None:
         """Constructor.
         """
         self.name = name
         self.offset = datetime.timedelta(seconds=offset)
 
-    def utcoffset(self, dt : datetime.datetime) -> float:
+    def utcoffset(self, dt: datetime.datetime) -> float:
         """Overloaded method.
         """
         return self.offset
 
-    def dst(self, dt : datetime.datetime) -> float:
+    def dst(self, dt: datetime.datetime) -> float:
         """Overloaded method.
 
         According to the documentation, this Return the daylight saving time (DST)
@@ -62,11 +61,10 @@ class tzoffset(datetime.tzinfo):
         """
         return None
 
-    def tzname(self, dt : datetime.datetime) -> str:
+    def tzname(self, dt: datetime.datetime) -> str:
         """Overloaded method.
         """
         return self.name
-
 
 
 @dataclass
@@ -99,7 +97,7 @@ class Timestamp:
     local_datetime: datetime.datetime
     seconds: float
 
-    def __sub__(self, other : Timestamp) -> float:
+    def __sub__(self, other: Timestamp) -> float:
         """Overloaded operator to support timestamp subtraction.
         """
         return self.seconds - other.seconds
@@ -110,10 +108,9 @@ class Timestamp:
         return f'{self.local_datetime} ({self.seconds} s)'
 
 
-
 class Timeline:
 
-    #pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods
 
     """Class representing a continuos timeline referred to a fixed origin.
 
@@ -142,7 +139,7 @@ class Timeline:
 
     _POSIX_ORIGIN = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
-    def __init__(self, origin : str = '1970-01-01') -> None:
+    def __init__(self, origin: str = '1970-01-01') -> None:
         """Constructor.
         """
         self.origin = datetime.datetime.fromisoformat(f'{origin}')

@@ -22,7 +22,6 @@ from enum import Enum
 import struct
 
 
-
 class Format(Enum):
 
     """Enum class encapsulating the supporte format characters from
@@ -48,7 +47,6 @@ class Format(Enum):
     DOUBLE = 'd'
 
 
-
 class Layout(Enum):
 
     """Enum class encapsulating the supported layout characters from
@@ -63,7 +61,6 @@ class Layout(Enum):
     DEFAULT = '@'
 
 
-
 class Edge(Enum):
 
     """Small Enum class encapsulating the edge type of a transition on a digital line.
@@ -71,7 +68,6 @@ class Edge(Enum):
 
     RISING = 1
     FALLING = 0
-
 
 
 class AbstractPacket(ABC):
@@ -110,7 +106,6 @@ class AbstractPacket(ABC):
         pass
 
 
-
 class FieldMismatchError(RuntimeError):
 
     """RuntimeError subclass to signal a field mismatch in a data structure.
@@ -120,7 +115,7 @@ class FieldMismatchError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'{cls.__name__} mismatch for field "{field}" '
-            f'(expected {hex(expected)}, found {hex(actual)})')
+                         f'(expected {hex(expected)}, found {hex(actual)})')
 
 
 def _class_annotations(cls) -> dict:
@@ -152,7 +147,6 @@ def _check_layout_character(cls: type) -> None:
         raise ValueError(f'Layout character {cls.layout} is not a Layout value')
 
 
-
 def packetclass(cls: type) -> type:
     """Simple decorator to support automatic generation of fixed-length packet classes.
     """
@@ -171,7 +165,7 @@ def packetclass(cls: type) -> type:
         # the class annotations.
         if len(args) != len(cls._fields):
             raise TypeError(f'{cls.__name__}.__init__() expected {len(cls._fields)} '
-                f'arguments {cls._fields}, got {len(args)}')
+                            f'arguments {cls._fields}, got {len(args)}')
         # Loop over the annotations and create all the instance variables.
         for field, value in zip(cls._fields, args):
             # If a given annotation has a value attched to it, make sure we are
@@ -188,7 +182,6 @@ def packetclass(cls: type) -> type:
 
     cls.__init__ = _init
     return cls
-
 
 
 @packetclass
@@ -216,11 +209,11 @@ class FixedSizePacketBase(AbstractPacket):
         return cls(*struct.unpack(cls._format, data), payload=data)
 
     def __setattr__(self, key, value) -> None:
-       """Overloaded method to make class instances frozen.
-       """
-       if key in self.__class__.__frozenattrs__:
-           raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
-       object.__setattr__(self, key, value)
+        """Overloaded method to make class instances frozen.
+        """
+        if key in self.__class__.__frozenattrs__:
+            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
+        object.__setattr__(self, key, value)
 
     def __str__(self):
         """String formatting.
@@ -228,7 +221,6 @@ class FixedSizePacketBase(AbstractPacket):
         attrs = self._fields + ('payload', '_format')
         info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
         return f'{self.__class__.__name__}({info})'
-
 
 
 @dataclass
