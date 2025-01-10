@@ -23,7 +23,7 @@ import struct
 
 
 
-class FormatChar(Enum):
+class Format(Enum):
 
     """Enum class encapsulating the supporte format characters from
     https://docs.python.org/3/library/struct.html#format-characters
@@ -49,7 +49,7 @@ class FormatChar(Enum):
 
 
 
-class LayoutChar(Enum):
+class Layout(Enum):
 
     """Enum class encapsulating the supported layout characters from
     https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
@@ -140,16 +140,16 @@ def _check_format_characters(cls: type) -> None:
     """Check that all the format characters in the class annotations are valid.
     """
     for character in _class_annotations(cls).values():
-        if not isinstance(character, FormatChar):
-            raise ValueError(f'Format character {character} is not a FormatChar')
+        if not isinstance(character, Format):
+            raise ValueError(f'Format character {character} is not a Format value')
 
 
 def _check_layout_character(cls: type) -> None:
     """Check that the class layout character is valid.
     """
-    cls.layout = getattr(cls, 'layout', LayoutChar.DEFAULT)
-    if not isinstance(cls.layout, LayoutChar):
-        raise ValueError(f'Layout {cls.layout} is not a LayoutChar')
+    cls.layout = getattr(cls, 'layout', Layout.DEFAULT)
+    if not isinstance(cls.layout, Layout):
+        raise ValueError(f'Layout character {cls.layout} is not a Layout value')
 
 
 

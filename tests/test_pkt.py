@@ -23,7 +23,7 @@ import pytest
 from baldaquin import logger
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import LayoutChar, FormatChar, FieldMismatchError
+from baldaquin.pkt import Layout, Format, FieldMismatchError
 
 
 @packetclass
@@ -32,10 +32,10 @@ class Readout(FixedSizePacketBase):
     """Plausible data structure for testing purposes.
     """
 
-    layout = LayoutChar.BIG_ENDIAN
-    header: FormatChar.UNSIGNED_CHAR = 0xaa
-    milliseconds: FormatChar.UNSIGNED_LONG
-    adc_value: FormatChar.UNSIGNED_SHORT
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = 0xaa
+    milliseconds: Format.UNSIGNED_LONG
+    adc_value: Format.UNSIGNED_SHORT
 
     def __post_init__(self) -> None:
         self.seconds = self.milliseconds / 1000.
@@ -93,11 +93,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = LayoutChar.BIG_ENDIAN
+        layout = Layout.BIG_ENDIAN
 
-        header: FormatChar.UNSIGNED_CHAR = 0xff
-        pin_number: FormatChar.UNSIGNED_CHAR
-        timestamp: FormatChar.UNSIGNED_LONG_LONG
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        timestamp: Format.UNSIGNED_LONG_LONG
 
     packet = Trigger(0xff, 1, 15426782)
     print(packet)
@@ -114,11 +114,11 @@ def test_docs():
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = LayoutChar.BIG_ENDIAN
+        layout = Layout.BIG_ENDIAN
 
-        header: FormatChar.UNSIGNED_CHAR = 0xff
-        pin_number: FormatChar.UNSIGNED_CHAR
-        microseconds: FormatChar.UNSIGNED_LONG_LONG
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        microseconds: Format.UNSIGNED_LONG_LONG
 
         def __post_init__(self):
             self.seconds = self.microseconds / 1000000

@@ -59,10 +59,10 @@ by the Python ``dataclass`` decorator, and what it does is essentially providing
 a class constructor based on class annotations. The basic contract is that for any
 annotation in the form of
 
->>> field_name: FormatChar
+>>> field_name: Format
 
 a new attribute with the given ``field_name`` is added to the class, with the
-:class:`FormatChar <baldaquin.pkt.FormatChar>` specifying the type of the field
+:class:`Format <baldaquin.pkt.Format>` specifying the type of the field
 in the packet layout, according to the rules in the Python
 `struct <https://docs.python.org/3/library/struct.html>`_.
 If the format charater is not supported, a ``ValueError`` is raised.
@@ -78,7 +78,7 @@ header that need to be checked within the event loop.)
 
 Finally, a ``layout`` class attribute can be optionally specified to control the
 byte order, size and alignment of the packet, according to the
-:class:`LayoutChar <baldaquin.pkt.LayoutChar>` enum.
+:class:`Layout <baldaquin.pkt.Layout>` enum.
 If no layout is specified, ``@`` (native order and size) is assumed.
 If the layout character is not supported a ``ValueError`` is raised.
 
@@ -92,11 +92,11 @@ the following snippet
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = LayoutChar.BIG_ENDIAN
+        layout = Layout.BIG_ENDIAN
 
-        header: FormatChar.UNSIGNED_CHAR = 0xff
-        pin_number: FormatChar.UNSIGNED_CHAR
-        timestamp: FormatChar.UNSIGNED_LONG_LONG
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        timestamp: Format.UNSIGNED_LONG_LONG
 
 defines a fully fledged packet class with three fields (big endian, standard size),
 where the header is required to be ``0xff`` (this is automatically checked at
@@ -148,11 +148,11 @@ lines of
     @packetclass
     class Trigger(FixedSizePacketBase):
 
-        layout = LayoutChar.BIG_ENDIAN
+        layout = Layout.BIG_ENDIAN
 
-        header: FormatChar.UNSIGNED_CHAR = 0xff
-        pin_number: FormatChar.UNSIGNED_CHAR
-        microseconds: FormatChar.UNSIGNED_LONG_LONG
+        header: Format.UNSIGNED_CHAR = 0xff
+        pin_number: Format.UNSIGNED_CHAR
+        microseconds: Format.UNSIGNED_LONG_LONG
 
         def __post_init__(self):
             self.seconds = self.microseconds / 1000000
