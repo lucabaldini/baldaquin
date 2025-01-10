@@ -300,7 +300,7 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
     def read_packet(self):
         """Read a single packet, that is, an analog readout.
         """
-        return self.serial_interface.read(DigitalTransition.SIZE)
+        return self.serial_interface.read(DigitalTransition._size)
 
     def process_packet(self, packet: AbstractPacket) -> None:
         """Overloaded method.

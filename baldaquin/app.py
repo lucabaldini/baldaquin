@@ -95,7 +95,7 @@ class UserApplicationBase:
         self.event_handler.flush_buffer()
 
     def pause(self) -> None:
-        """
+        """Pause the event handler.
         """
         logger.info(f'Pausing {self.NAME} user application...')
         self.event_handler.stop()
@@ -103,13 +103,13 @@ class UserApplicationBase:
         self.event_handler.flush_buffer()
 
     def resume(self) -> None:
-        """
+        """Resume the event handler.
         """
         logger.info(f'Resuming {self.NAME} user application...')
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
-        """
+        """Stop the event handler.
         """
         self.stop_run()
 

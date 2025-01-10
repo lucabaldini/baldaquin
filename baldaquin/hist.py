@@ -276,6 +276,7 @@ class Histogram1d(HistogramBase):
     def _plot(self, axes, **kwargs) -> None:
         """Overloaded make_plot() method.
         """
+        # pylint: disable=arguments-differ
         axes.hist(self.bin_centers(0), self.binning[0], weights=self.content, **kwargs)
 
 
@@ -296,6 +297,7 @@ class Histogram2d(HistogramBase):
     def _plot(self, axes, logz=False, **kwargs):
         """Overloaded make_plot() method.
         """
+        # pylint: disable=arguments-differ
         x, y = (v.flatten() for v in np.meshgrid(self.bin_centers(0), self.bin_centers(1)))
         bins = self.binning
         w = self.content.T.flatten()

@@ -35,6 +35,9 @@ from baldaquin.runctrl import RunControlBase
 @packetclass
 class SillyPacket(FixedSizePacketBase):
 
+    """Silly packet definition.
+    """
+
     trigger_id: Format.UNSIGNED_LONG
     seconds: Format.UNSIGNED_LONG
     microseconds: Format.UNSIGNED_LONG

@@ -76,34 +76,41 @@ class AbstractPacket(ABC):
     """
 
     def __post_init__(self) -> None:
-        pass
+        """Hook for post-initialization.
+        """
 
     @property
     @abstractmethod
     def payload(self) -> bytes:
-        pass
+        """Return the packet binary data.
+        """
 
     @property
     @abstractmethod
     def fields(self) -> tuple:
-        pass
+        """Return the packet fields.
+        """
 
     @abstractmethod
     def __len__(self) -> int:
-        pass
+        """Return the length of the binary data in bytes.
+        """
 
     @abstractmethod
     def __iter__(self):
-        pass
+        """Iterate over the field values.
+        """
 
     @abstractmethod
     def pack(self) -> bytes:
-        pass
+        """Pack the field values into the corresponding binary data.
+        """
 
     @classmethod
     @abstractmethod
     def unpack(cls, data: bytes):
-        pass
+        """Unpack the binary data into the corresponding field values.
+        """
 
 
 class FieldMismatchError(RuntimeError):
@@ -186,6 +193,9 @@ def packetclass(cls: type) -> type:
 
 @packetclass
 class FixedSizePacketBase(AbstractPacket):
+
+    """Class describing a packet with fixed size.
+    """
 
     @property
     def payload(self) -> bytes:

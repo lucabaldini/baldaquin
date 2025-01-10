@@ -227,6 +227,7 @@ class ConfigurationBase(dict):
         """
         return self[key].value
 
+    # pylint: disable=inconsistent-return-statements
     def update_value(self, key, value) -> ParameterValidationError:
         """Update the value of a configuration parameter.
         """
@@ -287,10 +288,16 @@ class ConfigurationBase(dict):
 
 class EmptyConfiguration(ConfigurationBase):
 
+    """Empty configuration.
+    """
+
     TITLE = 'Empty configuration'
 
 
 class SampleConfiguration(ConfigurationBase):
+
+    """Sample configuration.
+    """
 
     TITLE = 'A simple test configuration'
     PARAMETER_SPECS = (
