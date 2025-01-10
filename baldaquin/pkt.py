@@ -120,11 +120,23 @@ class FieldMismatchError(RuntimeError):
             f'(expected {hex(expected)}, found {hex(actual)})')
 
 
+def _class_annotations(cls) -> dict:
+    """Small convienience function to retrieve the class annotations.
+
+    This is needed because in Python 3.7 cls.__annotations__ is not defined
+    when a class has no annotations, while in subsequent Python versions an empty
+    dictionary is returned, instead.
+    """
+    try:
+        return cls.__annotations__
+    except AttributeError:
+        return {}
+
 
 def _check_format_characters(cls: type) -> None:
     """Check that all the format characters in the class annotations are valid.
     """
-    for character in cls.__annotations__.values():
+    for character in _class_annotations(cls).values():
         if character not in _FORMAT_CHARS:
             raise FormatCharacterError(character)
 
@@ -143,7 +155,7 @@ def packetclass(cls: type) -> type:
     _check_format_characters(cls)
     _check_layout_character(cls)
     # Cache all the necessary classvariables
-    annotations = cls.__annotations__
+    annotations = _class_annotations(cls)
     cls._fields = tuple(annotations.keys())
     cls._format = f'{cls.layout}{"".join(annotations.values())}'
     cls._size = struct.calcsize(cls._format)
