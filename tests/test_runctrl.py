@@ -74,15 +74,3 @@ def test_finite_state_machine():
     fsm.set_stopped()
     fsm.set_reset()
     assert fsm.is_reset()
-
-
-def __test_no_op():
-    """
-    """
-    rc = RunControl()
-    app = UserAppNoOp()
-    rc.set_user_application(app)
-    rc.set_stopped()
-    rc.set_running()
-    rc.set_stopped()
-    rc.set_reset()

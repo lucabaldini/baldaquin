@@ -54,7 +54,7 @@ def test_format():
     with pytest.raises(ValueError) as info:
         @packetclass
         class Packet(FixedSizePacketBase):
-            trigger_id: 'W'
+            trigger_id: 'W' # noqa: F821
     logger.info(info.value)
 
     with pytest.raises(FieldMismatchError) as info:

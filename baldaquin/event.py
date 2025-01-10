@@ -28,7 +28,7 @@ from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.buf import CircularBuffer
-from baldaquin.pkt import PacketStatistics
+from baldaquin.pkt import AbstractPacket, PacketStatistics
 
 
 
@@ -128,14 +128,14 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self.__running = False
 
-    def read_packet(self) -> PacketBase:
+    def read_packet(self) -> AbstractPacket:
         """Read a single packet (must be overloaded in derived classes).
 
         This is the actual blocking function that gets a single event from the hardware.
         """
         raise NotImplementedError
 
-    def process_packet(self, packet: PacketBase) -> None:
+    def process_packet(self, packet: AbstractPacket) -> None:
         """Process a single packet (must be overloaded in derived classes).
 
         This is typically implemented downstream in the user application.
