@@ -83,9 +83,13 @@ if BALDAQUIN_QT_WRAPPER == 'PySide2':
 
 if BALDAQUIN_QT_WRAPPER == 'PyQt6':
     from PyQt6 import QtCore, QtGui, QtWidgets
+    QtCore.Signal = QtCore.pyqtSignal
+    QtCore.Slot = QtCore.pyqtSlot
     exec_qapp = _exec_qapp_new_style
 
 
 if BALDAQUIN_QT_WRAPPER == 'PyQt5':
     from PyQt5 import QtCore, QtGui, QtWidgets
+    QtCore.Signal = QtCore.pyqtSignal
+    QtCore.Slot = QtCore.pyqtSlot
     exec_qapp = _exec_qapp_old_style
