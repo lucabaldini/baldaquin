@@ -201,8 +201,8 @@ class FIFO(queue.Queue, BufferBase):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, max_size: int = None, flush_size: int = None,
-                 flush_interval: float = 1., mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
+    def __init__(self, max_size: int = None, flush_size: int = None, flush_interval: float = 1.,
+                 mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the

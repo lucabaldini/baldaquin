@@ -104,7 +104,8 @@ class ConfigurationParameter:
         """
         return self.value is None
 
-    def _validation_error(self, value: Any, error_code: ParameterValidationError) -> ParameterValidationError:
+    def _validation_error(self, value: Any,
+                          error_code: ParameterValidationError) -> ParameterValidationError:
         """Utility function to log a parameter error (and forward the error code).
         """
         logger.error(f'Value {value} invalid for {self.name} {self.constraints}: {error_code.name}')
@@ -294,7 +295,8 @@ class SampleConfiguration(ConfigurationBase):
     TITLE = 'A simple test configuration'
     PARAMETER_SPECS = (
         ('enabled', 'bool', True, 'Enable connection', None, None, {}),
-        ('protocol', 'str', 'UDP', 'Communication protocol', None, None, dict(choices=('UDP', 'TCP/IP'))),
+        ('protocol', 'str', 'UDP', 'Communication protocol', None, None,
+            dict(choices=('UDP', 'TCP/IP'))),
         ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
         ('port', 'int', 20004, 'Port', None, None, dict(min=1024, max=65535)),
         ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))

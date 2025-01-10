@@ -67,7 +67,8 @@ def plot_baldaquin(line_color, lw, w=0.425, h=0.40, wave=True):
     """
     kwargs = dict(color=line_color, lw=lw)
     plt.plot((-w, -w, w, w), (-h, h, h, -h), **kwargs)
-    x, y = plot_spline((0., 0.99 * h), (-0.05 * w, 0.8 * h), (-0.4 * w, 0.5 * h), (-w, 0.), **kwargs)
+    x, y = plot_spline((0., 0.99 * h), (-0.05 * w, 0.8 * h),
+                       (-0.4 * w, 0.5 * h), (-w, 0.), **kwargs)
     plt.fill_between(x, y, np.full(x.shape, h), color=FILL_COLOR)
     x, y = plot_spline((0., 0.99 * h), (0.05 * w, 0.8 * h), (0.4 * w, 0.5 * h), (w, 0.), **kwargs)
     plt.fill_between(x, y, np.full(x.shape, h), color=FILL_COLOR)

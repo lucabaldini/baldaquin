@@ -898,9 +898,12 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_event_handler_stats(self, statistics: PacketStatistics, event_rate: float) -> None:
         """Update the data taking statistics in the event handler card.
         """
-        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_PROCESSED, statistics.packets_processed)
-        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_WRITTEN, statistics.packets_written)
-        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN, statistics.bytes_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_PROCESSED,
+                                    statistics.packets_processed)
+        self.event_handler_card.set(EventHandlerCardField.NUM_PACKETS_WRITTEN,
+                                    statistics.packets_written)
+        self.event_handler_card.set(EventHandlerCardField.NUM_BYTES_WRITTEN,
+                                    statistics.bytes_written)
         self.event_handler_card.set(EventHandlerCardField.AVERAGE_EVENT_RATE, event_rate)
 
     def set_run_control(self, run_control: RunControlBase) -> None:
