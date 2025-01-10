@@ -3,5 +3,5 @@ matplotlib
 numpy
 pydata-sphinx-theme
 pyserial
-PySide2
+PySide6
 scipy

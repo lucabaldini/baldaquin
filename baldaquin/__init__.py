@@ -54,7 +54,7 @@ BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 # Global flag to handle the Qt bindings in a consistent fashion, see the
 # __qt__ module for more context about this.
 AVAILABLE_BALDAQUIN_QT_WRAPPERS = ('PySide2', 'PySide6', 'PyQt5', 'PyQt6')
-DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide2'
+DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide6'
 try:
     BALDAQUIN_QT_WRAPPER = os.environ['BALDAQUIN_QT_WRAPPER']
     logger.info(f'$BALDAQUIN_QT_WRAPPER environmental variable set to {BALDAQUIN_QT_WRAPPER}')
