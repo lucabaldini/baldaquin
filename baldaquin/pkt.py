@@ -164,9 +164,9 @@ def packetclass(cls: type) -> type:
     annotations = _class_annotations(cls)
     cls._fields = tuple(annotations.keys())
     cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
-    cls._size = struct.calcsize(cls._format)
+    cls.size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
-    cls.__frozenattrs__ = ('_fields', '_format', '_size', '_payload') + cls._fields
+    cls.__frozenattrs__ = ('_fields', '_format', 'size', '_payload') + cls._fields
 
     def _init(self, *args, payload: bytes = None):
         # Make sure we have the correct number of arguments---they should match
@@ -202,7 +202,7 @@ class FixedSizePacketBase(AbstractPacket):
     # we list them here for reference, and to make pylint happy.
     _fields = None
     _format = None
-    _size = 0
+    size = 0
     __frozenattrs__ = None
     _payload = None
 
@@ -215,7 +215,7 @@ class FixedSizePacketBase(AbstractPacket):
         return self._fields
 
     def __len__(self) -> int:
-        return self._size
+        return self.size
 
     def __iter__(self):
         return (getattr(self, field) for field in self.fields)
