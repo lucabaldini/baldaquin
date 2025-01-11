@@ -130,9 +130,9 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         raise NotImplementedError
 
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Process a single packet (must be overloaded in derived classes).
-
-        This is typically implemented downstream in the user application.
-        """
-        raise NotImplementedError
+    # def process_packet(self, packet: AbstractPacket) -> None:
+    #     """Process a single packet (must be overloaded in derived classes).
+    #
+    #     This is typically implemented downstream in the user application.
+    #     """
+    #     raise NotImplementedError
