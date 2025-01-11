@@ -45,9 +45,6 @@ def start_message() -> None:
     print(msg)
 
 
-start_message()
-
-
 # Logger setup.
 DEFAULT_LOGURU_HANDLER = dict(sink=sys.stderr, colorize=True,
                               format=">>> <level>[{level}] {message}</level>")
