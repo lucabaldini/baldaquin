@@ -24,6 +24,9 @@ from typing import Any
 from loguru import logger
 
 
+_ENCODING = 'utf8'
+
+
 class ParameterValidationError(enum.IntEnum):
 
     """Enum class for the possible errors occurring while checking the input
@@ -240,7 +243,7 @@ class ConfigurationBase(dict):
         """Update the configuration parameters from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
-        with open(file_path, 'r') as input_file:
+        with open(file_path, 'r', encoding=_ENCODING) as input_file:
             data = json.load(input_file)
         for key, param_dict in data.items():
             self.update_value(key, param_dict['value'])
@@ -255,7 +258,7 @@ class ConfigurationBase(dict):
         """Dump the configuration to a JSON file.
         """
         logger.info(f'Writing configuration to {file_path}...')
-        with open(file_path, 'w') as output_file:
+        with open(file_path, 'w', encoding=_ENCODING) as output_file:
             output_file.write(self.to_json())
 
     @staticmethod

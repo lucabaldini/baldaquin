@@ -64,7 +64,7 @@ def test_readout():
     # Test the class variables.
     assert Readout._fields == ('header', 'milliseconds', 'adc_value')
     assert Readout._format == '>BLH'
-    assert Readout._size == 7
+    assert Readout.size == 7
 
     # Create a class instance.
     packet = Readout(0xaa, 100, 127)

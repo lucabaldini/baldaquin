@@ -157,15 +157,16 @@ def _check_layout_character(cls: type) -> None:
 def packetclass(cls: type) -> type:
     """Simple decorator to support automatic generation of fixed-length packet classes.
     """
+    # pylint: disable = protected-access
     _check_format_characters(cls)
     _check_layout_character(cls)
     # Cache all the necessary classvariables
     annotations = _class_annotations(cls)
     cls._fields = tuple(annotations.keys())
     cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
-    cls._size = struct.calcsize(cls._format)
+    cls.size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
-    cls.__frozenattrs__ = ('_fields', '_format', '_size', '_payload') + cls._fields
+    cls.__frozenattrs__ = ('_fields', '_format', 'size', '_payload') + cls._fields
 
     def _init(self, *args, payload: bytes = None):
         # Make sure we have the correct number of arguments---they should match
@@ -197,6 +198,14 @@ class FixedSizePacketBase(AbstractPacket):
     """Class describing a packet with fixed size.
     """
 
+    # All of these fields will be overwritten by the @packetclass decorator, but
+    # we list them here for reference, and to make pylint happy.
+    _fields = None
+    _format = None
+    size = 0
+    __frozenattrs__ = None
+    _payload = None
+
     @property
     def payload(self) -> bytes:
         return self._payload
@@ -206,7 +215,7 @@ class FixedSizePacketBase(AbstractPacket):
         return self._fields
 
     def __len__(self) -> int:
-        return self._size
+        return self.size
 
     def __iter__(self):
         return (getattr(self, field) for field in self.fields)
