@@ -963,7 +963,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
 def bootstrap_qapplication():
-    """Create a QApplication object and apply the proper stypesheet.
+    """Create a QApplication object and apply the proper stylesheet.
     """
     # pylint: disable=unspecified-encoding
     qapp = QtWidgets.QApplication(sys.argv)

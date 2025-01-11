@@ -45,4 +45,5 @@ application.
 
    plasduino
 
+   release_notes
    api
