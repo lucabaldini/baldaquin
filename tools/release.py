@@ -18,7 +18,6 @@
 
 import time
 from argparse import ArgumentParser
-import os
 
 from baldaquin import logger, execute_shell_command
 from baldaquin import BALDAQUIN_VERSION_FILE_PATH, BALDAQUIN_RELEASE_NOTES_PATH
@@ -91,7 +90,7 @@ def tag(mode):
     execute_shell_command(['git', 'commit', '-a', '-m', msg])
     execute_shell_command(['git', 'push'])
     msg = 'Tagging version {version}.'
-    execute_shell_command(['git', 'tag', '-a', version, '-m', f'"msg"'])
+    execute_shell_command(['git', 'tag', '-a', version, '-m', f'"{msg}"'])
     execute_shell_command(['git', 'push', '--tags'])
     execute_shell_command(['git', 'status'])
 
@@ -99,6 +98,6 @@ def tag(mode):
 if __name__ == '__main__':
     parser = ArgumentParser()
     parser.add_argument('mode', type=str, choices=INCREMENT_MODES,
-                        help = f'Tag increment mode')
+                        help = 'Tag increment mode')
     args = parser.parse_args()
     tag(args.mode)
