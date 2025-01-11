@@ -220,7 +220,6 @@ class ArduinoProgrammingInterfaceBase:
             if cls.PROGRAM_URL is not None:
                 logger.error(f'See {cls.PROGRAM_URL} for more details.')
             raise RuntimeError(f'{cls.PROGRAM_NAME} not found')
-        status.check_returncode()
         return status
 
 

@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* Fix a bunch of pylint warnings
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/15
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/9
+
 
 *baldaquin 0.1.1 (Sat, 11 Jan 2025 02:09:53 +0100)*
 

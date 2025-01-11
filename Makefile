@@ -11,7 +11,8 @@ lint:
 		--disable too-many-ancestors \
 		--disable too-many-arguments \
 		--disable too-many-function-args \
-		--disable too-many-instance-attributes 
+		--disable too-many-instance-attributes \
+		--ignore _version.py
 
 test:
 	python -m pytest tests -s
