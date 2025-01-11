@@ -157,6 +157,7 @@ def _check_layout_character(cls: type) -> None:
 def packetclass(cls: type) -> type:
     """Simple decorator to support automatic generation of fixed-length packet classes.
     """
+    # pylint: disable = protected-access
     _check_format_characters(cls)
     _check_layout_character(cls)
     # Cache all the necessary classvariables
@@ -196,6 +197,14 @@ class FixedSizePacketBase(AbstractPacket):
 
     """Class describing a packet with fixed size.
     """
+
+    # All of these fields will be overwritten by the @packetclass decorator, but
+    # we list them here for reference, and to make pylint happy.
+    _fields = None
+    _format = None
+    _size = 0
+    __frozenattrs__ = None
+    _payload = None
 
     @property
     def payload(self) -> bytes:
