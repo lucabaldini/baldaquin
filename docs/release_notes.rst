@@ -3,6 +3,9 @@
 Release notes
 =============
 
+
+*baldaquin 0.1.2 (Sat, 11 Jan 2025 10:52:28 +0100)*
+
 * Fix a bunch of pylint warnings
 * Code of conduct added.
 * Merging pull requests
