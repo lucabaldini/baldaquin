@@ -3,4 +3,7 @@
 Release notes
 =============
 
-Initial stub.
+
+*baldaquin 0.1.0 (Sat, 11 Jan 2025 02:03:41 +0100)*
+
+Initial stub
