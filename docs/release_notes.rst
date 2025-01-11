@@ -4,7 +4,9 @@ Release notes
 =============
 
 * Fix a bunch of pylint warnings
+* Code of conduct added.
 * Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/14
       * https://github.com/lucabaldini/baldaquin/pull/15
 * Issue(s) closed
       * https://github.com/lucabaldini/baldaquin/issues/9
