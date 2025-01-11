@@ -25,14 +25,14 @@ import sys
 
 from loguru import logger
 
-from baldaquin.__version__ import TAG, BUILD_DATE
+from baldaquin._version import VERSION as __version__, TAG_DATE
 
 
 def start_message() -> None:
     """Print the start message.
     """
     msg = f"""
-    This is baldaquin version {TAG} (built on {BUILD_DATE}).
+    This is baldaquin version {__version__} ({TAG_DATE}).
 
     Copyright (C) 2022--2024, the baldaquin team.
 
@@ -76,19 +76,7 @@ BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
 
 
 # Version information.
-BALDAQUIN_VERSION_FILE_PATH = os.path.join(BALDAQUIN_ROOT, '__version__.py')
-
-def version_info():
-    """Read the tag and build date straight from the appropriate file.
-
-    This is meant to be used when you don't want to import the module (i.e., at
-    release time, when the file is changed), so that you don't have to bother with
-    reloading stuff.
-    """
-    with open(BALDAQUIN_VERSION_FILE_PATH, 'r', encoding='utf8') as input_file:
-        tag = input_file.readline().split('=')[-1].strip(' \'\n')
-        build_date = input_file.readline().split('=')[-1].strip(' \'\n')
-    return tag, build_date
+BALDAQUIN_VERSION_FILE_PATH = os.path.join(BALDAQUIN_ROOT, '_version.py')
 
 
 # Release notes file.

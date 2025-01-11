@@ -2,3 +2,5 @@
 
 Release notes
 =============
+
+Initial stub.
