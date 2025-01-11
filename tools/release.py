@@ -97,7 +97,6 @@ def tag(mode):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('mode', type=str, choices=INCREMENT_MODES,
-                        help = 'Tag increment mode')
+    parser.add_argument('mode', type=str, choices=INCREMENT_MODES, help='Tag increment mode')
     args = parser.parse_args()
     tag(args.mode)

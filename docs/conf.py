@@ -15,10 +15,10 @@ import sys
 sys.path.insert(0, os.path.abspath('..'))
 sys.path.insert(0, os.path.abspath('../baldaquin'))
 
+from baldaquin.__version__ import TAG  # noqa E402
+
 
 # -- Project information -----------------------------------------------------
-
-from baldaquin.__version__ import TAG
 
 project = 'baldaquin'
 copyright = '2022--2024, The baldaquin team'
