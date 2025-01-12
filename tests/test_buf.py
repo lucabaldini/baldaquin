@@ -19,15 +19,28 @@
 
 import pytest
 
-from baldaquin.buf import FIFO, CircularBuffer
+from baldaquin.buf import FIFO, CircularBuffer, Sink
+from baldaquin.pkt import Layout, Format, packetclass, FixedSizePacketBase
 
 
-def _test_buffer_base(buffer_class, num_items: int = 100, **kwargs):
+@packetclass
+class Packet(FixedSizePacketBase):
+
+    """Plausible data structure for testing purposes.
+    """
+
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = 0xaa
+    packet_id: Format.UNSIGNED_SHORT
+
+
+def _test_buffer_base(buffer_class, num_items: int = 10, **kwargs):
     """Base function to test a generic, concrete subclass
     """
     buffer = buffer_class(**kwargs)
     for i in range(num_items):
-        buffer.put(i)
+        packet = Packet(Packet.header, i)
+        buffer.put(packet)
     assert buffer.size() == num_items
     with pytest.raises(RuntimeError):
         buffer.flush()
@@ -44,3 +57,8 @@ def test_circular_buffer():
     """Test a circular buffer.
     """
     _test_buffer_base(CircularBuffer)
+
+
+def test_sinks():
+    """
+    """

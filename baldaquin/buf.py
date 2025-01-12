@@ -41,7 +41,6 @@ class BufferWriteMode(enum.Enum):
     TEXT: str = 't'
 
 
-
 class Sink:
 
     """Small class describing a sink where a buffer can be flushed.
@@ -59,7 +58,7 @@ class Sink:
     def __str__(self) -> str:
         """String formatting.
         """
-        return f'Sink -> {file_path}'
+        return f'Sink -> {self.file_path} ({self.mode}, {self._flush_method})'
 
 
 class BufferBase:
