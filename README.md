@@ -1,5 +1,5 @@
 <h1 align="center">
-<img src="https://github.com/lucabaldini/baldaquin/blob/main/docs/_static/baldaquin_logo_light.png" width="250">
+<img src="https://github.com/lucabaldini/baldaquin/blob/main/docs/_static/baldaquin_logo_small_light.png" width="120">
 </h1><br>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
