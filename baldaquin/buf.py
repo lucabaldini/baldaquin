@@ -20,8 +20,7 @@ from __future__ import annotations
 
 import collections
 from collections.abc import Callable
-import enum
-import os
+from contextlib import contextmanager
 from pathlib import Path
 import queue
 import time
@@ -31,31 +30,44 @@ from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
 from baldaquin.profile import timing
 
 
-class BufferWriteMode(enum.Enum):
-
-    """Enum for the mode in which the output file is opened.
-    """
-
-    BINARY: str = 'b'
-    TEXT: str = 't'
-
-
 class Sink:
 
-    """Small class describing a sink where a buffer can be flushed.
+    """Small class describing a file sink where a buffer can be flushed.
     """
 
-    def __init__(self, file_path: Path, mode: BufferWriteMode, flush_method: Callable) -> None:
+    def __init__(self, file_path: Path, mode: str = 'b', flush_method: Callable = None) -> None:
         """Constructor.
         """
+        if file_path.exists():
+            raise RuntimeError(f'Output file {file_path} already exists')
         self.file_path = file_path
         self._mode = mode
         self._flush_method = flush_method
+        self.__output_file = None
+        # Do we really need to open the file, here?
+        with self.open():
+            pass
+
+    @contextmanager
+    def open(self):
+        """Open the proper file object and return it.
+
+        Note this is implemented as a context manager.
+        """
+        kwargs = dict(mode=f'a{self._mode}')
+        if self._mode == 't':
+            kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
+        logger.debug(f'Opening output file {self.file_path} {kwargs}...')
+        output_file = open(self.file_path, **kwargs)
+        yield output_file
+        output_file.close()
+        logger.debug(f'Ouput file {self.file_path} closed.')
 
     def __str__(self) -> str:
         """String formatting.
         """
-        return f'Sink -> {self.file_path} ({self.mode}, {self._flush_method})'
+        method_name = self._flush_method.__name__ if self._flush_method is not None else None
+        return f'Sink -> {self.file_path} ({self._mode}, {method_name})'
 
 
 class BufferBase:
@@ -79,12 +91,11 @@ class BufferBase:
         :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>` call
         returns True.
 
-    mode : BufferWriteMode
+    mode : str
         The file write mode.
     """
 
-    def __init__(self, max_size: int, flush_size: int, flush_interval: float,
-                 mode: BufferWriteMode) -> None:
+    def __init__(self, max_size: int, flush_size: int, flush_interval: float, mode: str) -> None:
         """Constructor.
         """
         if max_size is not None and flush_size is not None and max_size <= flush_size:
@@ -94,87 +105,9 @@ class BufferBase:
         self._flush_interval = flush_interval
         self._mode = mode
         self._last_flush_time = time.time()
+        self._sinks = []
+        # To be removed.
         self._current_file_path = None
-
-    def _file_open_kwargs(self):
-        """Return the proper keyword arguments (mode and encoding) for a generic
-        open() call.
-        """
-        kwargs = dict(mode=f'a{self._mode.value}')
-        if self._mode == BufferWriteMode.TEXT:
-            kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
-        return kwargs
-
-    def set_output_file(self, file_path: Path) -> None:
-        """Set the output file for flushing the buffer.
-        """
-        # If we're targeting the current file path, then there is nothing to do.
-        if file_path == self._current_file_path:
-            return
-        # If the target file path is None, then we're disconnecting from the
-        # current file.
-        if file_path is None:
-            logger.info(f'Disconnecting the packet buffer from {self._current_file_path}...')
-            self._current_file_path = None
-            return
-        # Otherwise we're actually opening a new file and getting it ready.
-        self._current_file_path = file_path
-        logger.info(f'Directing the packet buffer to {self._current_file_path}...')
-        if os.path.exists(self._current_file_path):
-            logger.warning(f'Output file {self._current_file_path} exists and will be overwritten')
-        # pylint: disable=consider-using-with, unspecified-encoding
-        open(self._current_file_path, **self._file_open_kwargs()).close()
-
-    def almost_full(self) -> bool:
-        """Return True if the buffer is almost full.
-        """
-        return self._flush_size is not None and self.size() >= self._flush_size
-
-    def time_since_last_flush(self):
-        """Return the time (in s) since the last flush operation, or since the
-        buffer creation, in case it has never been flushed.
-        """
-        return time.time() - self._last_flush_time
-
-    def flush_needed(self) -> bool:
-        """Return True if the buffer needs to be flushed.
-        """
-        if self.almost_full() or self.time_since_last_flush() > self._flush_interval:
-            return True
-        return False
-
-    @timing
-    def flush(self) -> tuple[int, int]:
-        """Write the content of the buffer to file and returns the number of
-        objects written to disk.
-
-        .. note::
-           This will write all the items in the buffer at the time of the
-           function call, i.e., items added while writing to disk will need to
-           wait for the next call.
-        """
-        # If there is no output file path set, then something went horribly wrong...
-        if self._current_file_path is None:
-            raise RuntimeError('Output file not set, cannot flush buffer.')
-        # Cache the number of packets to be read---this is implemented this way
-        # as we might be adding new packets while flushing the buffer.
-        num_packets = self.size()
-        num_bytes = 0
-        self._last_flush_time = time.time()
-        # If there are no packets, then there is nothing to do, and we are not
-        # actually flushing the buffer.
-        if num_packets == 0:
-            return (num_packets, num_bytes)
-        # And, finally, the actual thing.
-        logger.info(f'Writing {num_packets} packets to {self._current_file_path}...')
-        # pylint: disable=unspecified-encoding
-        with open(self._current_file_path, **self._file_open_kwargs()) as output_file:
-            for _ in range(num_packets):
-                item = self.pop()
-                num_bytes += len(item)
-                output_file.write(item)
-        logger.info(f'Done, {num_bytes} Bytes written to disk.')
-        return (num_packets, num_bytes)
 
     def put(self, item: Any) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
@@ -203,6 +136,91 @@ class BufferBase:
         """
         raise NotImplementedError
 
+    def almost_full(self) -> bool:
+        """Return True if the buffer is almost full.
+        """
+        return self._flush_size is not None and self.size() >= self._flush_size
+
+    def time_since_last_flush(self):
+        """Return the time (in s) since the last flush operation, or since the
+        buffer creation, in case it has never been flushed.
+        """
+        return time.time() - self._last_flush_time
+
+    def flush_needed(self) -> bool:
+        """Return True if the buffer needs to be flushed.
+        """
+        if self.almost_full() or self.time_since_last_flush() > self._flush_interval:
+            return True
+        return False
+
+    def add_sink(self, file_path: Path, mode: str = 'b', flush_method: Callable = None) -> None:
+        """Add a sink to the buffer.
+        """
+        if len(self._sinks) == 0 and flush_method is not None:
+            raise RuntimeError('The first sink connected to a buffer has non trivial flush')
+        sink = Sink(file_path, mode, flush_method)
+        logger.info(f'Connecting buffer to {sink}...')
+        self._sinks.append(sink)
+
+    def disconnect(self) -> None:
+        """Disconnect all sinks.
+        """
+        self._sinks = []
+        logger.info('All buffer sinks disconnected.')
+
+    # def set_output_file(self, file_path: Path) -> None:
+
+    def _write_native(self, num_packets: int, output_file) -> int:
+        """
+        """
+        num_bytes_written = 0
+        for _ in range(num_packets):
+            num_bytes_written += output_file.write(self.pop().payload)
+        logger.debug(f'{num_bytes_written} bytes written to file.')
+        return num_bytes_written
+
+    def _write_custom(self, num_packets: int, output_file, flush_method) -> int:
+        """
+        """
+        num_bytes_written = 0
+        for i in range(num_packets):
+            num_bytes_written += output_file.write(flush_method(self[i]))
+        logger.debug(f'{num_bytes_written} bytes written to file.')
+        return num_bytes_written
+
+    @timing
+    def flush(self) -> tuple[int, int]:
+        """Write the content of the buffer to file and returns the number of
+        objects written to disk.
+
+        .. note::
+           This will write all the items in the buffer at the time of the
+           function call, i.e., items added while writing to disk will need to
+           wait for the next call.
+        """
+        if len(self._sinks) == 0:
+            raise RuntimeError('No sink connected to the buffer, cannot flush')
+        # Cache the number of packets to be read---this is implemented this way
+        # as we might be adding new packets while flushing the buffer.
+        num_packets = self.size()
+        num_bytes = 0
+        self._last_flush_time = time.time()
+        # If there are no packets, then there is nothing to do, and we are not
+        # actually flushing the buffer.
+        if num_packets == 0:
+            return (num_packets, num_bytes)
+        # And, finally, the actual flush.
+        logger.info(f'{num_packets} packets ready to be written out...')
+        for sink in reversed(self._sinks):
+            with sink.open() as output_file:
+                if sink._flush_method is not None:
+                    self._write_custom(num_packets, output_file, sink._flush_method)
+                else:
+                    self._write_native(num_packets, output_file)
+        logger.info(f'{num_bytes} bytes written to disk.')
+        return (num_packets, num_bytes)
+
 
 class FIFO(queue.Queue, BufferBase):
 
@@ -218,7 +236,7 @@ class FIFO(queue.Queue, BufferBase):
     """
 
     def __init__(self, max_size: int = None, flush_size: int = None, flush_interval: float = 1.,
-                 mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
+                 mode: str = 'b') -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
@@ -269,7 +287,7 @@ class CircularBuffer(collections.deque, BufferBase):
     """
 
     def __init__(self, max_size: int = None, flush_interval: float = 1.,
-                 flush_size: int = None, mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
+                 flush_size: int = None, mode: str = 'b') -> None:
         """Constructor.
         """
         collections.deque.__init__(self, [], max_size)
