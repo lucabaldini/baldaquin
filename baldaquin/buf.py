@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import collections
+from collections.abc import Callable
 import enum
 import os
 from pathlib import Path
@@ -40,6 +41,27 @@ class BufferWriteMode(enum.Enum):
     TEXT: str = 't'
 
 
+
+class Sink:
+
+    """Small class describing a sink where a buffer can be flushed.
+    """
+
+    _DEFAULT_ENCODING = 'utf-8'
+
+    def __init__(self, file_path: Path, mode: BufferWriteMode, flush_method: Callable) -> None:
+        """Constructor.
+        """
+        self.file_path = file_path
+        self._mode = mode
+        self._flush_method = flush_method
+
+    def __str__(self) -> str:
+        """String formatting.
+        """
+        return f'Sink -> {file_path}'
+
+
 class BufferBase:
 
     """Base class for a data buffer.
@@ -47,13 +69,13 @@ class BufferBase:
     Arguments
     ---------
     max_size : int
-        The maximum number of events the buffer can physically contain.
+        The maximum number of packets the buffer can physically contain.
 
     flush_size : int
-        The maximum number of events before a
+        The maximum number of packets before a
         :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>`
         call returns True (mind this should be smaller than ``max_size`` because
-        otherwise the buffer will generally drop events).
+        otherwise the buffer will generally drop packets).
 
     flush_interval : float
         The maximum time (in s) elapsed since the last
@@ -98,12 +120,12 @@ class BufferBase:
         # If the target file path is None, then we're disconnecting from the
         # current file.
         if file_path is None:
-            logger.info(f'Disconnecting the event buffer from {self._current_file_path}...')
+            logger.info(f'Disconnecting the packet buffer from {self._current_file_path}...')
             self._current_file_path = None
             return
         # Otherwise we're actually opening a new file and getting it ready.
         self._current_file_path = file_path
-        logger.info(f'Directing the event buffer to {self._current_file_path}...')
+        logger.info(f'Directing the packet buffer to {self._current_file_path}...')
         if os.path.exists(self._current_file_path):
             logger.warning(f'Output file {self._current_file_path} exists and will be overwritten')
         # pylint: disable=consider-using-with, unspecified-encoding
@@ -140,25 +162,25 @@ class BufferBase:
         # If there is no output file path set, then something went horribly wrong...
         if self._current_file_path is None:
             raise RuntimeError('Output file not set, cannot flush buffer.')
-        # Cache the number of events to be read---this is implemented this way
-        # as we might be adding new events while flushing the buffer.
-        num_events = self.size()
+        # Cache the number of packets to be read---this is implemented this way
+        # as we might be adding new packets while flushing the buffer.
+        num_packets = self.size()
         num_bytes = 0
         self._last_flush_time = time.time()
-        # If there are no events, then there is nothing to do, and we are not
+        # If there are no packets, then there is nothing to do, and we are not
         # actually flushing the buffer.
-        if num_events == 0:
-            return (num_events, num_bytes)
+        if num_packets == 0:
+            return (num_packets, num_bytes)
         # And, finally, the actual thing.
-        logger.info(f'Writing {num_events} events to {self._current_file_path}...')
+        logger.info(f'Writing {num_packets} packets to {self._current_file_path}...')
         # pylint: disable=unspecified-encoding
         with open(self._current_file_path, **self._file_open_kwargs()) as output_file:
-            for _ in range(num_events):
+            for _ in range(num_packets):
                 item = self.pop()
                 num_bytes += len(item)
                 output_file.write(item)
         logger.info(f'Done, {num_bytes} Bytes written to disk.')
-        return (num_events, num_bytes)
+        return (num_packets, num_bytes)
 
     def put(self, item: Any) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
