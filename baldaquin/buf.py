@@ -27,8 +27,7 @@ import queue
 import time
 from typing import Any
 
-from loguru import logger
-
+from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
 from baldaquin.profile import timing
 
 
@@ -45,8 +44,6 @@ class Sink:
 
     """Small class describing a sink where a buffer can be flushed.
     """
-
-    _DEFAULT_ENCODING = 'utf-8'
 
     def __init__(self, file_path: Path, mode: BufferWriteMode, flush_method: Callable) -> None:
         """Constructor.
@@ -86,8 +83,6 @@ class BufferBase:
         The file write mode.
     """
 
-    _DEFAULT_ENCODING = 'utf-8'
-
     def __init__(self, max_size: int, flush_size: int, flush_interval: float,
                  mode: BufferWriteMode) -> None:
         """Constructor.
@@ -107,7 +102,7 @@ class BufferBase:
         """
         kwargs = dict(mode=f'a{self._mode.value}')
         if self._mode == BufferWriteMode.TEXT:
-            kwargs.update(encoding=self._DEFAULT_ENCODING)
+            kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
         return kwargs
 
     def set_output_file(self, file_path: Path) -> None:

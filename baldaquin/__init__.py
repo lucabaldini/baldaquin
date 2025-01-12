@@ -80,6 +80,10 @@ BALDAQUIN_VERSION_FILE_PATH = os.path.join(BALDAQUIN_ROOT, '_version.py')
 BALDAQUIN_RELEASE_NOTES_PATH = os.path.join(BALDAQUIN_DOCS, 'release_notes.rst')
 
 
+# Default character encoding.
+DEFAULT_CHARACTER_ENCODING = 'utf-8'
+
+
 def execute_shell_command(args):
     """Execute a shell command.
     """

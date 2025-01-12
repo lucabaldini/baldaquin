@@ -19,12 +19,11 @@
 import time
 from argparse import ArgumentParser
 
-from baldaquin import logger, execute_shell_command
+from baldaquin import logger, execute_shell_command, DEFAULT_CHARACTER_ENCODING
 from baldaquin import BALDAQUIN_VERSION_FILE_PATH, BALDAQUIN_RELEASE_NOTES_PATH
 
 
 INCREMENT_MODES = ('major', 'minor', 'patch')
-_ENCODING = 'utf8'
 
 
 def write_version_file(version: str, tag_date: str) -> None:
@@ -33,7 +32,8 @@ def write_version_file(version: str, tag_date: str) -> None:
     logger.info(f'Writing versioning info to {BALDAQUIN_VERSION_FILE_PATH}...')
     logger.debug(f'Version: {version}')
     logger.debug(f'Tag date: {tag_date}')
-    with open(BALDAQUIN_VERSION_FILE_PATH, 'w', encoding=_ENCODING) as output_file:
+    with open(BALDAQUIN_VERSION_FILE_PATH, 'w',
+              encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
         output_file.write(f"VERSION = '{version}'\nTAG_DATE = '{tag_date}'\n")
     logger.info('Done.')
 
@@ -45,7 +45,8 @@ def increment_version_file(mode: str, tag_date: str) -> str:
     if mode not in INCREMENT_MODES:
         raise RuntimeError(f'Invalid incerement mode "{mode}"---valid modes are {INCREMENT_MODES}')
     logger.info(f'Reading {BALDAQUIN_VERSION_FILE_PATH}...')
-    with open(BALDAQUIN_VERSION_FILE_PATH, 'r', encoding=_ENCODING) as input_file:
+    with open(BALDAQUIN_VERSION_FILE_PATH, 'r',
+              encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
         version = input_file.readline().split('=')[-1].strip(' \'\n')
     logger.debug(f'Previous version was {version}')
     major, minor, patch = (int(item) for item in version.split('.'))
@@ -69,10 +70,12 @@ def update_release_notes(version: str, tag_date: str) -> None:
     """
     title = '.. _release_notes:\n\nRelease notes\n=============\n\n'
     logger.info(f'Reading in {BALDAQUIN_RELEASE_NOTES_PATH}...')
-    with open(BALDAQUIN_RELEASE_NOTES_PATH, 'r', encoding=_ENCODING) as input_file:
+    with open(BALDAQUIN_RELEASE_NOTES_PATH, 'r',
+              encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
         notes = input_file.read().strip('\n').strip(title)
     logger.info(f'Writing out {BALDAQUIN_RELEASE_NOTES_PATH}...')
-    with open(BALDAQUIN_RELEASE_NOTES_PATH, 'w', encoding=_ENCODING) as output_file:
+    with open(BALDAQUIN_RELEASE_NOTES_PATH, 'w',
+              encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
         output_file.writelines(title)
         output_file.writelines(f'\n*baldaquin {version} ({tag_date})*\n\n')
         output_file.writelines(notes)
