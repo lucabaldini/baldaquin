@@ -21,44 +21,82 @@ from __future__ import annotations
 import collections
 from collections.abc import Callable
 from contextlib import contextmanager
+from enum import Enum
+import io
 from pathlib import Path
 import queue
 import time
 from typing import Any
 
 from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
+from baldaquin.pkt import AbstractPacket
 from baldaquin.profile import timing
+
+
+class WriteMode(Enum):
+
+    """Small enum class for the file write mode.
+
+    Note this has to match the open modes in the Python open() builtin.
+    """
+
+    BINARY = 'b'
+    TEXT = 't'
 
 
 class Sink:
 
     """Small class describing a file sink where a buffer can be flushed.
+
+    Arguments
+    ---------
+    file_path : Path or str
+        The path to the output file.
+
+    mode : WriteMode
+        The write mode (``WriteMode.BINARY`` or ``WriteMode.TEXT``)
+
+    formatter : callable, optional
+        The packet formatting function to be used to flush a buffer.
+
+    header : anything that can be written to the output file
+        The file optional file header. If not None, this gets written to the
+        output file when the sink is created.
     """
 
-    def __init__(self, file_path: Path, mode: str = 'b', flush_method: Callable = None) -> None:
+    def __init__(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                 header: Any = None) -> None:
         """Constructor.
         """
+        # If the output file already exists, then something has gone wrong---we
+        # never overwrite data.
         if file_path.exists():
-            raise RuntimeError(f'Output file {file_path} already exists')
+            raise FileExistsError(f'Output file {file_path} already exists')
         self.file_path = file_path
+        self.formatter = formatter
         self._mode = mode
-        self._flush_method = flush_method
-        self.__output_file = None
-        # Do we really need to open the file, here?
-        with self.open():
-            pass
+        self._output_file = None
+        # Note we always open the output file in append mode.
+        self._open_kwargs = dict(mode=f'a{self._mode.value}')
+        if self._mode == WriteMode.TEXT:
+            self._open_kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
+        # At this point we do create the file and, if needed, we write the
+        # header into it. (And we are ready to flush.)
+        with self.open() as output_file:
+            if header is not None:
+                logger.debug('Writing file header...')
+                output_file.write(header)
 
     @contextmanager
-    def open(self):
+    def open(self) -> io.IOBase:
         """Open the proper file object and return it.
 
-        Note this is implemented as a context manager.
+        Note this is implemented as a context manager, and yields a reference to
+        the underlying (open) output file.
         """
-        kwargs = dict(mode=f'a{self._mode}')
-        if self._mode == 't':
-            kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
-        logger.debug(f'Opening output file {self.file_path} {kwargs}...')
-        output_file = open(self.file_path, **kwargs)
+        # pylint: disable=unspecified-encoding
+        logger.debug(f'Opening output file {self.file_path} {self._open_kwargs}...')
+        output_file = open(self.file_path, **self._open_kwargs)
         yield output_file
         output_file.close()
         logger.debug(f'Ouput file {self.file_path} closed.')
@@ -66,8 +104,9 @@ class Sink:
     def __str__(self) -> str:
         """String formatting.
         """
-        method_name = self._flush_method.__name__ if self._flush_method is not None else None
-        return f'Sink -> {self.file_path} ({self._mode}, {method_name})'
+        if self.formatter is None:
+            return f'Sink -> {self.file_path} ({self._mode})'
+        return f'Sink -> {self.file_path} ({self._mode}, {self.formatter.__qualname__})'
 
 
 class BufferBase:
@@ -109,8 +148,15 @@ class BufferBase:
         # To be removed.
         self._current_file_path = None
 
-    def put(self, item: Any) -> None:
+    def put(self, packet: AbstractPacket) -> None:
         """Put an item into the buffer (to be reimplemented in derived classes).
+        """
+        if not isinstance(packet, AbstractPacket):
+            raise TypeError(f'{packet} is not an AbstractPacket instance')
+        self._do_put(packet)
+
+    def _do_put(self, packet: AbstractPacket) -> None:
+        """
         """
         raise NotImplementedError
 
@@ -154,12 +200,13 @@ class BufferBase:
             return True
         return False
 
-    def add_sink(self, file_path: Path, mode: str = 'b', flush_method: Callable = None) -> None:
+    def add_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                 header=None) -> None:
         """Add a sink to the buffer.
         """
-        if len(self._sinks) == 0 and flush_method is not None:
+        if len(self._sinks) == 0 and formatter is not None:
             raise RuntimeError('The first sink connected to a buffer has non trivial flush')
-        sink = Sink(file_path, mode, flush_method)
+        sink = Sink(file_path, mode, formatter, header)
         logger.info(f'Connecting buffer to {sink}...')
         self._sinks.append(sink)
 
@@ -180,12 +227,12 @@ class BufferBase:
         logger.debug(f'{num_bytes_written} bytes written to file.')
         return num_bytes_written
 
-    def _write_custom(self, num_packets: int, output_file, flush_method) -> int:
+    def _write_custom(self, num_packets: int, output_file, formatter) -> int:
         """
         """
         num_bytes_written = 0
         for i in range(num_packets):
-            num_bytes_written += output_file.write(flush_method(self[i]))
+            num_bytes_written += output_file.write(formatter(self[i]))
         logger.debug(f'{num_bytes_written} bytes written to file.')
         return num_bytes_written
 
@@ -212,10 +259,10 @@ class BufferBase:
             return (num_packets, num_bytes)
         # And, finally, the actual flush.
         logger.info(f'{num_packets} packets ready to be written out...')
-        for sink in reversed(self._sinks):
+        for i, sink in enumerate(reversed(self._sinks)):
             with sink.open() as output_file:
-                if sink._flush_method is not None:
-                    self._write_custom(num_packets, output_file, sink._flush_method)
+                if i != len(self._sinks) - 1:
+                    self._write_custom(num_packets, output_file, sink.formatter)
                 else:
                     self._write_native(num_packets, output_file)
         logger.info(f'{num_bytes} bytes written to disk.')
@@ -247,13 +294,13 @@ class FIFO(queue.Queue, BufferBase):
         queue.Queue.__init__(self, max_size)
         BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
 
-    def put(self, item: Any, block: bool = True, timeout: float = None) -> None:
+    def _do_put(self, packet: AbstractPacket, block: bool = True, timeout: float = None) -> None:
         """Overloaded method.
 
         See https://docs.python.org/3/library/queue.html as for the meaning
         o the function arguments.
         """
-        queue.Queue.put(self, item, block, timeout)
+        queue.Queue.put(self, packet, block, timeout)
 
     def pop(self) -> Any:
         """Overloaded method.
@@ -293,10 +340,10 @@ class CircularBuffer(collections.deque, BufferBase):
         collections.deque.__init__(self, [], max_size)
         BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
 
-    def put(self, item: Any) -> None:
+    def _do_put(self, packet: AbstractPacket) -> None:
         """Overloaded method.
         """
-        self.append(item)
+        self.append(packet)
 
     def pop(self) -> Any:
         """Overloaded method.
