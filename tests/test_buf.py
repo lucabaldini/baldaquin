@@ -106,7 +106,7 @@ def test_sink_header():
     os.remove(file_path)
 
 
-def test_buffer_flush(num_packets=10):
+def test_buffer_flush(num_packets: int = 10):
     """Test the full flush mechanism with multiple sinks.
     """
     binary_file_path = _scrap_file(BALDAQUIN_DATA / 'sink.dat')
