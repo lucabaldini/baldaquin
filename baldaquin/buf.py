@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 import collections
 from collections.abc import Callable
 from contextlib import contextmanager
@@ -109,9 +110,9 @@ class Sink:
         return f'Sink -> {self.file_path} ({self._mode}, {self.formatter.__qualname__})'
 
 
-class BufferBase:
+class AbstractBuffer(ABC):
 
-    """Base class for a data buffer.
+    """Abstract base class for a data buffer.
 
     Arguments
     ---------
@@ -120,21 +121,18 @@ class BufferBase:
 
     flush_size : int
         The maximum number of packets before a
-        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>`
+        :meth:`flush_needed() <baldaquin.buf.AbstractBuffer.flush_needed()>`
         call returns True (mind this should be smaller than ``max_size`` because
         otherwise the buffer will generally drop packets).
 
     flush_interval : float
         The maximum time (in s) elapsed since the last
-        :meth:`flush() <baldaquin.buf.BufferBase.flush()>` before a
-        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>` call
+        :meth:`flush() <baldaquin.buf.AbstractBuffer.flush()>` before a
+        :meth:`flush_needed() <baldaquin.buf.AbstractBuffer.flush_needed()>` call
         returns True.
-
-    mode : str
-        The file write mode.
     """
 
-    def __init__(self, max_size: int, flush_size: int, flush_interval: float, mode: str) -> None:
+    def __init__(self, max_size: int, flush_size: int, flush_interval: float) -> None:
         """Constructor.
         """
         if max_size is not None and flush_size is not None and max_size <= flush_size:
@@ -142,24 +140,35 @@ class BufferBase:
         self._max_size = max_size
         self._flush_size = flush_size
         self._flush_interval = flush_interval
-        self._mode = mode
         self._last_flush_time = time.time()
         self._sinks = []
-        # To be removed.
-        self._current_file_path = None
 
     def put(self, packet: AbstractPacket) -> None:
-        """Put an item into the buffer (to be reimplemented in derived classes).
+        """Put a packet into the buffer.
+
+        Note we check in the abstract class that the packet we put into the buffer
+        is an ``AbstractPacket`` instance, while the actual work is done in the
+        ``_do_put()`` method, that is abstract and should be reimplemented in all
+        derived classes.
         """
         if not isinstance(packet, AbstractPacket):
             raise TypeError(f'{packet} is not an AbstractPacket instance')
         self._do_put(packet)
 
+    @abstractmethod
     def _do_put(self, packet: AbstractPacket) -> None:
-        """
-        """
-        raise NotImplementedError
+        """Abstract method with the actual code to put a packet into the buffer
+        (to be reimplemented in derived classes).
 
+        .. warning::
+            In case you wonder why this is called ``_do_put`` and not, e.g., ``_put()``...
+            well: whoever designed the ``queue.Queue`` class (which we rely on for
+            of the actual buffer implementations) apparently had the same brilliant
+            idea of delegating the ``put()`` call to a ``_put()`` function, and
+            overloading that name was putting things into an infinite loop.
+        """
+
+    @abstractmethod
     def pop(self) -> Any:
         """Pop an item from the buffer (to be reimplemented in derived classes).
 
@@ -170,17 +179,16 @@ class BufferBase:
             stated it should be understood that this is popping items from the
             left of the queue.
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def size(self) -> int:
         """Return the number of items in the buffer (to be reimplemented in derived classes).
         """
-        raise NotImplementedError
 
+    @abstractmethod
     def clear(self) -> None:
-        """Clear the buffer.
+        """Clear the buffer (to be reimplemented in derived classes).
         """
-        raise NotImplementedError
 
     def almost_full(self) -> bool:
         """Return True if the buffer is almost full.
@@ -201,14 +209,33 @@ class BufferBase:
         return False
 
     def add_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
-                 header=None) -> None:
+                 header: Any = None) -> Sink:
         """Add a sink to the buffer.
+
+        See the :class:`Sink <baldaquin.buf.Sink>` class constructor for an
+        explanation of the arguments.
+
+        .. warning::
+            The basic rules for connecting sinks is that the first one should have
+            no formatter and should open in the output file in binary mode, as
+            we assume that we `always` want to write the raw packets out.
+            At runtime, whenever the buffer is flushed, the sinks are looped over
+            in reverse order, and the last one is the one where we just write out
+            the packet binary data and, at the same time, we call the buffer ``pop()``
+            method to empty the thing.
+
+            Admittedly, this is quite involuted, and it is one of the things where
+            we might want to put more thought into.
         """
-        if len(self._sinks) == 0 and formatter is not None:
-            raise RuntimeError('The first sink connected to a buffer has non trivial flush')
+        if len(self._sinks) == 0:
+            if formatter is not None:
+                raise RuntimeError('The first connected sink should have no formatter')
+            if mode != WriteMode.BINARY:
+                raise RuntimeError('The first connected sink should be in binary mode')
         sink = Sink(file_path, mode, formatter, header)
         logger.info(f'Connecting buffer to {sink}...')
         self._sinks.append(sink)
+        return sink
 
     def disconnect(self) -> None:
         """Disconnect all sinks.
@@ -216,30 +243,58 @@ class BufferBase:
         self._sinks = []
         logger.info('All buffer sinks disconnected.')
 
-    # def set_output_file(self, file_path: Path) -> None:
+    def _pop_and_write_raw(self, num_packets: int, output_file: io.IOBase) -> int:
+        """Pop the first ``num_packets`` packets from the buffer and write the
+        corresponding raw binary data into the given output file.
 
-    def _write_native(self, num_packets: int, output_file) -> int:
-        """
+        Arguments
+        ---------
+        num_packets : int
+            The number of packets to be written out.
+
+        output_file : io.IOBase
+            The output binary file.
+
+        Returns
+        -------
+        int
+            The number of bytes written to disk.
         """
         num_bytes_written = 0
         for _ in range(num_packets):
             num_bytes_written += output_file.write(self.pop().payload)
-        logger.debug(f'{num_bytes_written} bytes written to file.')
+        logger.debug(f'{num_bytes_written} bytes written to disk.')
         return num_bytes_written
 
-    def _write_custom(self, num_packets: int, output_file, formatter) -> int:
-        """
+    def _write(self, num_packets: int, output_file: io.IOBase, formatter: Callable) -> int:
+        """Write the first ``num_packets`` packets from the buffer to the given
+        output file (and with the given formatter) without popping them.
+
+        Arguments
+        ---------
+        num_packets : int
+            The number of packets to be written out.
+
+        output_file : io.IOBase
+            The output binary file.
+
+        formatter : Callable
+            The packet formatting function.
+
+        Returns
+        -------
+        int
+            The number of bytes written to disk.
         """
         num_bytes_written = 0
         for i in range(num_packets):
             num_bytes_written += output_file.write(formatter(self[i]))
-        logger.debug(f'{num_bytes_written} bytes written to file.')
+        logger.debug(f'{num_bytes_written} bytes written to disk.')
         return num_bytes_written
 
     @timing
     def flush(self) -> tuple[int, int]:
-        """Write the content of the buffer to file and returns the number of
-        objects written to disk.
+        """Write the content of the buffer to all the sinks connected.
 
         .. note::
            This will write all the items in the buffer at the time of the
@@ -251,25 +306,31 @@ class BufferBase:
         # Cache the number of packets to be read---this is implemented this way
         # as we might be adding new packets while flushing the buffer.
         num_packets = self.size()
-        num_bytes = 0
+        num_bytes_written = 0
         self._last_flush_time = time.time()
         # If there are no packets, then there is nothing to do, and we are not
         # actually flushing the buffer.
         if num_packets == 0:
-            return (num_packets, num_bytes)
+            return (num_packets, num_bytes_written)
         # And, finally, the actual flush.
         logger.info(f'{num_packets} packets ready to be written out...')
         for i, sink in enumerate(reversed(self._sinks)):
             with sink.open() as output_file:
                 if i != len(self._sinks) - 1:
-                    self._write_custom(num_packets, output_file, sink.formatter)
+                    num_bytes_written += self._write(num_packets, output_file, sink.formatter)
                 else:
-                    self._write_native(num_packets, output_file)
-        logger.info(f'{num_bytes} bytes written to disk.')
-        return (num_packets, num_bytes)
+                    num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
+                    num_bytes_written += num_raw_bytes_written
+        logger.info(f'{num_bytes_written} bytes ({num_raw_bytes_written} raw bytes) '
+                    'written to disk.')
+        # Note at this point we are keeping track of both the total number of
+        # bytes written to disk *and* the number of bytes written in the form of
+        # raw binary packets, and we can decide which one we want to use downstream,
+        # e.g., to update the GUI.
+        return (num_packets, num_bytes_written)
 
 
-class FIFO(queue.Queue, BufferBase):
+class FIFO(queue.Queue, AbstractBuffer):
 
     """Implementation of a FIFO.
 
@@ -282,8 +343,8 @@ class FIFO(queue.Queue, BufferBase):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, max_size: int = None, flush_size: int = None, flush_interval: float = 1.,
-                 mode: str = 'b') -> None:
+    def __init__(self, max_size: int = None, flush_size: int = None,
+                 flush_interval: float = 1.) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
@@ -292,13 +353,13 @@ class FIFO(queue.Queue, BufferBase):
         if max_size is None:
             max_size = -1
         queue.Queue.__init__(self, max_size)
-        BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
+        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
 
     def _do_put(self, packet: AbstractPacket, block: bool = True, timeout: float = None) -> None:
         """Overloaded method.
 
         See https://docs.python.org/3/library/queue.html as for the meaning
-        o the function arguments.
+        of the function arguments.
         """
         queue.Queue.put(self, packet, block, timeout)
 
@@ -318,7 +379,7 @@ class FIFO(queue.Queue, BufferBase):
         self.queue.clear()
 
 
-class CircularBuffer(collections.deque, BufferBase):
+class CircularBuffer(collections.deque, AbstractBuffer):
 
     """Implementation of a simple circular buffer.
 
@@ -334,11 +395,11 @@ class CircularBuffer(collections.deque, BufferBase):
     """
 
     def __init__(self, max_size: int = None, flush_interval: float = 1.,
-                 flush_size: int = None, mode: str = 'b') -> None:
+                 flush_size: int = None) -> None:
         """Constructor.
         """
         collections.deque.__init__(self, [], max_size)
-        BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
+        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
 
     def _do_put(self, packet: AbstractPacket) -> None:
         """Overloaded method.

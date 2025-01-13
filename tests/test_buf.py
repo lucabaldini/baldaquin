@@ -50,8 +50,10 @@ def _test_buffer_base(buffer_class, num_packets: int = 10, **kwargs):
         packet = Packet(Packet.header, i)
         buffer.put(packet)
     assert buffer.size() == num_packets
-    with pytest.raises(RuntimeError):
+    # Since we have no sink connected, any flush attempt should raise an exception.
+    with pytest.raises(RuntimeError) as info:
         buffer.flush()
+    logger.info(info)
     buffer.clear()
 
 
@@ -87,7 +89,7 @@ def test_sink_contextmanager():
     # Check that creating another sink with the same file path raises an exception.
     with pytest.raises(FileExistsError) as info:
         sink = Sink(file_path, WriteMode.BINARY)
-    logger.info(info.value)
+    logger.info(info)
     # Cleanup.
     os.remove(file_path)
 
