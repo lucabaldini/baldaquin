@@ -307,9 +307,11 @@ class AbstractBuffer(ABC):
             return (num_packets, num_bytes_written)
         # And, finally, the actual flush.
         logger.info(f'{num_packets} packets ready to be written out...')
+        # First write to all the custom sinks, as this does not empty the buffer...
         for sink in self._custom_sinks:
             with sink.open() as output_file:
                 num_bytes_written += self._write(num_packets, output_file, sink.formatter)
+        # ... and, finally flush the buffer to the primary sink.
         with self._primary_sink.open() as output_file:
             num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
             num_bytes_written += num_raw_bytes_written
