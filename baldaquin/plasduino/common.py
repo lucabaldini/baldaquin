@@ -27,7 +27,6 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
@@ -189,6 +188,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
     sketch upload. Derived classes must implement the ``read_packet()`` slot.
     """
 
+    # pylint: disable=abstract-method
     BUFFER_CLASS = CircularBuffer
     BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_interval=5.)
 

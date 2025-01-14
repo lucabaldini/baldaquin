@@ -16,8 +16,6 @@
 """User application framework.
 """
 
-from pathlib import Path
-
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
