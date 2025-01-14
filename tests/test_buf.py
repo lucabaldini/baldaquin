@@ -115,8 +115,8 @@ def test_buffer_flush(num_packets: int = 10):
     text_file_path = _scrap_file(BALDAQUIN_DATA / 'sink.txt')
     # Create a buffer and assign two sinks.
     buffer = CircularBuffer()
-    buffer.add_sink(binary_file_path, WriteMode.BINARY)
-    buffer.add_sink(text_file_path, WriteMode.TEXT, Packet.as_text, '#File header\n')
+    buffer.set_primary_sink(binary_file_path)
+    buffer.add_custom_sink(text_file_path, WriteMode.TEXT, Packet.as_text, '#File header\n')
     # Fill the buffer with some packets.
     for i in range(num_packets):
         packet = Packet(Packet.header, i)
