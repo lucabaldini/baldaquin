@@ -141,7 +141,8 @@ class AbstractBuffer(ABC):
         self._flush_size = flush_size
         self._flush_interval = flush_interval
         self._last_flush_time = time.time()
-        self._sinks = []
+        self._primary_sink = None
+        self._custom_sinks = []
 
     def put(self, packet: AbstractPacket) -> None:
         """Put a packet into the buffer.
@@ -208,39 +209,31 @@ class AbstractBuffer(ABC):
             return True
         return False
 
-    def add_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
-                 header: Any = None) -> Sink:
+    def set_primary_sink(self, file_path: Path) -> Sink:
+        """Set the primary sink for the buffer.
+        """
+        sink = Sink(file_path, WriteMode.BINARY, None, None)
+        logger.info(f'Connecting buffer to primary {sink}...')
+        self._primary_sink = sink
+        return sink
+
+    def add_custom_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                        header: Any = None) -> Sink:
         """Add a sink to the buffer.
 
         See the :class:`Sink <baldaquin.buf.Sink>` class constructor for an
         explanation of the arguments.
-
-        .. warning::
-            The basic rules for connecting sinks is that the first one should have
-            no formatter and should open in the output file in binary mode, as
-            we assume that we `always` want to write the raw packets out.
-            At runtime, whenever the buffer is flushed, the sinks are looped over
-            in reverse order, and the last one is the one where we just write out
-            the packet binary data and, at the same time, we call the buffer ``pop()``
-            method to empty the thing.
-
-            Admittedly, this is quite involuted, and it is one of the things where
-            we might want to put more thought into.
         """
-        if len(self._sinks) == 0:
-            if formatter is not None:
-                raise RuntimeError('The first connected sink should have no formatter')
-            if mode != WriteMode.BINARY:
-                raise RuntimeError('The first connected sink should be in binary mode')
         sink = Sink(file_path, mode, formatter, header)
-        logger.info(f'Connecting buffer to {sink}...')
-        self._sinks.append(sink)
+        logger.info(f'Connecting buffer to custom {sink}...')
+        self._custom_sinks.append(sink)
         return sink
 
     def disconnect(self) -> None:
         """Disconnect all sinks.
         """
-        self._sinks = []
+        self._primary_sink = None
+        self._custom_sinks = []
         logger.info('All buffer sinks disconnected.')
 
     def _pop_and_write_raw(self, num_packets: int, output_file: io.IOBase) -> int:
@@ -301,8 +294,8 @@ class AbstractBuffer(ABC):
            function call, i.e., items added while writing to disk will need to
            wait for the next call.
         """
-        if len(self._sinks) == 0:
-            raise RuntimeError('No sink connected to the buffer, cannot flush')
+        if self._primary_sink is None:
+            raise RuntimeError('No primary sink connected to the buffer, cannot flush')
         # Cache the number of packets to be read---this is implemented this way
         # as we might be adding new packets while flushing the buffer.
         num_packets = self.size()
@@ -314,13 +307,12 @@ class AbstractBuffer(ABC):
             return (num_packets, num_bytes_written)
         # And, finally, the actual flush.
         logger.info(f'{num_packets} packets ready to be written out...')
-        for i, sink in enumerate(reversed(self._sinks)):
+        for sink in self._custom_sinks:
             with sink.open() as output_file:
-                if i != len(self._sinks) - 1:
-                    num_bytes_written += self._write(num_packets, output_file, sink.formatter)
-                else:
-                    num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
-                    num_bytes_written += num_raw_bytes_written
+                num_bytes_written += self._write(num_packets, output_file, sink.formatter)
+        with self._primary_sink.open() as output_file:
+            num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
+            num_bytes_written += num_raw_bytes_written
         logger.info(f'{num_bytes_written} bytes ({num_raw_bytes_written} raw bytes) '
                     'written to disk.')
         # Note at this point we are keeping track of both the total number of
