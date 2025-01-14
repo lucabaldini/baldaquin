@@ -230,11 +230,6 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         """
         self.serial_interface.disconnect()
 
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
-
 
 class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
 
@@ -286,11 +281,6 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
             self.flush_buffer()
         self.serial_interface.read_run_end_marker()
 
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
-
 
 class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
@@ -301,11 +291,6 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         """Read a single packet, that is, an analog readout.
         """
         return self.serial_interface.read(DigitalTransition.size)
-
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
 
 
 class PlasduinoAnalogConfiguration(ConfigurationBase):

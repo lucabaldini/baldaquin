@@ -20,6 +20,7 @@ from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
+from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
@@ -75,12 +76,13 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         for chart in self.strip_chart_dict.values():
             chart.reset(self.configuration.value('strip_chart_max_length'))
 
-    def process_packet(self, packet) -> None:
+    def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
-        readout = AnalogReadout.unpack(packet)
+        readout = AnalogReadout.unpack(packet_data)
         x, y = readout.seconds, self._converter(readout.adc_value)
         self.strip_chart_dict[readout.pin_number].add_point(x, y)
+        return readout
 
 
 if __name__ == '__main__':

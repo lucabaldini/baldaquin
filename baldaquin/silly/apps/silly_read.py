@@ -19,6 +19,7 @@
 from loguru import logger
 
 from baldaquin.gui import bootstrap_window
+from baldaquin.pkt import AbstractPacket
 from baldaquin.silly import SILLY_APP_CONFIG
 from baldaquin.silly.common import SillyRunControl, SillyPacket,\
     SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
@@ -33,11 +34,12 @@ class SillyRead(SillyUserApplicationBase):
     CONFIGURATION_CLASS = SillyConfiguration
     CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'silly_read.cfg'
 
-    def process_packet(self, data):
+    def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
         """
-        packet = SillyPacket.unpack(data)
-        logger.debug(f'{packet} <- {data}')
+        packet = SillyPacket.unpack(packet_data)
+        logger.debug(f'{packet} <- {packet_data}')
+        return packet
 
 
 if __name__ == '__main__':
