@@ -4,6 +4,15 @@ Release notes
 =============
 
 
+* Major refactoring of the buf.py module.
+* Buffer sinks added to add flexibility to the generation of output files.
+* Default character encoding now defined in baldaquin.__init__
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/21
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/13
+
+
 *baldaquin 0.1.2 (Sat, 11 Jan 2025 10:52:28 +0100)*
 
 * Fix a bunch of pylint warnings

@@ -27,7 +27,6 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
@@ -189,6 +188,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
     sketch upload. Derived classes must implement the ``read_packet()`` slot.
     """
 
+    # pylint: disable=abstract-method
     BUFFER_CLASS = CircularBuffer
     BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_interval=5.)
 
@@ -229,11 +229,6 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         """Close the serial interface.
         """
         self.serial_interface.disconnect()
-
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
 
 
 class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
@@ -286,11 +281,6 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
             self.flush_buffer()
         self.serial_interface.read_run_end_marker()
 
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
-
 
 class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
@@ -301,11 +291,6 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         """Read a single packet, that is, an analog readout.
         """
         return self.serial_interface.read(DigitalTransition.size)
-
-    def process_packet(self, packet: AbstractPacket) -> None:
-        """Overloaded method.
-        """
-        raise NotImplementedError
 
 
 class PlasduinoAnalogConfiguration(ConfigurationBase):

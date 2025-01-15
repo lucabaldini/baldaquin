@@ -18,57 +18,121 @@
 
 from __future__ import annotations
 
+from abc import ABC, abstractmethod
 import collections
-import enum
-import os
+from collections.abc import Callable
+from contextlib import contextmanager
+from enum import Enum
+import io
 from pathlib import Path
 import queue
 import time
 from typing import Any
 
-from loguru import logger
-
+from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
+from baldaquin.pkt import AbstractPacket
 from baldaquin.profile import timing
 
 
-class BufferWriteMode(enum.Enum):
+class WriteMode(Enum):
 
-    """Enum for the mode in which the output file is opened.
+    """Small enum class for the file write mode.
+
+    Note this has to match the open modes in the Python open() builtin.
     """
 
-    BINARY: str = 'b'
-    TEXT: str = 't'
+    BINARY = 'b'
+    TEXT = 't'
 
 
-class BufferBase:
+class Sink:
 
-    """Base class for a data buffer.
+    """Small class describing a file sink where a buffer can be flushed.
+
+    Arguments
+    ---------
+    file_path : Path or str
+        The path to the output file.
+
+    mode : WriteMode
+        The write mode (``WriteMode.BINARY`` or ``WriteMode.TEXT``)
+
+    formatter : callable, optional
+        The packet formatting function to be used to flush a buffer.
+
+    header : anything that can be written to the output file
+        The file optional file header. If not None, this gets written to the
+        output file when the sink is created.
+    """
+
+    def __init__(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                 header: Any = None) -> None:
+        """Constructor.
+        """
+        # If the output file already exists, then something has gone wrong---we
+        # never overwrite data.
+        if file_path.exists():
+            raise FileExistsError(f'Output file {file_path} already exists')
+        self.file_path = file_path
+        self.formatter = formatter
+        self._mode = mode
+        self._output_file = None
+        # Note we always open the output file in append mode.
+        self._open_kwargs = dict(mode=f'a{self._mode.value}')
+        if self._mode == WriteMode.TEXT:
+            self._open_kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
+        # At this point we do create the file and, if needed, we write the
+        # header into it. (And we are ready to flush.)
+        with self.open() as output_file:
+            if header is not None:
+                logger.debug('Writing file header...')
+                output_file.write(header)
+
+    @contextmanager
+    def open(self) -> io.IOBase:
+        """Open the proper file object and return it.
+
+        Note this is implemented as a context manager, and yields a reference to
+        the underlying (open) output file.
+        """
+        # pylint: disable=unspecified-encoding
+        logger.debug(f'Opening output file {self.file_path} {self._open_kwargs}...')
+        output_file = open(self.file_path, **self._open_kwargs)
+        yield output_file
+        output_file.close()
+        logger.debug(f'Ouput file {self.file_path} closed.')
+
+    def __str__(self) -> str:
+        """String formatting.
+        """
+        if self.formatter is None:
+            return f'Sink -> {self.file_path} ({self._mode})'
+        return f'Sink -> {self.file_path} ({self._mode}, {self.formatter.__qualname__})'
+
+
+class AbstractBuffer(ABC):
+
+    """Abstract base class for a data buffer.
 
     Arguments
     ---------
     max_size : int
-        The maximum number of events the buffer can physically contain.
+        The maximum number of packets the buffer can physically contain.
 
     flush_size : int
-        The maximum number of events before a
-        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>`
+        The maximum number of packets before a
+        :meth:`flush_needed() <baldaquin.buf.AbstractBuffer.flush_needed()>`
         call returns True (mind this should be smaller than ``max_size`` because
-        otherwise the buffer will generally drop events).
+        otherwise the buffer will generally drop packets).
 
     flush_interval : float
         The maximum time (in s) elapsed since the last
-        :meth:`flush() <baldaquin.buf.BufferBase.flush()>` before a
-        :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>` call
+        :meth:`flush() <baldaquin.buf.AbstractBuffer.flush()>` before a
+        :meth:`flush_needed() <baldaquin.buf.AbstractBuffer.flush_needed()>` call
         returns True.
-
-    mode : BufferWriteMode
-        The file write mode.
     """
 
-    _DEFAULT_ENCODING = 'utf-8'
-
-    def __init__(self, max_size: int, flush_size: int, flush_interval: float,
-                 mode: BufferWriteMode) -> None:
+    def __init__(self, max_size: int, flush_size: int, flush_interval: float) -> None:
         """Constructor.
         """
         if max_size is not None and flush_size is not None and max_size <= flush_size:
@@ -76,38 +140,56 @@ class BufferBase:
         self._max_size = max_size
         self._flush_size = flush_size
         self._flush_interval = flush_interval
-        self._mode = mode
         self._last_flush_time = time.time()
-        self._current_file_path = None
+        self._primary_sink = None
+        self._custom_sinks = []
 
-    def _file_open_kwargs(self):
-        """Return the proper keyword arguments (mode and encoding) for a generic
-        open() call.
-        """
-        kwargs = dict(mode=f'a{self._mode.value}')
-        if self._mode == BufferWriteMode.TEXT:
-            kwargs.update(encoding=self._DEFAULT_ENCODING)
-        return kwargs
+    def put(self, packet: AbstractPacket) -> None:
+        """Put a packet into the buffer.
 
-    def set_output_file(self, file_path: Path) -> None:
-        """Set the output file for flushing the buffer.
+        Note we check in the abstract class that the packet we put into the buffer
+        is an ``AbstractPacket`` instance, while the actual work is done in the
+        ``_do_put()`` method, that is abstract and should be reimplemented in all
+        derived classes.
         """
-        # If we're targeting the current file path, then there is nothing to do.
-        if file_path == self._current_file_path:
-            return
-        # If the target file path is None, then we're disconnecting from the
-        # current file.
-        if file_path is None:
-            logger.info(f'Disconnecting the event buffer from {self._current_file_path}...')
-            self._current_file_path = None
-            return
-        # Otherwise we're actually opening a new file and getting it ready.
-        self._current_file_path = file_path
-        logger.info(f'Directing the event buffer to {self._current_file_path}...')
-        if os.path.exists(self._current_file_path):
-            logger.warning(f'Output file {self._current_file_path} exists and will be overwritten')
-        # pylint: disable=consider-using-with, unspecified-encoding
-        open(self._current_file_path, **self._file_open_kwargs()).close()
+        if not isinstance(packet, AbstractPacket):
+            raise TypeError(f'{packet} is not an AbstractPacket instance')
+        self._do_put(packet)
+
+    @abstractmethod
+    def _do_put(self, packet: AbstractPacket) -> None:
+        """Abstract method with the actual code to put a packet into the buffer
+        (to be reimplemented in derived classes).
+
+        .. warning::
+            In case you wonder why this is called ``_do_put`` and not, e.g., ``_put()``...
+            well: whoever designed the ``queue.Queue`` class (which we rely on for
+            of the actual buffer implementations) apparently had the same brilliant
+            idea of delegating the ``put()`` call to a ``_put()`` function, and
+            overloading that name was putting things into an infinite loop.
+        """
+
+    @abstractmethod
+    def pop(self) -> Any:
+        """Pop an item from the buffer (to be reimplemented in derived classes).
+
+        .. note::
+            The specific semantic of `which` item is returned (e.g, the first,
+            last, or something more clever) is delegated to the concrete classes,
+            but we will be mostly dealing with FIFOs, i.e., unless otherwise
+            stated it should be understood that this is popping items from the
+            left of the queue.
+        """
+
+    @abstractmethod
+    def size(self) -> int:
+        """Return the number of items in the buffer (to be reimplemented in derived classes).
+        """
+
+    @abstractmethod
+    def clear(self) -> None:
+        """Clear the buffer (to be reimplemented in derived classes).
+        """
 
     def almost_full(self) -> bool:
         """Return True if the buffer is almost full.
@@ -127,68 +209,122 @@ class BufferBase:
             return True
         return False
 
+    def set_primary_sink(self, file_path: Path) -> Sink:
+        """Set the primary sink for the buffer.
+        """
+        sink = Sink(file_path, WriteMode.BINARY, None, None)
+        logger.info(f'Connecting buffer to primary {sink}...')
+        self._primary_sink = sink
+        return sink
+
+    def add_custom_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                        header: Any = None) -> Sink:
+        """Add a sink to the buffer.
+
+        See the :class:`Sink <baldaquin.buf.Sink>` class constructor for an
+        explanation of the arguments.
+        """
+        sink = Sink(file_path, mode, formatter, header)
+        logger.info(f'Connecting buffer to custom {sink}...')
+        self._custom_sinks.append(sink)
+        return sink
+
+    def disconnect(self) -> None:
+        """Disconnect all sinks.
+        """
+        self._primary_sink = None
+        self._custom_sinks = []
+        logger.info('All buffer sinks disconnected.')
+
+    def _pop_and_write_raw(self, num_packets: int, output_file: io.IOBase) -> int:
+        """Pop the first ``num_packets`` packets from the buffer and write the
+        corresponding raw binary data into the given output file.
+
+        Arguments
+        ---------
+        num_packets : int
+            The number of packets to be written out.
+
+        output_file : io.IOBase
+            The output binary file.
+
+        Returns
+        -------
+        int
+            The number of bytes written to disk.
+        """
+        num_bytes_written = 0
+        for _ in range(num_packets):
+            num_bytes_written += output_file.write(self.pop().payload)
+        logger.debug(f'{num_bytes_written} bytes written to disk.')
+        return num_bytes_written
+
+    def _write(self, num_packets: int, output_file: io.IOBase, formatter: Callable) -> int:
+        """Write the first ``num_packets`` packets from the buffer to the given
+        output file (and with the given formatter) without popping them.
+
+        Arguments
+        ---------
+        num_packets : int
+            The number of packets to be written out.
+
+        output_file : io.IOBase
+            The output binary file.
+
+        formatter : Callable
+            The packet formatting function.
+
+        Returns
+        -------
+        int
+            The number of bytes written to disk.
+        """
+        num_bytes_written = 0
+        for i in range(num_packets):
+            num_bytes_written += output_file.write(formatter(self[i]))
+        logger.debug(f'{num_bytes_written} bytes written to disk.')
+        return num_bytes_written
+
     @timing
     def flush(self) -> tuple[int, int]:
-        """Write the content of the buffer to file and returns the number of
-        objects written to disk.
+        """Write the content of the buffer to all the sinks connected.
 
         .. note::
            This will write all the items in the buffer at the time of the
            function call, i.e., items added while writing to disk will need to
            wait for the next call.
         """
-        # If there is no output file path set, then something went horribly wrong...
-        if self._current_file_path is None:
-            raise RuntimeError('Output file not set, cannot flush buffer.')
-        # Cache the number of events to be read---this is implemented this way
-        # as we might be adding new events while flushing the buffer.
-        num_events = self.size()
-        num_bytes = 0
+        if self._primary_sink is None:
+            raise RuntimeError('No primary sink connected to the buffer, cannot flush')
+        # Cache the number of packets to be read---this is implemented this way
+        # as we might be adding new packets while flushing the buffer.
+        num_packets = self.size()
+        num_bytes_written = 0
         self._last_flush_time = time.time()
-        # If there are no events, then there is nothing to do, and we are not
+        # If there are no packets, then there is nothing to do, and we are not
         # actually flushing the buffer.
-        if num_events == 0:
-            return (num_events, num_bytes)
-        # And, finally, the actual thing.
-        logger.info(f'Writing {num_events} events to {self._current_file_path}...')
-        # pylint: disable=unspecified-encoding
-        with open(self._current_file_path, **self._file_open_kwargs()) as output_file:
-            for _ in range(num_events):
-                item = self.pop()
-                num_bytes += len(item)
-                output_file.write(item)
-        logger.info(f'Done, {num_bytes} Bytes written to disk.')
-        return (num_events, num_bytes)
-
-    def put(self, item: Any) -> None:
-        """Put an item into the buffer (to be reimplemented in derived classes).
-        """
-        raise NotImplementedError
-
-    def pop(self) -> Any:
-        """Pop an item from the buffer (to be reimplemented in derived classes).
-
-        .. note::
-            The specific semantic of `which` item is returned (e.g, the first,
-            last, or something more clever) is delegated to the concrete classes,
-            but we will be mostly dealing with FIFOs, i.e., unless otherwise
-            stated it should be understood that this is popping items from the
-            left of the queue.
-        """
-        raise NotImplementedError
-
-    def size(self) -> int:
-        """Return the number of items in the buffer (to be reimplemented in derived classes).
-        """
-        raise NotImplementedError
-
-    def clear(self) -> None:
-        """Clear the buffer.
-        """
-        raise NotImplementedError
+        if num_packets == 0:
+            return (num_packets, num_bytes_written)
+        # And, finally, the actual flush.
+        logger.info(f'{num_packets} packets ready to be written out...')
+        # First write to all the custom sinks, as this does not empty the buffer...
+        for sink in self._custom_sinks:
+            with sink.open() as output_file:
+                num_bytes_written += self._write(num_packets, output_file, sink.formatter)
+        # ... and, finally flush the buffer to the primary sink.
+        with self._primary_sink.open() as output_file:
+            num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
+            num_bytes_written += num_raw_bytes_written
+        logger.info(f'{num_bytes_written} bytes ({num_raw_bytes_written} raw bytes) '
+                    'written to disk.')
+        # Note at this point we are keeping track of both the total number of
+        # bytes written to disk *and* the number of bytes written in the form of
+        # raw binary packets, and we can decide which one we want to use downstream,
+        # e.g., to update the GUI.
+        return (num_packets, num_bytes_written)
 
 
-class FIFO(queue.Queue, BufferBase):
+class FIFO(queue.Queue, AbstractBuffer):
 
     """Implementation of a FIFO.
 
@@ -201,8 +337,8 @@ class FIFO(queue.Queue, BufferBase):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, max_size: int = None, flush_size: int = None, flush_interval: float = 1.,
-                 mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
+    def __init__(self, max_size: int = None, flush_size: int = None,
+                 flush_interval: float = 1.) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
@@ -211,15 +347,15 @@ class FIFO(queue.Queue, BufferBase):
         if max_size is None:
             max_size = -1
         queue.Queue.__init__(self, max_size)
-        BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
+        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
 
-    def put(self, item: Any, block: bool = True, timeout: float = None) -> None:
+    def _do_put(self, packet: AbstractPacket, block: bool = True, timeout: float = None) -> None:
         """Overloaded method.
 
         See https://docs.python.org/3/library/queue.html as for the meaning
-        o the function arguments.
+        of the function arguments.
         """
-        queue.Queue.put(self, item, block, timeout)
+        queue.Queue.put(self, packet, block, timeout)
 
     def pop(self) -> Any:
         """Overloaded method.
@@ -237,7 +373,7 @@ class FIFO(queue.Queue, BufferBase):
         self.queue.clear()
 
 
-class CircularBuffer(collections.deque, BufferBase):
+class CircularBuffer(collections.deque, AbstractBuffer):
 
     """Implementation of a simple circular buffer.
 
@@ -253,16 +389,16 @@ class CircularBuffer(collections.deque, BufferBase):
     """
 
     def __init__(self, max_size: int = None, flush_interval: float = 1.,
-                 flush_size: int = None, mode: BufferWriteMode = BufferWriteMode.BINARY) -> None:
+                 flush_size: int = None) -> None:
         """Constructor.
         """
         collections.deque.__init__(self, [], max_size)
-        BufferBase.__init__(self, max_size, flush_size, flush_interval, mode)
+        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
 
-    def put(self, item: Any) -> None:
+    def _do_put(self, packet: AbstractPacket) -> None:
         """Overloaded method.
         """
-        self.append(item)
+        self.append(packet)
 
     def pop(self) -> Any:
         """Overloaded method.

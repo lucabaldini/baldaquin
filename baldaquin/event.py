@@ -78,10 +78,10 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self._statistics.reset()
 
-    def set_output_file(self, file_path: Path) -> None:
-        """Set the path to the output file.
+    def set_primary_sink(self, file_path: Path) -> None:
+        """Set the primary sink for the buffer.
         """
-        self._buffer.set_output_file(file_path)
+        self._buffer.set_primary_sink(file_path)
         self.output_file_set.emit(file_path)
 
     def flush_buffer(self) -> None:
@@ -97,14 +97,16 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         it is factored out so that, if necessary, it can be called in a stand-alone
         fashion, rather than automatically when the data acquisition thread is
         launched.
+
+        .. warning::
+            We need some cleanup, here, to make sure we really thought through the
+            mechanism for defining the ``process_packet()`` slot.
         """
-        packet = self.read_packet()
-        self._buffer.put(packet)
+        packet_data = self.read_packet()
+        self._buffer.put(self.process_packet(packet_data))
         self._statistics.update(1, 0, 0)
         if self._buffer.flush_needed():
             self.flush_buffer()
-        # We should make clear where this is defined.
-        self.process_packet(packet)
 
     def run(self):
         """Overloaded QRunnable method.

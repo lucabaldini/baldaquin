@@ -21,10 +21,7 @@ import json
 import os
 from typing import Any
 
-from loguru import logger
-
-
-_ENCODING = 'utf8'
+from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
 
 
 class ParameterValidationError(enum.IntEnum):
@@ -243,7 +240,7 @@ class ConfigurationBase(dict):
         """Update the configuration parameters from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
-        with open(file_path, 'r', encoding=_ENCODING) as input_file:
+        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             data = json.load(input_file)
         for key, param_dict in data.items():
             self.update_value(key, param_dict['value'])
@@ -258,7 +255,7 @@ class ConfigurationBase(dict):
         """Dump the configuration to a JSON file.
         """
         logger.info(f'Writing configuration to {file_path}...')
-        with open(file_path, 'w', encoding=_ENCODING) as output_file:
+        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
             output_file.write(self.to_json())
 
     @staticmethod

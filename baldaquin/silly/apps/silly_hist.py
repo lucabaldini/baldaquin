@@ -21,6 +21,7 @@ import numpy as np
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
+from baldaquin.pkt import AbstractPacket
 from baldaquin.hist import Histogram1d
 from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket,\
     SillyUserApplicationBase, SillyConfiguration
@@ -56,11 +57,12 @@ class SillyHist(SillyUserApplicationBase):
         super().__init__()
         self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel='PHA [ADC counts]')
 
-    def process_packet(self, data):
+    def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
         """
-        packet = SillyPacket.unpack(data)
+        packet = SillyPacket.unpack(packet_data)
         self.pha_hist.fill(packet.pha)
+        return packet
 
 
 if __name__ == '__main__':

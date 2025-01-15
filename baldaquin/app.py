@@ -16,8 +16,6 @@
 """User application framework.
 """
 
-from pathlib import Path
-
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
@@ -58,11 +56,6 @@ class UserApplicationBase:
         if self.CONFIGURATION_FILE_PATH is not None:
             self.configuration.save(self.CONFIGURATION_FILE_PATH)
         self.configure()
-
-    def set_data_file_path(self, file_path: Path) -> None:
-        """Set the file path for the event handler.
-        """
-        self.event_handler.set_output_file(file_path)
 
     def configure(self):
         """Apply a given configuration to the user application.
