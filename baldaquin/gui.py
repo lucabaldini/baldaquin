@@ -89,9 +89,10 @@ class Button(QtWidgets.QPushButton):
         An optional tooltip to be associated to the button.
     """
 
+    # pylint: disable=too-few-public-methods
+
     DEFAULT_SIZE: int = 40
     DEFAULT_ICON_SIZE: int = 25
-    # pylint: disable=too-few-public-methods
 
     def __init__(self, icon_name: str, tooltip: str = None, size: int = DEFAULT_SIZE,
                  icon_size: int = DEFAULT_ICON_SIZE) -> None:

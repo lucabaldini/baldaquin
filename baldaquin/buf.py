@@ -95,7 +95,7 @@ class Sink:
         Note this is implemented as a context manager, and yields a reference to
         the underlying (open) output file.
         """
-        # pylint: disable=unspecified-encoding
+        # pylint: disable=unspecified-encoding, bad-open-mode
         logger.debug(f'Opening output file {self.file_path} {self._open_kwargs}...')
         output_file = open(self.file_path, **self._open_kwargs)
         yield output_file

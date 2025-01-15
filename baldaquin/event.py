@@ -29,8 +29,6 @@ from baldaquin.pkt import AbstractPacket, PacketStatistics
 
 class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
 
-    # pylint: disable=c-extension-no-member
-
     """Base class for an event handler.
 
     This is an abstract base class inheriting from ``QtCore.QRunnable``, owning
@@ -41,7 +39,6 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     BUFFER_CLASS = CircularBuffer
     BUFFER_KWARGS = {}
 
-    # pylint: disable=c-extension-no-member
     output_file_set = QtCore.Signal(Path)
 
     def __init__(self) -> None:

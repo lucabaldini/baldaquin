@@ -12,6 +12,9 @@ lint:
 		--disable too-many-arguments \
 		--disable too-many-function-args \
 		--disable too-many-instance-attributes \
+		--disable c-extension-no-member \
+		--disable use-dict-literal \
+		--disable too-many-positional-arguments \
 		--ignore _version.py
 
 test:
