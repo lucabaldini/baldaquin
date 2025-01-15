@@ -4,6 +4,8 @@ Release notes
 =============
 
 
+*baldaquin 0.1.3 (Wed, 15 Jan 2025 08:59:44 +0100)*
+
 * Major refactoring of the buf.py module.
 * Buffer sinks added to add flexibility to the generation of output files.
 * Default character encoding now defined in baldaquin.__init__
