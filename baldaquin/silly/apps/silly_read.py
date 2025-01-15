@@ -21,7 +21,7 @@ from loguru import logger
 from baldaquin.gui import bootstrap_window
 from baldaquin.pkt import AbstractPacket
 from baldaquin.silly import SILLY_APP_CONFIG
-from baldaquin.silly.common import SillyRunControl, SillyPacket,\
+from baldaquin.silly.common import SillyRunControl, SillyPacket, \
     SillyUserApplicationBase, SillyConfiguration, SillyMainWindow
 
 

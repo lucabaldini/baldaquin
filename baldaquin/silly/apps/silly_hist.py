@@ -23,7 +23,7 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.pkt import AbstractPacket
 from baldaquin.hist import Histogram1d
-from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket,\
+from baldaquin.silly.common import SillyRunControl, SillyMainWindow, SillyPacket, \
     SillyUserApplicationBase, SillyConfiguration
 
 

@@ -22,7 +22,7 @@ from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
-from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler,\
+from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.plasduino.shields import Lab1
