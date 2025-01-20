@@ -74,6 +74,5 @@ class MainArgumentParser(argparse.ArgumentParser):
         command(**kwargs)
 
 
-
 if __name__ == '__main__':
     MainArgumentParser().run_command()
