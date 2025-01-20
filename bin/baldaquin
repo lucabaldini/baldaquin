@@ -1,0 +1,75 @@
+#!/usr/bin/env python3
+#
+# Copyright (C) 2025 the baldaquin team.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+import argparse
+
+from baldaquin import arduino_
+
+
+class _Formatter(argparse.RawDescriptionHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
+
+    """Do nothing class combining our favorite formatting for the
+    command-line options, i.e., the newlines in the descriptions are
+    preserved and, at the same time, the argument defaults are printed
+    out when the --help options is passed.
+
+    The inspiration for this is coming from one of the comments in
+    https://stackoverflow.com/questions/3853722
+    """
+
+
+class MainArgumentParser(argparse.ArgumentParser):
+
+    """Application-wide argument parser.
+    """
+
+    _DESCRIPTION = None
+    _EPILOG = None
+    _FORMATTER_CLASS = _Formatter
+
+    def __init__(self) -> None:
+        """Overloaded method.
+        """
+        super().__init__(description=self._DESCRIPTION, epilog=self._EPILOG,
+            formatter_class=self._FORMATTER_CLASS)
+        subparsers = self.add_subparsers(required=True, help='sub-command help')
+        # See https://stackoverflow.com/questions/8757338/
+        subparsers._parser_class = argparse.ArgumentParser
+
+        # Arduino autodetect.
+        arduino_autodetect = subparsers.add_parser('arduino-autodetect',
+            help='autodetect arduino boards attached to the COM ports',
+            formatter_class=self._FORMATTER_CLASS)
+        arduino_autodetect.set_defaults(func=arduino_.autodetect_arduino_boards)
+
+        # Arduino upload.
+        arduino_upload = subparsers.add_parser('arduino-upload',
+            help='upload a sketch to an arduino board',
+            formatter_class=self._FORMATTER_CLASS)
+
+    def run_command(self) -> None:
+        """Run the actual command tied to the specific options.
+        """
+        kwargs = vars(self.parse_args())
+        command = kwargs.pop('func')
+        command(**kwargs)
+
+
+
+if __name__ == '__main__':
+    MainArgumentParser().run_command()
