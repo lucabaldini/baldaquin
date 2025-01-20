@@ -141,6 +141,9 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_
         https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
         for the object documentation.
     """
+    # If we are passing no boards, we are interested in all the supported ones.
+    if len(boards) == 0:
+        boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
     ports = list_com_ports(*board_identifiers(*boards))
     for port in ports:

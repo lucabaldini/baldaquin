@@ -68,6 +68,8 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
     for port in ports:
         logger.debug(_fmt_port(port))
     logger.info(f'Done, {len(ports)} device(s) found.')
+    if len(devices) == 0:
+        return ports
     if len(ports) > 0:
         device_list = [f'({hex(vid)}, {hex(pid)})' for vid, pid in devices]
         logger.info(f'Filtering port list for specific devices: {", ".join(device_list)}...')
