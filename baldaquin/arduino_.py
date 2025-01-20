@@ -22,6 +22,7 @@
 """
 
 from dataclasses import dataclass
+import os
 import subprocess
 
 import serial.tools.list_ports_common
@@ -368,11 +369,13 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
             ]
         if verbose:
             args.append('-v')
-        AvrDude._execute(args)
+        return AvrDude._execute(args)
 
 
-# if __name__ == '__main__':
-#     file_path = '/data/work/baldaquin/baldaquin/plasduino/sketches/analog_sampling.hex'
-#     port = '/dev/ttyACM0'
-#     ArduinoCli.upload(file_path, port, UNO)
-#     AvrDude.upload(file_path, port, UNO)
+def upload_sketch(file_path: str, board: ArduinoBoard) -> subprocess.CompletedProcess:
+    """Upload a sketch to an arduino board.
+    """
+    if not os.path.exists(file_path):
+        raise RuntimeError(f'Could not find file {file_path}')
+    port = autodetect_arduino_board(board)
+    return ArduinoCli.upload(file_path, port.device, board)

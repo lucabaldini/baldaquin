@@ -61,6 +61,9 @@ class MainArgumentParser(argparse.ArgumentParser):
         arduino_upload = subparsers.add_parser('arduino-upload',
             help='upload a sketch to an arduino board',
             formatter_class=self._FORMATTER_CLASS)
+        arduino_upload.add_argument('file_path')
+        arduino_upload.add_argument('--board', default=arduino_.UNO)
+        arduino_upload.set_defaults(func=arduino_.upload_sketch)
 
     def run_command(self) -> None:
         """Run the actual command tied to the specific options.
