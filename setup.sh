@@ -21,4 +21,4 @@ export PYTHONPATH=$BALDAQUIN_ROOT:$PYTHONPATH
 #
 # Add the bin folder to the $PATH so that we have the executables off hand.
 #
-export PATH=$BALDAQUIN_ROOT/baldaquin/bin:$PATH
+export PATH=$BALDAQUIN_ROOT/bin:$PATH
