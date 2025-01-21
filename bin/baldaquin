@@ -19,6 +19,7 @@
 import argparse
 
 from baldaquin import arduino_
+from baldaquin import serial_
 
 
 class _Formatter(argparse.RawDescriptionHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
@@ -50,6 +51,12 @@ class MainArgumentParser(argparse.ArgumentParser):
         subparsers = self.add_subparsers(required=True, help='sub-command help')
         # See https://stackoverflow.com/questions/8757338/
         subparsers._parser_class = argparse.ArgumentParser
+
+        # Simply list the COM ports.
+        list_com_ports = subparsers.add_parser('list-com-ports',
+            help='list the available COM ports',
+            formatter_class=self._FORMATTER_CLASS)
+        list_com_ports.set_defaults(func=serial_.list_com_ports)
 
         # Arduino autodetect.
         arduino_autodetect = subparsers.add_parser('arduino-autodetect',
