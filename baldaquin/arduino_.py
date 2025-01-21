@@ -53,7 +53,7 @@ class ArduinoBoard:
 
     # pylint: disable=too-many-instance-attributes
 
-    identifier: str
+    designator: str
     name: str
     vendor: str
     architecture: str
@@ -71,7 +71,7 @@ class ArduinoBoard:
         """Return the fully qualified board name (FQBN), as defined in
         https://arduino.github.io/arduino-cli/1.1/platform-specification/
         """
-        return f'{self.vendor}:{self.architecture}:{self.identifier}'
+        return f'{self.vendor}:{self.architecture}:{self.designator}'
 
 
 UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
@@ -85,17 +85,9 @@ UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'a
 _SUPPORTED_BOARDS = (UNO,)
 
 
-# Build a dictionary {(vid, pid): ArduinoBoard} containing all the supported boards.
-# Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
-_BOARD_IDENTIFIER_DICT = {}
-for _board in _SUPPORTED_BOARDS:
-    for _id in _board.device_ids:
-        _BOARD_IDENTIFIER_DICT[_id] = _board
-
-
-def board_identifiers(*boards: ArduinoBoard) -> tuple:
-    """Return all the possible identiers corresponding to a subset of the supported
-    arduino boards.
+def _concatenate_device_ids(*boards: ArduinoBoard) -> tuple:
+    """Return a tuple with all the possible DeviceId objects corresponding to a
+    subset of the supported arduino boards.
 
     Arguments
     ---------
@@ -105,18 +97,28 @@ def board_identifiers(*boards: ArduinoBoard) -> tuple:
     Returns
     -------
     tuple
-        A tuple of (vid, pid) tuples.
+        A tuple of DeviceId objects.
     """
     # If you are tempted to use a sum of lists with start=[], here, keep in mind
     # this is not supported in Python 3.7.
-    identiers = ()
+    device_ids = ()
     for board in boards:
-        identiers += board.device_ids
-    return identiers
+        device_ids += board.device_ids
+    return device_ids
 
 
-def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
-    """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+# Build a dictionary {DeviceId: ArduinoBoard} containing all the supported boards.
+# Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
+_BOARD_DESIGNATOR_DICT = {}
+_DEVICE_ID_DICT = {}
+for _board in _SUPPORTED_BOARDS:
+    _BOARD_DESIGNATOR_DICT[_board.designator] = _board
+    for _id in _board.device_ids:
+        _DEVICE_ID_DICT[_id] = _board
+
+
+def board_by_device_id(device_id: DeviceId) -> ArduinoBoard:
+    """Return the ArduinoBoard object corresponding to a given DeviceId.
 
     Arguments
     ---------
@@ -129,9 +131,31 @@ def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
     Returns
     -------
     ArduinoBoard
-        The ArduinoBoard object corresponding to the vid and pid passes as arguments.
+        The ArduinoBoard object corresponding to the DeviceId.
     """
-    return _BOARD_IDENTIFIER_DICT.get((vid, pid))
+    try:
+        return _DEVICE_ID_DICT[device_id]
+    except KeyError as exception:
+        raise RuntimeError(f'Unsupported device ID {device_id}') from exception
+
+
+def board_by_designator(designator: str) -> ArduinoBoard:
+    """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+
+    Arguments
+    ---------
+    designator : str
+        The board designator (e.g., "uno").
+
+    Returns
+    -------
+    ArduinoBoard
+        The ArduinoBoard object corresponding to the designator.
+    """
+    try:
+        return _BOARD_DESIGNATOR_DICT[designator]
+    except KeyError as exception:
+        raise RuntimeError(f'Unsupported designator {designator}') from exception
 
 
 def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
@@ -145,20 +169,18 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
 
     Returns
     -------
-    serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    list of Port objects
+        The list of Port object with relevant boards attached to them.
     """
     # If we are passing no boards, we are interested in all the supported ones.
     if len(boards) == 0:
         boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    ports = list_com_ports(*board_identifiers(*boards))
+    ports = list_com_ports(*_concatenate_device_ids(*boards))
     for port in ports:
-        board = identify_arduino_board(port.device_id.vid, port.device_id.pid)
+        board = board_by_device_id(port.device_id)
         if port is not None:
-            logger.info(f'{port.name} -> {board.board_id} ({board.name})')
+            logger.debug(f'{port.name} -> {board.designator} ({board.name})')
     return ports
 
 
