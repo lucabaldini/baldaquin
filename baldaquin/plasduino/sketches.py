@@ -52,6 +52,7 @@ def sketch_file_path(sketch_id: int, sketch_version: int) -> Path:
     """
     try:
         file_name = _PLASDUINO_SKETCH_DICT[(sketch_id, sketch_version)]
-    except KeyError:
-        raise RuntimeError(f'No information for sketch {sketch_id} version {sketch_version}')
+    except KeyError as exc:
+        raise RuntimeError(f'No information for sketch {sketch_id} version {sketch_version}') \
+            from exc
     return PLASDUINO_SKETCH_ROOT / file_name

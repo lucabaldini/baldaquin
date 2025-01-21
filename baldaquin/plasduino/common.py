@@ -245,7 +245,8 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         arduino_.ArduinoCli.upload(file_path, port.device, arduino_.UNO)
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
         if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
-            raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} version {self.SKETCH_VERSION}')
+            raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
+                               f'version {self.SKETCH_VERSION}')
 
     def close_serial_interface(self) -> None:
         """Close the serial interface.
