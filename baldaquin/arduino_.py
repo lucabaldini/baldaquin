@@ -144,7 +144,7 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     if len(boards) == 0:
         boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    ports = list_com_ports(board_identifiers(*boards))
+    ports = list_com_ports(*board_identifiers(*boards))
     for port in ports:
         board = identify_arduino_board(port.device_id.vid, port.device_id.pid)
         if port is not None:

@@ -41,6 +41,6 @@ def test_list_com_ports() -> None:
         print(port)
     assert isinstance(ports, list)
     assert all(isinstance(port, serial_.Port) for port in ports)
-    ports = serial_.list_com_ports(device_ids=[(0x2341, 0x0043)])
+    ports = serial_.list_com_ports((0x2341, 0x0043))
     for port in ports:
         print(port)

@@ -115,14 +115,14 @@ class Port:
         return cls(port_info.device, device_id, port_info.manufacturer)
 
 
-def list_com_ports(device_ids: list[DeviceId] = None) -> list[Port]:
+def list_com_ports(*device_ids: DeviceId) -> list[Port]:
     """List all the com ports with devices attached, possibly with a filter on
     the device ids we are interested into.
 
     Arguments
     ---------
-    device_ids : list of DeviceId objects or vid, pid tuples, optional
-        The list of device ids to filter the list of ports returned by pyserial.
+    device_ids : DeviceId or vid, pid tuples, optional
+        An arbitrary number of device ids to filter the list of ports returned by pyserial.
         This is useful when we are searching for a specific device attached to a
         port; an arduino uno, e.g., might look something like (0x2341, 0x43).
 
@@ -138,16 +138,13 @@ def list_com_ports(device_ids: list[DeviceId] = None) -> list[Port]:
         logger.debug(port)
     logger.info(f'Done, {len(ports)} device(s) found.')
     # If we're not filtering over device ids, we're done.
-    if device_ids is None:
+    if len(device_ids) == 0:
         return ports
     # Otherwise, we filter the list of ports, assuming we have any.
     if len(ports) > 0:
         # If we have a list of tuples, we convert them to DeviceId objects---this
         # will make the printout on the terminal nicer, with the 0x and all that.
-        # Note that, since we are changing the list in place, we need to make 
-        # sure it is actually a list and not an immutable sequence.
-        if not isinstance(device_ids, list):
-            device_ids = list(device_ids)
+        device_ids = list(device_ids)
         for i, entry in enumerate(device_ids):
             if isinstance(entry, tuple):
                 device_ids[i] = DeviceId(*entry)

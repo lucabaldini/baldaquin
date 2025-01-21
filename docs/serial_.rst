@@ -25,12 +25,12 @@ ports, along wit the device that are attached to them.
 The method allows to filter over device IDs (or, equivalently, over vid, pid tuples)
 which comes handy when one is interested in a particular device or set of devices.
 
->>> ports = serial_.list_com_ports(filter=[(0x2341, 0x0043)])
+>>> ports = serial_.list_com_ports((0x2341, 0x0043))
 >>> [INFO] Scanning serial devices...
 >>> [DEBUG] Port(name='/dev/ttyS0', device_id=(vid=None, pid=None), manufacturer=None)
 >>> [DEBUG] Port(name='/dev/ttyACM0', device_id=(vid=0x2341, pid=0x43), manufacturer='Arduino (www.arduino.cc)')
 >>> [INFO] Done, 2 device(s) found.
->>> [INFO] Filtering port list for specific devices: [(9025, 67)]...
+>>> [INFO] Filtering port list for specific devices: [(vid=0x2341, pid=0x43)]...
 >>> [INFO] Done, 1 device(s) remaining.
 >>> [DEBUG] Port(name='/dev/ttyACM0', device_id=(vid=0x2341, pid=0x43), manufacturer='Arduino (www.arduino.cc)')
 
