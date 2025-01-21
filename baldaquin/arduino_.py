@@ -107,8 +107,7 @@ def _concatenate_device_ids(*boards: ArduinoBoard) -> tuple:
     return device_ids
 
 
-# Build a dictionary {DeviceId: ArduinoBoard} containing all the supported boards.
-# Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
+# Build the necessary dictionaries to retrieve the boards by device_id or designator.
 _BOARD_DESIGNATOR_DICT = {}
 _DEVICE_ID_DICT = {}
 for _board in _SUPPORTED_BOARDS:
@@ -197,10 +196,8 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
 
     Returns
     -------
-    serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    Port
+        The Port object our target board is attached to.
     """
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
