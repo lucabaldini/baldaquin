@@ -215,7 +215,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         super().__init__()
         self.serial_interface = PlasduinoSerialInterface()
 
-    def open_serial_interface(self, timeout: float = None, handshake_timeout: float = 1.) -> None:
+    def open_serial_interface(self, timeout: float = None, handshake_timeout: float = 5.) -> None:
         """Autodetect a supported arduino board, open the serial connection to it,
         and do the handshaking.
 
@@ -252,9 +252,8 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         # Otherwise we have to upload the proper sketch.
         logger.info(f'About to upload sketch {self.SKETCH_ID} version {self.SKETCH_VERSION}...')
         file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
-        # Warning: pack this into a function within arduino_!
-        # Also, the autodetect should probably return the board as well...
-        arduino_.ArduinoCli.upload(file_path, port.name, arduino_.UNO)
+        board = arduino_.board_by_device_id(port.device_id)
+        arduino_.ArduinoCli.upload(file_path, port.name, board)
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
         if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
             raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
