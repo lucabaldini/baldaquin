@@ -285,10 +285,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
                verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
 
-        Note this is using avrdude under the hood, so one might wonder why we
-        would want to use the Arduino CLI in the first place to upload sketches,
-        beside the fact that the FQBN is the only thing that it seems to need to
-        make the magic.
+        Note this is using avrdude under the hood.
 
         .. code-block:: shell
 
