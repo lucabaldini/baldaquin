@@ -16,6 +16,7 @@
 """Serial port interface.
 """
 
+from dataclasses import dataclass
 import struct
 import time
 from typing import Any
@@ -32,20 +33,67 @@ STANDARD_BAUD_RATES = serial.Serial.BAUDRATES
 DEFAULT_BAUD_RATE = 115200
 
 
-def _fmt_port(port: serial.tools.list_ports_common.ListPortInfo) -> str:
-    """Small convenience function to print out some pretty-printed serial port info.
+@dataclass
+class DeviceId:
+
+    """Data class to hold the device id information.
+
+    A device id is a tuple of two integers, the vendor id (vid) and the
+    product id (pid).
     """
-    text = port.device
-    vid, pid, manufacturer = port.vid, port.pid, port.manufacturer
-    if vid is None and pid is None:
-        return text
-    text = f'{text} -> vid {hex(vid)}, pid {hex(pid)}'
-    if manufacturer is not None:
-        text = f'{text} by {manufacturer}'
-    return text
+
+    vid: int
+    pid: int
+
+    def __eq__(self, other) -> bool:
+        """Equality comparison.
+
+        Note we support the comparison between a DeviceId object and a tuple.
+        """
+        if isinstance(other, tuple):
+            return (self.vid, self.pid) == other
+        return (self.vid, self.pid) == (other.vid, other.pid)
+
+    @staticmethod
+    def __hex(value: int) -> str:
+        """Convenience function to format an integer as a hexadecimal string.
+        """
+        try:
+            return hex(value)
+        except TypeError:
+            return None
+
+    def __repr__(self) -> str:
+        """String formatting.
+        """
+        return f'DeviceId(vid={self.__hex(self.vid)}, pid={self.__hex(self.pid)})'
 
 
-def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
+@dataclass
+class Port:
+
+    """Small data class holding the informatio about a COM port.
+
+    This is a simple wrapper around the serial.tools.list_ports_common.ListPortInfo
+    isolating the basic useful functionalities, for the sake of simplicity.
+
+    See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+    for more information.
+    """
+
+    name: str
+    device_id: DeviceId
+    manufacturer: str = None
+
+    @classmethod
+    def from_port_info(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'Port':
+        """Create a Port object from a ListPortInfo object.
+        """
+        device_id = DeviceId(port_info.vid, port_info.pid)
+        return cls(port_info.device, device_id, port_info.manufacturer)
+
+
+def list_com_ports(filter: list[DeviceId] = None) -> list[Port]:
     """List all the com ports with devices attached, possibly with a filter on the
     (vid, pid) pairs we are interested into.
 
@@ -58,25 +106,23 @@ def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
 
     Returns
     -------
-    list of serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    list of Port objects
+        The list of COM ports.
     """
     logger.info('Scanning serial devices...')
-    ports = serial.tools.list_ports.comports()
+    ports = [Port.from_port_info(port_info) for port_info in \
+             serial.tools.list_ports.comports()]
     for port in ports:
-        logger.debug(_fmt_port(port))
+        logger.debug(port)
     logger.info(f'Done, {len(ports)} device(s) found.')
-    if len(devices) == 0:
+    if filter is None:
         return ports
     if len(ports) > 0:
-        device_list = [f'({hex(vid)}, {hex(pid)})' for vid, pid in devices]
-        logger.info(f'Filtering port list for specific devices: {", ".join(device_list)}...')
-        ports = [port for port in ports if (port.vid, port.pid) in devices]
+        logger.info(f'Filtering port list for specific devices: {filter}...')
+        ports = [port for port in ports if port.device_id in filter]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
-        logger.debug(_fmt_port(port))
+        logger.debug(port)
     return ports
 
 
