@@ -399,7 +399,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         """ # noqa F811
         args = [
             ArduinoCli.PROGRAM_NAME, 'compile',
-            '--build-path', str(build_path),
+            '--output-dir', str(build_path),
             '--fqbn', board.fqbn(),
             str(file_path)
             ]
@@ -480,12 +480,12 @@ def upload_sketch(file_path: str, board: ArduinoBoard) -> subprocess.CompletedPr
     return ArduinoCli.upload(file_path, port.device, board)
 
 
-def compile_sketch(file_path: str, build_path: str, board_designator: str,
-                   verbose: bool = True) -> subprocess.CompletedProcess:
+def compile_sketch(file_path: str, output_dir: str, board_designator: str,
+                   verbose: bool = False) -> subprocess.CompletedProcess:
     """Compile a sketch for a given arduino board.
     """
     if not os.path.exists(file_path):
         raise RuntimeError(f'Could not find file {file_path}')
     board = board_by_designator(board_designator)
     logger.info(f'Compiling sketch {file_path} for {board}...')
-    return ArduinoCli.compile(file_path, build_path, board, verbose)
+    return ArduinoCli.compile(file_path, output_dir, board, verbose)

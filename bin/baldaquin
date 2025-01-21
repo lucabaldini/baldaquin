@@ -71,7 +71,7 @@ class MainArgumentParser(argparse.ArgumentParser):
             formatter_class=self._FORMATTER_CLASS)
         arduino_compile.add_argument('file_path',
             help='the path to the sketch source file')
-        arduino_compile.add_argument('--build-path', default=BALDAQUIN_DATA)
+        arduino_compile.add_argument('--output_dir', default=BALDAQUIN_DATA)
         arduino_compile.add_argument('--board-designator', default='uno')
         arduino_compile.set_defaults(func=arduino_.compile_sketch)
 
