@@ -225,6 +225,12 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             The timeout (in s) for the serial readout. If set to None, every read
             operation is effectively blocking, and this is the way we should operate
             in normal conditions.
+
+        handshake_timeout : float
+            The timeout for the first handshaking with the board, when we try and
+            gauge the identifier and version of the sketch that is preloaded.
+            Note that this cannot be too small, as it takes a good second for the
+            thing to happen. 
         """
         port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
