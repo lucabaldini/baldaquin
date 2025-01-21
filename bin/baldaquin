@@ -18,6 +18,7 @@
 
 import argparse
 
+from baldaquin import BALDAQUIN_DATA
 from baldaquin import arduino_
 from baldaquin import serial_
 
@@ -63,6 +64,16 @@ class MainArgumentParser(argparse.ArgumentParser):
             help='autodetect arduino boards attached to the COM ports',
             formatter_class=self._FORMATTER_CLASS)
         arduino_autodetect.set_defaults(func=arduino_.autodetect_arduino_boards)
+
+        # Arduino upload.
+        arduino_compile = subparsers.add_parser('arduino-compile',
+            help='compile a sketch for a given arduino board',
+            formatter_class=self._FORMATTER_CLASS)
+        arduino_compile.add_argument('file_path',
+            help='the path to the sketch source file')
+        arduino_compile.add_argument('--build-path', default=BALDAQUIN_DATA)
+        arduino_compile.add_argument('--board-designator', default='uno')
+        arduino_compile.set_defaults(func=arduino_.compile_sketch)
 
         # Arduino upload.
         arduino_upload = subparsers.add_parser('arduino-upload',

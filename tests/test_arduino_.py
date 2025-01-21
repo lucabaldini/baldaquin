@@ -18,7 +18,7 @@
 
 import pytest
 
-from baldaquin import logger
+from baldaquin import logger, BALDAQUIN_DATA, BALDAQUIN_TEST_DATA
 from baldaquin import arduino_
 from baldaquin.serial_ import DeviceId
 
@@ -54,3 +54,10 @@ def test_board_retrieval():
     with pytest.raises(RuntimeError) as info:
         arduino_.board_by_designator('una')
     logger.info(info)
+
+
+def test_compile():
+    """
+    """
+    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
+    arduino_.compile_sketch(file_path, BALDAQUIN_DATA, 'uno', verbose=False)
