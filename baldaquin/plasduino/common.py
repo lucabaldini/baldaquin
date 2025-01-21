@@ -242,6 +242,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         except struct.error:
             logger.warning('There seems to be no plasduino scketch pre-loaded on the board...')
             sketch_id, sketch_version = None, None
+        # Now put back the actual target timeout.
         self.serial_interface.timeout = timeout
 
         # If the sketch uploaded onboard is the one we expect, we're good to go.
