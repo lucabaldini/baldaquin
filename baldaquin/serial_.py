@@ -74,6 +74,11 @@ class DeviceId:
         except TypeError:
             return None
 
+    def __hash__(self):
+        """Hash function.
+        """
+        return hash((self.vid, self.pid))
+
     def __repr__(self) -> str:
         """String formatting.
         """

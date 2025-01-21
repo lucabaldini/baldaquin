@@ -21,13 +21,15 @@
     point you should consider all the API as experimental.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 import os
 import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import Port, list_com_ports
+from baldaquin.serial_ import DeviceId, Port, list_com_ports
 
 
 @dataclass
@@ -51,24 +53,32 @@ class ArduinoBoard:
 
     # pylint: disable=too-many-instance-attributes
 
-    board_id: str
+    identifier: str
     name: str
     vendor: str
     architecture: str
     upload_protocol: str
     upload_speed: int
     build_mcu: str
-    identifiers: tuple
+    device_ids: tuple[DeviceId]
+
+    def __post_init__(self):
+        """Post-initialization: turn the vid, pid tuples into DeviceId objects.
+        """
+        self.device_ids = tuple(DeviceId(*tup) for tup in self.device_ids)
 
     def fqbn(self) -> str:
         """Return the fully qualified board name (FQBN), as defined in
         https://arduino.github.io/arduino-cli/1.1/platform-specification/
         """
-        return f'{self.vendor}:{self.architecture}:{self.board_id}'
+        return f'{self.vendor}:{self.architecture}:{self.identifier}'
 
 
 UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
-                   ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243),
+                   ((0x2341, 0x0043),
+                    (0x2341, 0x0001),
+                    (0x2A03, 0x0043),
+                    (0x2341, 0x0243),
                     (0x2341, 0x006A)))
 
 
@@ -79,7 +89,7 @@ _SUPPORTED_BOARDS = (UNO,)
 # Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
 _BOARD_IDENTIFIER_DICT = {}
 for _board in _SUPPORTED_BOARDS:
-    for _id in _board.identifiers:
+    for _id in _board.device_ids:
         _BOARD_IDENTIFIER_DICT[_id] = _board
 
 
@@ -101,7 +111,7 @@ def board_identifiers(*boards: ArduinoBoard) -> tuple:
     # this is not supported in Python 3.7.
     identiers = ()
     for board in boards:
-        identiers += board.identifiers
+        identiers += board.device_ids
     return identiers
 
 
