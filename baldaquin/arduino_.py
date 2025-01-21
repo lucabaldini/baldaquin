@@ -25,11 +25,9 @@ from dataclasses import dataclass
 import os
 import subprocess
 
-import serial.tools.list_ports_common
-
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import list_com_ports
+from baldaquin.serial_ import Port, list_com_ports
 
 
 @dataclass
@@ -126,7 +124,7 @@ def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
     return _BOARD_IDENTIFIER_DICT.get((vid, pid))
 
 
-def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
+def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     """Autodetect all supported arduino boards of one or more specific types
     attached to the COM ports.
 
@@ -146,15 +144,15 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_
     if len(boards) == 0:
         boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    ports = list_com_ports(*board_identifiers(*boards))
+    ports = list_com_ports(board_identifiers(*boards))
     for port in ports:
-        board = identify_arduino_board(port.vid, port.pid)
+        board = identify_arduino_board(port.device_id.vid, port.device_id.pid)
         if port is not None:
-            logger.info(f'{port.device} -> {board.board_id} ({board.name})')
+            logger.info(f'{port.name} -> {board.board_id} ({board.name})')
     return ports
 
 
-def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
+def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
     """Autodetect the first supported arduino board within a list of board types.
 
     Note this returns None if no supported arduino board is found, and the

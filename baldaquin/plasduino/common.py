@@ -229,7 +229,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port.device, timeout=timeout)
+        self.serial_interface.connect(port.name, timeout=timeout)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
@@ -242,7 +242,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
         # Warning: pack this into a function within arduino_!
         # Also, the autodetect should probably return the board as well...
-        arduino_.ArduinoCli.upload(file_path, port.device, arduino_.UNO)
+        arduino_.ArduinoCli.upload(file_path, port.name, arduino_.UNO)
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
         if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
             raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
