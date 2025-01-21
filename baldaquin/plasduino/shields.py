@@ -35,5 +35,5 @@ class Lab1:
     SHUNT_RESISTANCE = 10.  # kOhm
     # Digital inputs for the time measurements.
     DIGITAL_PIN_1 = 0
-    DIGITAL_PIN_2 = 0
+    DIGITAL_PIN_2 = 1
     DIGITAL_PINS = (DIGITAL_PIN_1, DIGITAL_PIN_2)

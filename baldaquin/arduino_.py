@@ -302,7 +302,9 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
             ArduinoCli.PROGRAM_NAME, 'upload',
             '--port', port,
             '--fqbn', board.fqbn(),
-            '--input-file', file_path
+            # Note we have to cast to string in case file_path is a Path, as
+            # subprocess is adamant in requiring a string.
+            '--input-file', str(file_path)
             ]
         if verbose:
             args.append('--verbose')
