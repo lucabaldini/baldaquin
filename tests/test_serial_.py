@@ -32,14 +32,15 @@ def test_device_id(pid: int = 0x0043, vid: int = 0x2341) -> None:
     assert dev_id == (vid, pid)
     assert dev_id != (vid + 1, pid)
 
+
 def test_list_com_ports() -> None:
     """Test the COM port listing.
     """
     ports = serial_.list_com_ports()
     for port in ports:
         print(port)
-    #assert isinstance(ports, list)
-    #assert all(isinstance(port, serial_.ComPort) for port in ports)
-    ports = serial_.list_com_ports(filter=[(0x2341, 0x0043)])
+    assert isinstance(ports, list)
+    assert all(isinstance(port, serial_.Port) for port in ports)
+    ports = serial_.list_com_ports(device_ids=[(0x2341, 0x0043)])
     for port in ports:
         print(port)

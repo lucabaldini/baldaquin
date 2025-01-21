@@ -16,6 +16,8 @@
 """Serial port interface.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 import struct
 import time
@@ -38,8 +40,16 @@ class DeviceId:
 
     """Data class to hold the device id information.
 
-    A device id is a tuple of two integers, the vendor id (vid) and the
-    product id (pid).
+    A device id is basically a tuple of two integers, the vendor id (vid) and the
+    product id (pid), and the class has exactly these two members.
+
+    Arguments
+    ---------
+    vid : int
+        The vendor id.
+
+    pid : int
+        The product id.
     """
 
     vid: int
@@ -55,8 +65,9 @@ class DeviceId:
         return (self.vid, self.pid) == (other.vid, other.pid)
 
     @staticmethod
-    def __hex(value: int) -> str:
-        """Convenience function to format an integer as a hexadecimal string.
+    def _hex(value: int) -> str:
+        """Convenience function to format an integer as a hexadecimal string,
+        gracefully handling the case when the input is not an integer.
         """
         try:
             return hex(value)
@@ -66,7 +77,7 @@ class DeviceId:
     def __repr__(self) -> str:
         """String formatting.
         """
-        return f'DeviceId(vid={self.__hex(self.vid)}, pid={self.__hex(self.pid)})'
+        return f'(vid={self._hex(self.vid)}, pid={self._hex(self.pid)})'
 
 
 @dataclass
@@ -79,6 +90,17 @@ class Port:
 
     See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
     for more information.
+
+    Arguments
+    ---------
+    name : str
+        The name of the port (e.g., ``/dev/ttyACM0``).
+
+    device_id : DeviceId
+        The device id.
+
+    manufacturer : str, optional
+        The manufacturer of the device attached to the port.
     """
 
     name: str
@@ -93,14 +115,14 @@ class Port:
         return cls(port_info.device, device_id, port_info.manufacturer)
 
 
-def list_com_ports(filter: list[DeviceId] = None) -> list[Port]:
-    """List all the com ports with devices attached, possibly with a filter on the
-    (vid, pid) pairs we are interested into.
+def list_com_ports(device_ids: list[DeviceId] = None) -> list[Port]:
+    """List all the com ports with devices attached, possibly with a filter on
+    the device ids we are interested into.
 
     Arguments
     ---------
-    *devices : (vid, pid) tuples
-        The (vid, pid) tuples to filter the list of ports returned by pyserial.
+    device_ids : list of DeviceId objects or vid, pid tuples, optional
+        The list of device ids to filter the list of ports returned by pyserial.
         This is useful when we are searching for a specific device attached to a
         port; an arduino uno, e.g., might look something like (0x2341, 0x43).
 
@@ -110,16 +132,24 @@ def list_com_ports(filter: list[DeviceId] = None) -> list[Port]:
         The list of COM ports.
     """
     logger.info('Scanning serial devices...')
-    ports = [Port.from_port_info(port_info) for port_info in \
-             serial.tools.list_ports.comports()]
+    # Populate the initial list of ports.
+    ports = [Port.from_port_info(port_info) for port_info in serial.tools.list_ports.comports()]
     for port in ports:
         logger.debug(port)
     logger.info(f'Done, {len(ports)} device(s) found.')
-    if filter is None:
+    # If we're not filtering over device ids, we're done.
+    if device_ids is None:
         return ports
+    # Otherwise, we filter the list of ports, assuming we have any.
     if len(ports) > 0:
-        logger.info(f'Filtering port list for specific devices: {filter}...')
-        ports = [port for port in ports if port.device_id in filter]
+        # If we have a list of tuples, we convert them to DeviceId objects---this
+        # will make the printout on the terminal nicer, with the 0x and all that.
+        for i, entry in enumerate(device_ids):
+            if isinstance(entry, tuple):
+                device_ids[i] = DeviceId(*entry)
+        logger.info(f'Filtering port list for specific devices: {device_ids}...')
+        # Do the actual filtering.
+        ports = [port for port in ports if port.device_id in device_ids]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
         logger.debug(port)
