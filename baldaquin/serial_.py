@@ -144,6 +144,10 @@ def list_com_ports(device_ids: list[DeviceId] = None) -> list[Port]:
     if len(ports) > 0:
         # If we have a list of tuples, we convert them to DeviceId objects---this
         # will make the printout on the terminal nicer, with the 0x and all that.
+        # Note that, since we are changing the list in place, we need to make 
+        # sure it is actually a list and not an immutable sequence.
+        if not isinstance(device_ids, list):
+            device_ids = list(device_ids)
         for i, entry in enumerate(device_ids):
             if isinstance(entry, tuple):
                 device_ids[i] = DeviceId(*entry)
