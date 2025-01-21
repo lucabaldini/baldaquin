@@ -477,7 +477,7 @@ def upload_sketch(file_path: str, board: ArduinoBoard) -> subprocess.CompletedPr
     if not os.path.exists(file_path):
         raise RuntimeError(f'Could not find file {file_path}')
     port = autodetect_arduino_board(board)
-    return ArduinoCli.upload(file_path, port.device, board)
+    return ArduinoCli.upload(file_path, port.name, board)
 
 
 def compile_sketch(file_path: str, output_dir: str, board_designator: str,

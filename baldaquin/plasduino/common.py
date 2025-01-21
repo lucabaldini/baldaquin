@@ -215,7 +215,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         super().__init__()
         self.serial_interface = PlasduinoSerialInterface()
 
-    def open_serial_interface(self, timeout: float = None) -> None:
+    def open_serial_interface(self, timeout: float = None, handshake_timeout: float = 1.) -> None:
         """Autodetect a supported arduino board, open the serial connection to it,
         and do the handshaking.
 
@@ -232,11 +232,22 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         self.serial_interface.connect(port.name, timeout=timeout)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
-        sketch_id, sketch_version = self.serial_interface.read_sketch_info()
-        logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+
+        # Temporarily set a finite timeout to handle the case where there is not
+        # sensible sketch pre-loaded on the board, and we have to start from scratch.
+        self.serial_interface.timeout = handshake_timeout
+        try:
+            sketch_id, sketch_version = self.serial_interface.read_sketch_info()
+            logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+        except struct.error:
+            logger.warning('There seems to be no plasduino scketch pre-loaded on the board...')
+            sketch_id, sketch_version = None, None
+        self.serial_interface.timeout = timeout
+
         # If the sketch uploaded onboard is the one we expect, we're good to go.
         if (sketch_id, sketch_version) == (self.SKETCH_ID, self.SKETCH_VERSION):
             return
+
         # Otherwise we have to upload the proper sketch.
         logger.info(f'About to upload sketch {self.SKETCH_ID} version {self.SKETCH_VERSION}...')
         file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
