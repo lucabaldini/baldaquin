@@ -400,7 +400,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         return ArduinoCli._execute(args)
 
     @staticmethod
-    def compile(file_path: str, build_path: str, board: ArduinoBoard,
+    def compile(file_path: str, output_dir: str, board: ArduinoBoard,
                 verbose: bool = False) -> subprocess.CompletedProcess:
         """Compile a sketch.
 
@@ -461,7 +461,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         """ # noqa F811
         args = [
             ArduinoCli.PROGRAM_NAME, 'compile',
-            '--output-dir', str(build_path),
+            '--output-dir', str(output_dir),
             '--fqbn', board.fqbn(),
             str(file_path)
             ]
@@ -533,18 +533,53 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
         return AvrDude._execute(args)
 
 
-def upload_sketch(file_path: str, board: ArduinoBoard) -> subprocess.CompletedProcess:
-    """Upload a sketch to an arduino board.
+def upload_sketch(file_path: str, board_designator: str,
+                  port_name: str = None, verbose: bool = False) -> subprocess.CompletedProcess:
+    """High-level interface to upload a compiled sketch to an arduino board.
+
+    Arguments
+    ---------
+    file_path : str
+        The path to the binary file containing the sketch compiled for the given
+        board.
+
+    board_designator : str
+        The board designator (e.g., "uno").
+
+    port_name : str, optional
+        The port name the board is attached to (e.g., "/dev/ttyACM0"). If this is
+        None, we use the autodetection features implemented in the module.
+
+    verbose : bool
+        If True, the program will run in verbose mode.
     """
     if not os.path.exists(file_path):
         raise RuntimeError(f'Could not find file {file_path}')
-    port = autodetect_arduino_board(board)
-    return ArduinoCli.upload(file_path, port.name, board)
+    board = ArduinoBoard.by_designator(board_designator)
+    if port_name is None:
+        port_name = autodetect_arduino_board(board).name
+    logger.info(f'Uploading sketch {file_path} for {board} to port {port_name}...')
+    return ArduinoCli.upload(file_path, port_name, board, verbose)
 
 
-def compile_sketch(file_path: str, output_dir: str, board_designator: str,
+def compile_sketch(file_path: str, board_designator: str, output_dir: str,
                    verbose: bool = False) -> subprocess.CompletedProcess:
-    """Compile a sketch for a given arduino board.
+    """High-level interface to compile a sketch for a given arduino board.
+
+    Arguments
+    ---------
+    file_path : str
+        The path to the binary file containing the sketch compiled for the given
+        board.
+
+    board_designator : str
+        The board designator (e.g., "uno").
+
+    otuput_dir : str
+        Path to the folder where the compilation artifacts should be placed.
+
+    verbose : bool
+        If True, the program will run in verbose mode.
     """
     if not os.path.exists(file_path):
         raise RuntimeError(f'Could not find file {file_path}')

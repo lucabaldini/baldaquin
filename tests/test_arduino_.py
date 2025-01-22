@@ -56,6 +56,26 @@ def test_board_retrieval():
     logger.info(info)
 
 
+def test_autodetect():
+    """Test the automatic detection of the Arduino board.
+    """
+    ports = arduino_.autodetect_arduino_boards()
+    print(ports)
+    ports = arduino_.autodetect_arduino_boards(arduino_.UNO)
+    print(ports)
+    ports = arduino_.autodetect_arduino_board(arduino_.UNO)
+    print(ports)
+
+
+# def test_upload():
+#     """Test the sketch upload.
+#     """
+#     file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
+#     try:
+#         arduino_.upload_sketch(file_path, BALDAQUIN_DATA, 'uno', verbose=False)
+#     except RuntimeError as info:
+#         logger.info(info)
+
 def test_compile():
     """Test the sketch compilation.
 
