@@ -35,7 +35,7 @@ from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
 # This needs to stay *after* the from baldaquin.__qt__ import, in order for the
 # matplotlib monkeypatching to happen in time.
-# pylint: disable=no-name-in-module, wrong-import-order, ungrouped-imports
+# pylint: disable=no-name-in-module, wrong-import-order, ungrouped-imports, import-error
 from matplotlib.backends.backend_qtagg import FigureCanvas
 
 # pylint: disable=too-many-lines
