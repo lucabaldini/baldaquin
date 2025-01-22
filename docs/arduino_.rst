@@ -21,7 +21,8 @@ need them.
     go---see the `installation instructions <https://arduino.github.io/arduino-cli/latest/installation/>`_.
     (This will literally run a script and copy the executable on your machine,
     which is handy because you will not need administrator priviledges to
-    run the thing.)
+    run the thing. The same thing holds for all the additional modules, e.g.,
+    `arduino:avr` you might need.)
 
 
 The :class:`ArduinoBoard <baldaquin.arduino_.ArduinoBoard>` class provides a small
