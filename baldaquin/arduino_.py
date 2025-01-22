@@ -570,7 +570,11 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
     ---------
     file_path : str
         The path to the binary file containing the sketch compiled for the given
-        board.
+        board. Note that, in virtue of some interesting decision by the Arduino
+        team, it appears that the main source file for the sketch should be embedded
+        in a folder with the same name (without extension)---I guess that vaguely
+        makes sense for sketches with multiple files. The directory name is also
+        gladly accepted for the compilation.
 
     board_designator : str
         The board designator (e.g., "uno").
