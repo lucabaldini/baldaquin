@@ -18,12 +18,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
-from baldaquin.buf import CircularBuffer
+from baldaquin.buf import CircularBuffer, WriteMode
 from baldaquin.pkt import AbstractPacket, PacketStatistics
 
 

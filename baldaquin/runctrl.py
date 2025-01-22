@@ -332,7 +332,10 @@ class RunControlBase(FiniteStateMachineBase):
         return data_folder_path(self._PROJECT_NAME) / self._file_name_base()
 
     def output_file_path_base(self) -> Path:
-        """
+        """Return the base pattern for all the output files.
+
+        This is use to pass the message about where to write output files to
+        user applications.
         """
         return self.data_folder_path() / self._file_name_base()
 

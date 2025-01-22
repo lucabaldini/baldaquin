@@ -78,7 +78,6 @@ class UserApplicationBase:
         be done right before the application is stared (e.g., adding a custom
         sink to the underlying packet buffer.)
         """
-        pass
 
     def start_run(self) -> None:
         """Start the event handler.
