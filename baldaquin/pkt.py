@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from enum import Enum
 import struct
 
+from baldaquin.timeline import Timeline
+
 
 class Format(Enum):
 
@@ -120,7 +122,7 @@ class AbstractPacket(ABC):
         """Hook that subclasses can overload to provide a sensible header for an
         output text file.
         """
-        return ''
+        return f'{cls.COMMENT_PREFIX}Created on {Timeline().latch()}'
 
     def to_text(self) -> str:
         """Hook that subclasses can overload to provide a text representation of
@@ -261,7 +263,8 @@ class FixedSizePacketBase(AbstractPacket):
     def text_header(cls) -> str:
         """Overloaded method.
         """
-        return f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}'
+        return f'{super().text_header()}\n' \
+               f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}'
 
     def to_text(self) -> str:
         """Overloaded method.
