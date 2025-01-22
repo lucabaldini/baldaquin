@@ -264,12 +264,12 @@ class FixedSizePacketBase(AbstractPacket):
         """Overloaded method.
         """
         return f'{super().text_header()}\n' \
-               f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}'
+               f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}\n'
 
     def to_text(self) -> str:
         """Overloaded method.
         """
-        return self.TEXT_SEPARATOR.join([str(item) for item in self])
+        return f'{self.TEXT_SEPARATOR.join([str(item) for item in self])}\n'
 
 
 @dataclass

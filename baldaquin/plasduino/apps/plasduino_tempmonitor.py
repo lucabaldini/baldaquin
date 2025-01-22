@@ -16,8 +16,11 @@
 """Plasduino temperature monitor application.
 """
 
+from pathlib import Path
+
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
+from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
@@ -70,11 +73,18 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         args = self._CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE, 10, *self._CONVERSION_COLS
         self._converter = ThermistorConversion.from_file(*args)
 
-    def configure(self):
+    def configure(self) -> None:
         """Overloaded method.
         """
         for chart in self.strip_chart_dict.values():
             chart.reset(self.configuration.value('strip_chart_max_length'))
+
+    def pre_start(self) -> None:
+        """Overloaded method.
+        """
+        file_path = Path(f'{self.current_output_file_base}_data.txt')
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
+                                           AnalogReadout.text_header())
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.

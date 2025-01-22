@@ -38,6 +38,7 @@ class UserApplicationBase:
         """
         # pylint: disable=not-callable
         self.event_handler = self.EVENT_HANDLER_CLASS()
+        self.current_output_file_base = None
         # We should think about whether there is a more elegant way to do this.
         # Pass the user application to the child event handler? Use inheritance
         # rather than composition?
@@ -71,6 +72,13 @@ class UserApplicationBase:
         """Function called when the run control transitions from STOPPED to RESET.
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
+
+    def pre_start(self) -> None:
+        """Hook that subclasses can use to perform any operation that needs to
+        be done right before the application is stared (e.g., adding a custom
+        sink to the underlying packet buffer.)
+        """
+        pass
 
     def start_run(self) -> None:
         """Start the event handler.
