@@ -69,7 +69,8 @@ BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
 BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'
 BALDAQUIN_DOCS = BALDAQUIN_BASE / 'docs'
 BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
-BALDAQUIN_TESTS = BALDAQUIN_BASE / 'test'
+BALDAQUIN_TESTS = BALDAQUIN_BASE / 'tests'
+BALDAQUIN_TEST_DATA = BALDAQUIN_TESTS / 'data'
 
 
 # Version information.
@@ -114,6 +115,15 @@ try:
 except KeyError:
     BALDAQUIN_DATA = Path.home() / 'baldaquindata'
 _create_folder(BALDAQUIN_DATA)
+
+
+# We're doing a similar thing for our scratch space.
+try:
+    BALDAQUIN_SCRATCH = Path(os.environ['BALDAQUIN_SCRATCH'])
+except KeyError:
+    BALDAQUIN_SCRATCH = BALDAQUIN_DATA / 'scratch'
+_create_folder(BALDAQUIN_SCRATCH)
+
 
 # On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
 BALDAQUIN_CONFIG = Path.home() / '.baldaquin'

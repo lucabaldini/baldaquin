@@ -3,6 +3,18 @@
 Release notes
 =============
 
+* Major refactoring of the serial_ and arduino_ modules.
+* New, experimental, baldaquin command-line utility added.
+* Sketch auto-upload implemented in plasduino.
+* Sketch compilation capability added.
+* BALDAQUIN_SCRATCH folder added.
+* Documentation expanded and revised.
+* Unit tests added.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/27
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/25
+
 
 *baldaquin 0.1.3 (Wed, 15 Jan 2025 08:59:44 +0100)*
 

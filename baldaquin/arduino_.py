@@ -14,21 +14,24 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """Arduino common resources.
-
-.. warning::
-    We are taking this chance to look around and see what's the best way to interface
-    to arduino, and this module might significantly change in the future---at this
-    point you should consider all the API as experimental.
 """
 
-from dataclasses import dataclass
-import subprocess
+from __future__ import annotations
 
-import serial.tools.list_ports_common
+from dataclasses import dataclass
+import os
+import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import list_com_ports
+from baldaquin.serial_ import DeviceId, Port, list_com_ports
+
+
+# Initialize the necessary dictionaries to retrieve the boards by device_id or
+# designator---these will act as two small databases helping accessing board
+# information.
+_BOARD_DESIGNATOR_DICT = {}
+_DEVICE_ID_DICT = {}
 
 
 @dataclass
@@ -48,84 +51,178 @@ class ArduinoBoard:
     supporting all the boards on the face of the Earth, we decided to manually add
     the necessary data for specific boards only when (and if) we need them, starting
     from the Arduino UNO, being used in plasduino.
+
+    The typical entry in the file for a board is something like this:
+
+    .. code-block:: shell
+
+        uno.name=Arduino UNO
+
+        uno.vid.0=0x2341
+        uno.pid.0=0x0043
+        uno.vid.1=0x2341
+        uno.pid.1=0x0001
+        uno.vid.2=0x2A03
+        uno.pid.2=0x0043
+        uno.vid.3=0x2341
+        uno.pid.3=0x0243
+        uno.vid.4=0x2341
+        uno.pid.4=0x006A
+        uno.upload_port.0.vid=0x2341
+        uno.upload_port.0.pid=0x0043
+        uno.upload_port.1.vid=0x2341
+        uno.upload_port.1.pid=0x0001
+        uno.upload_port.2.vid=0x2A03
+        uno.upload_port.2.pid=0x0043
+        uno.upload_port.3.vid=0x2341
+        uno.upload_port.3.pid=0x0243
+        uno.upload_port.4.vid=0x2341
+        uno.upload_port.4.pid=0x006A
+        uno.upload_port.5.board=uno
+
+        uno.upload.tool=avrdude
+        uno.upload.tool.default=avrdude
+        uno.upload.tool.network=arduino_ota
+        uno.upload.protocol=arduino
+        uno.upload.maximum_size=32256
+        uno.upload.maximum_data_size=2048
+        uno.upload.speed=115200
+
+        uno.bootloader.tool=avrdude
+        uno.bootloader.tool.default=avrdude
+        uno.bootloader.low_fuses=0xFF
+        uno.bootloader.high_fuses=0xDE
+        uno.bootloader.extended_fuses=0xFD
+        uno.bootloader.unlock_bits=0x3F
+        uno.bootloader.lock_bits=0x0F
+        uno.bootloader.file=optiboot/optiboot_atmega328.hex
+
+        uno.build.mcu=atmega328p
+        uno.build.f_cpu=16000000L
+        uno.build.board=AVR_UNO
+        uno.build.core=arduino
+        uno.build.variant=standard
+
+    Note that we refer to the qualifier for the board ("uno" in this case) as
+    the board `designator`, and we parse the bare minimum of the information
+    from the file.
+
     """
 
     # pylint: disable=too-many-instance-attributes
 
-    board_id: str
+    designator: str
     name: str
     vendor: str
     architecture: str
     upload_protocol: str
     upload_speed: int
     build_mcu: str
-    identifiers: tuple
+    device_ids: tuple[DeviceId]
+
+    def __post_init__(self):
+        """Post-initialization: turn the vid, pid tuples into DeviceId objects.
+        """
+        self.device_ids = tuple(DeviceId(*tup) for tup in self.device_ids)
 
     def fqbn(self) -> str:
         """Return the fully qualified board name (FQBN), as defined in
         https://arduino.github.io/arduino-cli/1.1/platform-specification/
         """
-        return f'{self.vendor}:{self.architecture}:{self.board_id}'
+        return f'{self.vendor}:{self.architecture}:{self.designator}'
+
+    @staticmethod
+    def concatenate_device_ids(*boards: ArduinoBoard) -> tuple[DeviceId]:
+        """Return a tuple with all the possible DeviceId objects corresponding to a
+        subset of the supported arduino boards.
+
+        Arguments
+        ---------
+        *boards : ArduinoBoard
+            The ArduinoBoard object(s) we are interested into.
+
+        Returns
+        -------
+        tuple
+            A tuple of DeviceId objects.
+        """
+        # If you are tempted to use a sum of lists with start=[], here, keep in mind
+        # this is not supported in Python 3.7.
+        device_ids = ()
+        for board in boards:
+            device_ids += board.device_ids
+        return device_ids
+
+    @staticmethod
+    def by_device_id(device_id: DeviceId) -> ArduinoBoard:
+        """Return the ArduinoBoard object corresponding to a given DeviceId.
+
+        Note this only involves a dictionary lookup, and nothing is created on
+        the spot.
+
+        Arguments
+        ---------
+        vid : int
+            The vendor ID for the given device.
+
+        pid : int
+            The prodict ID for the given device.
+
+        Returns
+        -------
+        ArduinoBoard
+            The ArduinoBoard object corresponding to the DeviceId.
+        """
+        try:
+            return _DEVICE_ID_DICT[device_id]
+        except KeyError as exception:
+            raise RuntimeError(f'Unsupported device ID {device_id}') from exception
+
+    @staticmethod
+    def by_designator(designator: str) -> ArduinoBoard:
+        """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+
+        Note this only involves a dictionary lookup, and nothing is created on
+        the spot.
+
+        Arguments
+        ---------
+        designator : str
+            The board designator (e.g., "uno").
+
+        Returns
+        -------
+        ArduinoBoard
+            The ArduinoBoard object corresponding to the designator.
+        """
+        try:
+            return _BOARD_DESIGNATOR_DICT[designator]
+        except KeyError as exception:
+            raise RuntimeError(f'Unsupported designator {designator}') from exception
 
 
+# --------------------------------------------------------------------------------------------------
+# Define the supported boards.
 UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
-                   ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043), (0x2341, 0x0243),
+                   ((0x2341, 0x0043),
+                    (0x2341, 0x0001),
+                    (0x2A03, 0x0043),
+                    (0x2341, 0x0243),
                     (0x2341, 0x006A)))
 
 
 _SUPPORTED_BOARDS = (UNO,)
+# --------------------------------------------------------------------------------------------------
 
 
-# Build a dictionary {(vid, pid): ArduinoBoard} containing all the supported boards.
-# Th is is useful, e.g., when autodetecting arduino boards connected to a serial port.
-_BOARD_IDENTIFIER_DICT = {}
+# And now loop over the supported boards to fill the information in the dictionaries.
 for _board in _SUPPORTED_BOARDS:
-    for _id in _board.identifiers:
-        _BOARD_IDENTIFIER_DICT[_id] = _board
+    _BOARD_DESIGNATOR_DICT[_board.designator] = _board
+    for _id in _board.device_ids:
+        _DEVICE_ID_DICT[_id] = _board
 
 
-def board_identifiers(*boards: ArduinoBoard) -> tuple:
-    """Return all the possible identiers corresponding to a subset of the supported
-    arduino boards.
-
-    Arguments
-    ---------
-    *boards : ArduinoBoard
-        The ArduinoBoard object(s) we are interested into.
-
-    Returns
-    -------
-    tuple
-        A tuple of (vid, pid) tuples.
-    """
-    # If you are tempted to use a sum of lists with start=[], here, keep in mind
-    # this is not supported in Python 3.7.
-    identiers = ()
-    for board in boards:
-        identiers += board.identifiers
-    return identiers
-
-
-def identify_arduino_board(vid: int, pid: int) -> ArduinoBoard:
-    """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
-
-    Arguments
-    ---------
-    vid : int
-        The vendor ID for the given device.
-
-    pid : int
-        The prodict ID for the given device.
-
-    Returns
-    -------
-    ArduinoBoard
-        The ArduinoBoard object corresponding to the vid and pid passes as arguments.
-    """
-    return _BOARD_IDENTIFIER_DICT.get((vid, pid))
-
-
-def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
+def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     """Autodetect all supported arduino boards of one or more specific types
     attached to the COM ports.
 
@@ -136,21 +233,22 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> serial.tools.list_ports_
 
     Returns
     -------
-    serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    list of Port objects
+        The list of Port object with relevant boards attached to them.
     """
+    # If we are passing no boards, we are interested in all the supported ones.
+    if len(boards) == 0:
+        boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    ports = list_com_ports(*board_identifiers(*boards))
+    ports = list_com_ports(*ArduinoBoard.concatenate_device_ids(*boards))
     for port in ports:
-        board = identify_arduino_board(port.vid, port.pid)
+        board = ArduinoBoard.by_device_id(port.device_id)
         if port is not None:
-            logger.info(f'{port.device} -> {board.board_id} ({board.name})')
+            logger.debug(f'{port.name} -> {board.designator} ({board.name})')
     return ports
 
 
-def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_common.ListPortInfo:
+def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
     """Autodetect the first supported arduino board within a list of board types.
 
     Note this returns None if no supported arduino board is found, and the
@@ -163,10 +261,8 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> serial.tools.list_ports_c
 
     Returns
     -------
-    serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    Port
+        The Port object our target board is attached to.
     """
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
@@ -251,10 +347,7 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
                verbose: bool = False) -> subprocess.CompletedProcess:
         """Upload a sketch to a board.
 
-        Note this is using avrdude under the hood, so one might wonder why we
-        would want to use the Arduino CLI in the first place to upload sketches,
-        beside the fact that the FQBN is the only thing that it seems to need to
-        make the magic.
+        Note this is using avrdude under the hood.
 
         .. code-block:: shell
 
@@ -298,7 +391,79 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
             ArduinoCli.PROGRAM_NAME, 'upload',
             '--port', port,
             '--fqbn', board.fqbn(),
-            '--input-file', file_path
+            # Note we have to cast to string in case file_path is a Path, as
+            # subprocess is adamant in requiring a string.
+            '--input-file', str(file_path)
+            ]
+        if verbose:
+            args.append('--verbose')
+        return ArduinoCli._execute(args)
+
+    @staticmethod
+    def compile(file_path: str, output_dir: str, board: ArduinoBoard,
+                verbose: bool = False) -> subprocess.CompletedProcess:
+        """Compile a sketch.
+
+        .. code-block:: shell
+
+            Usage:
+              arduino-cli compile [flags]
+
+            Examples:
+              arduino-cli compile -b arduino:avr:uno /home/user/Arduino/MySketch
+              arduino-cli compile -b arduino:avr:uno --build-property "build.extra_flags=\"-DMY_DEFINE=\"hello world\"\"" /home/user/Arduino/MySketch
+              arduino-cli compile -b arduino:avr:uno --build-property "build.extra_flags=-DPIN=2 \"-DMY_DEFINE=\"hello world\"\"" /home/user/Arduino/MySketch
+              arduino-cli compile -b arduino:avr:uno --build-property build.extra_flags=-DPIN=2 --build-property "compiler.cpp.extra_flags=\"-DSSID=\"hello world\"\"" /home/user/Arduino/MySketch
+
+
+            Flags:
+                  --board-options strings                 List of board options separated by commas. Or can be used multiple times for multiple options.
+                  --build-path string                     Path where to save compiled files. If omitted, a directory will be created in the default temporary path of your OS.
+                  --build-property stringArray            Override a build property with a custom value. Can be used multiple times for multiple properties.
+                  --clean                                 Optional, cleanup the build folder and do not use any cached build.
+                  --discovery-timeout duration            Max time to wait for port discovery, e.g.: 30s, 1m (default 1s)
+                  --dump-profile                          Create and print a profile configuration from the build.
+                  --encrypt-key string                    The name of the custom encryption key to use to encrypt a binary during the compile process. Used only by the platforms that support it.
+              -e, --export-binaries                       If set built binaries will be exported to the sketch folder.
+              -b, --fqbn string                           Fully Qualified Board Name, e.g.: arduino:avr:uno
+              -h, --help                                  help for compile
+              -j, --jobs int32                            Max number of parallel compiles. If set to 0 the number of available CPUs cores will be used.
+                  --keys-keychain string                  The path of the dir to search for the custom keys to sign and encrypt a binary. Used only by the platforms that support it.
+                  --libraries strings                     Path to a collection of libraries. Can be used multiple times or entries can be comma separated.
+                  --library strings                       Path to a single library’s root folder. Can be used multiple times or entries can be comma separated.
+                  --only-compilation-database             Just produce the compilation database, without actually compiling. All build commands are skipped except pre* hooks.
+                  --optimize-for-debug                    Optional, optimize compile output for debugging, rather than for release.
+                  --output-dir string                     Save build artifacts in this directory.
+              -p, --port string                           Upload port address, e.g.: COM3 or /dev/ttyACM2
+                  --preprocess                            Print preprocessed code to stdout instead of compiling.
+              -m, --profile string                        Sketch profile to use
+              -P, --programmer string                     Programmer to use, e.g: atmel_ice
+              -l, --protocol string                       Upload port protocol, e.g: serial
+                  --quiet                                 Optional, suppresses almost every output.
+                  --show-properties string[="expanded"]   Show build properties. The properties are expanded, use "--show-properties=unexpanded" if you want them exactly as they are defined. (default "disabled")
+                  --sign-key string                       The name of the custom signing key to use to sign a binary during the compile process. Used only by the platforms that support it.
+              -u, --upload                                Upload the binary after the compilation.
+              -v, --verbose                               Optional, turns on verbose mode.
+              -t, --verify                                Verify uploaded binary after the upload.
+                  --warnings string                       Optional, can be: none, default, more, all. Used to tell gcc which warning level to use (-W flag). (default "none")
+
+            Global Flags:
+                  --additional-urls strings   Comma-separated list of additional URLs for the Boards Manager.
+                  --config-dir string         Sets the default data directory (Arduino CLI will look for configuration file in this directory).
+                  --config-file string        The custom config file (if not specified the default will be used).
+                  --json                      Print the output in JSON format.
+                  --log                       Print the logs on the standard output.
+                  --log-file string           Path to the file where logs will be written.
+                  --log-format string         The output format for the logs, can be: text, json (default "text")
+                  --log-level string          Messages with this level and above will be logged. Valid levels are: trace, debug, info, warn, error, fatal, panic (default "info")
+                  --no-color                  Disable colored output.
+
+        """ # noqa F811
+        args = [
+            ArduinoCli.PROGRAM_NAME, 'compile',
+            '--output-dir', str(output_dir),
+            '--fqbn', board.fqbn(),
+            str(file_path)
             ]
         if verbose:
             args.append('--verbose')
@@ -365,11 +530,66 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
             ]
         if verbose:
             args.append('-v')
-        AvrDude._execute(args)
+        return AvrDude._execute(args)
 
 
-# if __name__ == '__main__':
-#     file_path = '/data/work/baldaquin/baldaquin/plasduino/sketches/analog_sampling.hex'
-#     port = '/dev/ttyACM0'
-#     ArduinoCli.upload(file_path, port, UNO)
-#     AvrDude.upload(file_path, port, UNO)
+def upload_sketch(file_path: str, board_designator: str,
+                  port_name: str = None, verbose: bool = False) -> subprocess.CompletedProcess:
+    """High-level interface to upload a compiled sketch to an arduino board.
+
+    Arguments
+    ---------
+    file_path : str
+        The path to the binary file containing the sketch compiled for the given
+        board.
+
+    board_designator : str
+        The board designator (e.g., "uno").
+
+    port_name : str, optional
+        The port name the board is attached to (e.g., "/dev/ttyACM0"). If this is
+        None, we use the autodetection features implemented in the module.
+
+    verbose : bool
+        If True, the program will run in verbose mode.
+    """
+    if not os.path.exists(file_path):
+        raise RuntimeError(f'Could not find file {file_path}')
+    board = ArduinoBoard.by_designator(board_designator)
+    if port_name is None:
+        port = autodetect_arduino_board(board)
+        if port is None:
+            raise RuntimeError(f'Could not autodetect port with {board.name}')
+        port_name = port.name
+    logger.info(f'Uploading sketch {file_path} for {board} to port {port_name}...')
+    return ArduinoCli.upload(file_path, port_name, board, verbose)
+
+
+def compile_sketch(file_path: str, board_designator: str, output_dir: str,
+                   verbose: bool = False) -> subprocess.CompletedProcess:
+    """High-level interface to compile a sketch for a given arduino board.
+
+    Arguments
+    ---------
+    file_path : str
+        The path to the binary file containing the sketch compiled for the given
+        board. Note that, in virtue of some interesting decision by the Arduino
+        team, it appears that the main source file for the sketch should be embedded
+        in a folder with the same name (without extension)---I guess that vaguely
+        makes sense for sketches with multiple files. The directory name is also
+        gladly accepted for the compilation.
+
+    board_designator : str
+        The board designator (e.g., "uno").
+
+    otuput_dir : str
+        Path to the folder where the compilation artifacts should be placed.
+
+    verbose : bool
+        If True, the program will run in verbose mode.
+    """
+    if not os.path.exists(file_path):
+        raise RuntimeError(f'Could not find file {file_path}')
+    board = ArduinoBoard.by_designator(board_designator)
+    logger.info(f'Compiling sketch {file_path} for {board}...')
+    return ArduinoCli.compile(file_path, output_dir, board, verbose)

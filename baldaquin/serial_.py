@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2024 the baldaquin team.
+# Copyright (C) 2022--2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,9 @@
 """Serial port interface.
 """
 
+from __future__ import annotations
+
+from dataclasses import dataclass
 import struct
 import time
 from typing import Any
@@ -32,49 +35,130 @@ STANDARD_BAUD_RATES = serial.Serial.BAUDRATES
 DEFAULT_BAUD_RATE = 115200
 
 
-def _fmt_port(port: serial.tools.list_ports_common.ListPortInfo) -> str:
-    """Small convenience function to print out some pretty-printed serial port info.
-    """
-    text = port.device
-    vid, pid, manufacturer = port.vid, port.pid, port.manufacturer
-    if vid is None and pid is None:
-        return text
-    text = f'{text} -> vid {hex(vid)}, pid {hex(pid)}'
-    if manufacturer is not None:
-        text = f'{text} by {manufacturer}'
-    return text
+@dataclass
+class DeviceId:
 
+    """Data class to hold the device id information.
 
-def list_com_ports(*devices) -> serial.tools.list_ports_common.ListPortInfo:
-    """List all the com ports with devices attached, possibly with a filter on the
-    (vid, pid) pairs we are interested into.
+    A device id is basically a tuple of two integers, the vendor id (vid) and the
+    product id (pid), and the class has exactly these two members.
 
     Arguments
     ---------
-    *devices : (vid, pid) tuples
-        The (vid, pid) tuples to filter the list of ports returned by pyserial.
+    vid : int
+        The vendor id.
+
+    pid : int
+        The product id.
+    """
+
+    vid: int
+    pid: int
+
+    def __eq__(self, other) -> bool:
+        """Equality comparison.
+
+        Note we support the comparison between a DeviceId object and a tuple.
+        """
+        if isinstance(other, tuple):
+            return (self.vid, self.pid) == other
+        return (self.vid, self.pid) == (other.vid, other.pid)
+
+    @staticmethod
+    def _hex(value: int) -> str:
+        """Convenience function to format an integer as a hexadecimal string,
+        gracefully handling the case when the input is not an integer.
+        """
+        try:
+            return hex(value)
+        except TypeError:
+            return None
+
+    def __hash__(self):
+        """Hash function.
+        """
+        return hash((self.vid, self.pid))
+
+    def __repr__(self) -> str:
+        """String formatting.
+        """
+        return f'(vid={self._hex(self.vid)}, pid={self._hex(self.pid)})'
+
+
+@dataclass
+class Port:
+
+    """Small data class holding the informatio about a COM port.
+
+    This is a simple wrapper around the serial.tools.list_ports_common.ListPortInfo
+    isolating the basic useful functionalities, for the sake of simplicity.
+
+    See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
+    for more information.
+
+    Arguments
+    ---------
+    name : str
+        The name of the port (e.g., ``/dev/ttyACM0``).
+
+    device_id : DeviceId
+        The device id.
+
+    manufacturer : str, optional
+        The manufacturer of the device attached to the port.
+    """
+
+    name: str
+    device_id: DeviceId
+    manufacturer: str = None
+
+    @classmethod
+    def from_port_info(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'Port':
+        """Create a Port object from a ListPortInfo object.
+        """
+        device_id = DeviceId(port_info.vid, port_info.pid)
+        return cls(port_info.device, device_id, port_info.manufacturer)
+
+
+def list_com_ports(*device_ids: DeviceId) -> list[Port]:
+    """List all the com ports with devices attached, possibly with a filter on
+    the device ids we are interested into.
+
+    Arguments
+    ---------
+    device_ids : DeviceId or vid, pid tuples, optional
+        An arbitrary number of device ids to filter the list of ports returned by pyserial.
         This is useful when we are searching for a specific device attached to a
         port; an arduino uno, e.g., might look something like (0x2341, 0x43).
 
     Returns
     -------
-    list of serial.tools.list_ports_common.ListPortInfo
-        See
-        https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
-        for the object documentation.
+    list of Port objects
+        The list of COM ports.
     """
     logger.info('Scanning serial devices...')
-    ports = serial.tools.list_ports.comports()
+    # Populate the initial list of ports.
+    ports = [Port.from_port_info(port_info) for port_info in serial.tools.list_ports.comports()]
     for port in ports:
-        logger.debug(_fmt_port(port))
+        logger.debug(port)
     logger.info(f'Done, {len(ports)} device(s) found.')
+    # If we're not filtering over device ids, we're done.
+    if len(device_ids) == 0:
+        return ports
+    # Otherwise, we filter the list of ports, assuming we have any.
     if len(ports) > 0:
-        device_list = [f'({hex(vid)}, {hex(pid)})' for vid, pid in devices]
-        logger.info(f'Filtering port list for specific devices: {", ".join(device_list)}...')
-        ports = [port for port in ports if (port.vid, port.pid) in devices]
+        # If we have a list of tuples, we convert them to DeviceId objects---this
+        # will make the printout on the terminal nicer, with the 0x and all that.
+        device_ids = list(device_ids)
+        for i, entry in enumerate(device_ids):
+            if isinstance(entry, tuple):
+                device_ids[i] = DeviceId(*entry)
+        logger.info(f'Filtering port list for specific devices: {device_ids}...')
+        # Do the actual filtering.
+        ports = [port for port in ports if port.device_id in device_ids]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
-        logger.debug(_fmt_port(port))
+        logger.debug(port)
     return ports
 
 

@@ -16,7 +16,11 @@
 """Test suite for arduino_.py
 """
 
+import pytest
+
+from baldaquin import logger, BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA
 from baldaquin import arduino_
+from baldaquin.serial_ import DeviceId
 
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
@@ -30,14 +34,60 @@ def test_supported_boards():
         print(board)
 
 
-def test_board_identifiers():
+def test_concatenate_device_ids():
     """Test the board identiers.
     """
-    assert arduino_.board_identifiers(arduino_.UNO) == _UNO_IDS
+    assert arduino_.ArduinoBoard.concatenate_device_ids(arduino_.UNO) == _UNO_IDS
 
 
-def test_board_identify():
+def test_board_retrieval():
     """Test the board identification code.
     """
-    for vid, pid in _UNO_IDS:
-        assert arduino_.identify_arduino_board(vid, pid) == arduino_.UNO
+    for device_id in _UNO_IDS:
+        assert arduino_.ArduinoBoard.by_device_id(device_id) == arduino_.UNO
+    assert arduino_.ArduinoBoard.by_designator('uno') == arduino_.UNO
+
+    with pytest.raises(RuntimeError) as info:
+        arduino_.ArduinoBoard.by_device_id(DeviceId(-1, -1))
+    logger.info(info)
+
+    with pytest.raises(RuntimeError) as info:
+        arduino_.ArduinoBoard.by_designator('una')
+    logger.info(info)
+
+
+def test_autodetect():
+    """Test the automatic detection of the Arduino board.
+    """
+    ports = arduino_.autodetect_arduino_boards()
+    print(ports)
+    ports = arduino_.autodetect_arduino_boards(arduino_.UNO)
+    print(ports)
+    ports = arduino_.autodetect_arduino_board(arduino_.UNO)
+    print(ports)
+
+
+def test_upload():
+    """Test the sketch upload.
+
+    Note this is within a try/except block because we cannot assume we have
+    arduino-cli installed.
+    """
+    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino.hex'
+    try:
+        arduino_.upload_sketch(file_path, 'uno')
+    except RuntimeError as info:
+        logger.info(info)
+
+
+def test_compile():
+    """Test the sketch compilation.
+
+    Note this is within a try/except block because we cannot assume we have
+    arduino-cli installed.
+    """
+    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
+    try:
+        arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
+    except RuntimeError as info:
+        logger.info(info)

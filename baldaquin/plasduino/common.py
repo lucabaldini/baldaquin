@@ -28,6 +28,7 @@ from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
+from baldaquin.plasduino.sketches import sketch_file_path
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import SerialInterface
@@ -58,6 +59,17 @@ class PlasduinoSerialInterface(SerialInterface):
         work on the receiving side too. Good job, Luca!
         """
         return super().read_and_unpack(f'>{fmt}')
+
+    def read_sketch_info(self):
+        """Read the information about the sketch loaded on the board.
+
+        The sketch information (identifier, version) is the first bit of info that
+        the plasduino sketches send out, and this should be the first function
+        called after a setup.
+        """
+        sketch_id = self.read_and_unpack('B')
+        sketch_version = self.read_and_unpack('B')
+        return sketch_id, sketch_version
 
     def read_run_end_marker(self) -> None:
         """Read a single byte from the serial port and make sure it is the
@@ -191,6 +203,8 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
     # pylint: disable=abstract-method
     BUFFER_CLASS = CircularBuffer
     BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_interval=5.)
+    SKETCH_ID = None
+    SKETCH_VERSION = None
 
     def __init__(self) -> None:
         """Constructor.
@@ -201,12 +215,9 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         super().__init__()
         self.serial_interface = PlasduinoSerialInterface()
 
-    def open_serial_interface(self, timeout: float = None) -> None:
+    def open_serial_interface(self, timeout: float = None, handshake_timeout: float = 5.) -> None:
         """Autodetect a supported arduino board, open the serial connection to it,
         and do the handshaking.
-
-        .. warning::
-            We still have to implement to sketch upload part, here.
 
         Arguments
         ---------
@@ -214,16 +225,44 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             The timeout (in s) for the serial readout. If set to None, every read
             operation is effectively blocking, and this is the way we should operate
             in normal conditions.
+
+        handshake_timeout : float
+            The timeout for the first handshaking with the board, when we try and
+            gauge the identifier and version of the sketch that is preloaded.
+            Note that this cannot be too small, as it takes a good second for the
+            thing to happen.
         """
         port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port.device, timeout=timeout)
+        self.serial_interface.connect(port.name, timeout=timeout)
         self.serial_interface.pulse_dtr()
         logger.info('Hand-shaking with the arduino board...')
-        sketch_id = self.serial_interface.read_and_unpack('B')
-        sketch_version = self.serial_interface.read_and_unpack('B')
-        logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+
+        # Temporarily set a finite timeout to handle the case where there is not
+        # sensible sketch pre-loaded on the board, and we have to start from scratch.
+        self.serial_interface.timeout = handshake_timeout
+        try:
+            sketch_id, sketch_version = self.serial_interface.read_sketch_info()
+            logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+        except struct.error:
+            logger.warning('There seems to be no plasduino scketch pre-loaded on the board...')
+            sketch_id, sketch_version = None, None
+        # Now put back the actual target timeout.
+        self.serial_interface.timeout = timeout
+
+        # If the sketch uploaded onboard is the one we expect, we're good to go.
+        if (sketch_id, sketch_version) == (self.SKETCH_ID, self.SKETCH_VERSION):
+            return
+
+        # Otherwise we have to upload the proper sketch.
+        file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
+        board = arduino_.ArduinoBoard.by_device_id(port.device_id)
+        arduino_.upload_sketch(file_path, board.designator, port.name)
+        sketch_id, sketch_version = self.serial_interface.read_sketch_info()
+        if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
+            raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
+                               f'version {self.SKETCH_VERSION}')
 
     def close_serial_interface(self) -> None:
         """Close the serial interface.
@@ -235,6 +274,9 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
 
     """Event handler for the plasduino sketches reading analog data.
     """
+
+    SKETCH_ID = 2
+    SKETCH_VERSION = 3
 
     def read_packet(self) -> int:
         """Read a single packet, that is, an analog readout.
@@ -286,6 +328,9 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
 
     """Event handler for the plasduino sketches reading digital data.
     """
+
+    SKETCH_ID = 1
+    SKETCH_VERSION = 3
 
     def read_packet(self):
         """Read a single packet, that is, an analog readout.
