@@ -73,6 +73,24 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         args = self._CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE, 10, *self._CONVERSION_COLS
         self._converter = ThermistorConversion.from_file(*args)
 
+    def adc_to_celsius(self, adc_value) -> float:
+        """Convert an analog readout in ADC count to a temperature in degrees C.
+        """
+        return self._converter(adc_value)
+
+    @staticmethod
+    def text_header() -> str:
+        """Return the header for the output text file.
+        """
+        return f'{AbstractPacket.text_header()}\n' \
+               f'{AbstractPacket.COMMENT_PREFIX}Pin number, Time [s], Temperature [deg C]\n'
+
+    def readout_to_text(self, readout: AnalogReadout) -> str:
+        """Convert a temperature readout to text for use in a custom sink.
+        """
+        return f'{readout.pin_number}, {readout.seconds:.3f}, ' \
+               f'{self.adc_to_celsius(readout.adc_value):.3f}\n'
+
     def configure(self) -> None:
         """Overloaded method.
         """
@@ -83,14 +101,14 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{self.current_output_file_base}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
-                                           AnalogReadout.text_header())
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.readout_to_text,
+                                           self.text_header())
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
         readout = AnalogReadout.unpack(packet_data)
-        x, y = readout.seconds, self._converter(readout.adc_value)
+        x, y = readout.seconds, self.adc_to_celsius(readout.adc_value)
         self.strip_chart_dict[readout.pin_number].add_point(x, y)
         return readout
 
