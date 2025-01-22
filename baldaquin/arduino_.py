@@ -27,6 +27,13 @@ from baldaquin import execute_shell_command
 from baldaquin.serial_ import DeviceId, Port, list_com_ports
 
 
+# Initialize the necessary dictionaries to retrieve the boards by device_id or
+# designator---these will act as two small databases helping accessing board
+# information.
+_BOARD_DESIGNATOR_DICT = {}
+_DEVICE_ID_DICT = {}
+
+
 @dataclass
 class ArduinoBoard:
 
@@ -44,6 +51,62 @@ class ArduinoBoard:
     supporting all the boards on the face of the Earth, we decided to manually add
     the necessary data for specific boards only when (and if) we need them, starting
     from the Arduino UNO, being used in plasduino.
+
+    The typical entry in the file for a board is something like this:
+
+    .. code-block:: shell
+
+        uno.name=Arduino UNO
+
+        uno.vid.0=0x2341
+        uno.pid.0=0x0043
+        uno.vid.1=0x2341
+        uno.pid.1=0x0001
+        uno.vid.2=0x2A03
+        uno.pid.2=0x0043
+        uno.vid.3=0x2341
+        uno.pid.3=0x0243
+        uno.vid.4=0x2341
+        uno.pid.4=0x006A
+        uno.upload_port.0.vid=0x2341
+        uno.upload_port.0.pid=0x0043
+        uno.upload_port.1.vid=0x2341
+        uno.upload_port.1.pid=0x0001
+        uno.upload_port.2.vid=0x2A03
+        uno.upload_port.2.pid=0x0043
+        uno.upload_port.3.vid=0x2341
+        uno.upload_port.3.pid=0x0243
+        uno.upload_port.4.vid=0x2341
+        uno.upload_port.4.pid=0x006A
+        uno.upload_port.5.board=uno
+
+        uno.upload.tool=avrdude
+        uno.upload.tool.default=avrdude
+        uno.upload.tool.network=arduino_ota
+        uno.upload.protocol=arduino
+        uno.upload.maximum_size=32256
+        uno.upload.maximum_data_size=2048
+        uno.upload.speed=115200
+
+        uno.bootloader.tool=avrdude
+        uno.bootloader.tool.default=avrdude
+        uno.bootloader.low_fuses=0xFF
+        uno.bootloader.high_fuses=0xDE
+        uno.bootloader.extended_fuses=0xFD
+        uno.bootloader.unlock_bits=0x3F
+        uno.bootloader.lock_bits=0x0F
+        uno.bootloader.file=optiboot/optiboot_atmega328.hex
+
+        uno.build.mcu=atmega328p
+        uno.build.f_cpu=16000000L
+        uno.build.board=AVR_UNO
+        uno.build.core=arduino
+        uno.build.variant=standard
+
+    Note that we refer to the qualifier for the board ("uno" in this case) as
+    the board `designator`, and we parse the bare minimum of the information
+    from the file.
+
     """
 
     # pylint: disable=too-many-instance-attributes
@@ -68,7 +131,78 @@ class ArduinoBoard:
         """
         return f'{self.vendor}:{self.architecture}:{self.designator}'
 
+    @staticmethod
+    def concatenate_device_ids(*boards: ArduinoBoard) -> tuple[DeviceId]:
+        """Return a tuple with all the possible DeviceId objects corresponding to a
+        subset of the supported arduino boards.
 
+        Arguments
+        ---------
+        *boards : ArduinoBoard
+            The ArduinoBoard object(s) we are interested into.
+
+        Returns
+        -------
+        tuple
+            A tuple of DeviceId objects.
+        """
+        # If you are tempted to use a sum of lists with start=[], here, keep in mind
+        # this is not supported in Python 3.7.
+        device_ids = ()
+        for board in boards:
+            device_ids += board.device_ids
+        return device_ids
+
+    @staticmethod
+    def by_device_id(device_id: DeviceId) -> ArduinoBoard:
+        """Return the ArduinoBoard object corresponding to a given DeviceId.
+
+        Note this only involves a dictionary lookup, and nothing is created on
+        the spot.
+
+        Arguments
+        ---------
+        vid : int
+            The vendor ID for the given device.
+
+        pid : int
+            The prodict ID for the given device.
+
+        Returns
+        -------
+        ArduinoBoard
+            The ArduinoBoard object corresponding to the DeviceId.
+        """
+        try:
+            return _DEVICE_ID_DICT[device_id]
+        except KeyError as exception:
+            raise RuntimeError(f'Unsupported device ID {device_id}') from exception
+
+    @staticmethod
+    def by_designator(designator: str) -> ArduinoBoard:
+        """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
+
+        Note this only involves a dictionary lookup, and nothing is created on
+        the spot.
+
+        Arguments
+        ---------
+        designator : str
+            The board designator (e.g., "uno").
+
+        Returns
+        -------
+        ArduinoBoard
+            The ArduinoBoard object corresponding to the designator.
+        """
+        try:
+            return _BOARD_DESIGNATOR_DICT[designator]
+        except KeyError as exception:
+            raise RuntimeError(f'Unsupported designator {designator}') from exception
+
+
+# --------------------------------------------------------------------------------------------------
+# Define the supported boards.
 UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
                    ((0x2341, 0x0043),
                     (0x2341, 0x0001),
@@ -78,78 +212,14 @@ UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'a
 
 
 _SUPPORTED_BOARDS = (UNO,)
+# --------------------------------------------------------------------------------------------------
 
 
-def _concatenate_device_ids(*boards: ArduinoBoard) -> tuple:
-    """Return a tuple with all the possible DeviceId objects corresponding to a
-    subset of the supported arduino boards.
-
-    Arguments
-    ---------
-    *boards : ArduinoBoard
-        The ArduinoBoard object(s) we are interested into.
-
-    Returns
-    -------
-    tuple
-        A tuple of DeviceId objects.
-    """
-    # If you are tempted to use a sum of lists with start=[], here, keep in mind
-    # this is not supported in Python 3.7.
-    device_ids = ()
-    for board in boards:
-        device_ids += board.device_ids
-    return device_ids
-
-
-# Build the necessary dictionaries to retrieve the boards by device_id or designator.
-_BOARD_DESIGNATOR_DICT = {}
-_DEVICE_ID_DICT = {}
+# And now loop over the supported boards to fill the information in the dictionaries.
 for _board in _SUPPORTED_BOARDS:
     _BOARD_DESIGNATOR_DICT[_board.designator] = _board
     for _id in _board.device_ids:
         _DEVICE_ID_DICT[_id] = _board
-
-
-def board_by_device_id(device_id: DeviceId) -> ArduinoBoard:
-    """Return the ArduinoBoard object corresponding to a given DeviceId.
-
-    Arguments
-    ---------
-    vid : int
-        The vendor ID for the given device.
-
-    pid : int
-        The prodict ID for the given device.
-
-    Returns
-    -------
-    ArduinoBoard
-        The ArduinoBoard object corresponding to the DeviceId.
-    """
-    try:
-        return _DEVICE_ID_DICT[device_id]
-    except KeyError as exception:
-        raise RuntimeError(f'Unsupported device ID {device_id}') from exception
-
-
-def board_by_designator(designator: str) -> ArduinoBoard:
-    """Return the ArduinoBoard object corresponding to a given (vid, pid) tuple.
-
-    Arguments
-    ---------
-    designator : str
-        The board designator (e.g., "uno").
-
-    Returns
-    -------
-    ArduinoBoard
-        The ArduinoBoard object corresponding to the designator.
-    """
-    try:
-        return _BOARD_DESIGNATOR_DICT[designator]
-    except KeyError as exception:
-        raise RuntimeError(f'Unsupported designator {designator}') from exception
 
 
 def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
@@ -170,9 +240,9 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     if len(boards) == 0:
         boards = _SUPPORTED_BOARDS
     logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
-    ports = list_com_ports(*_concatenate_device_ids(*boards))
+    ports = list_com_ports(*ArduinoBoard.concatenate_device_ids(*boards))
     for port in ports:
-        board = board_by_device_id(port.device_id)
+        board = ArduinoBoard.by_device_id(port.device_id)
         if port is not None:
             logger.debug(f'{port.name} -> {board.designator} ({board.name})')
     return ports
@@ -478,6 +548,6 @@ def compile_sketch(file_path: str, output_dir: str, board_designator: str,
     """
     if not os.path.exists(file_path):
         raise RuntimeError(f'Could not find file {file_path}')
-    board = board_by_designator(board_designator)
+    board = ArduinoBoard.by_designator(board_designator)
     logger.info(f'Compiling sketch {file_path} for {board}...')
     return ArduinoCli.compile(file_path, output_dir, board, verbose)
