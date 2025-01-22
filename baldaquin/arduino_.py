@@ -14,11 +14,6 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """Arduino common resources.
-
-.. warning::
-    We are taking this chance to look around and see what's the best way to interface
-    to arduino, and this module might significantly change in the future---at this
-    point you should consider all the API as experimental.
 """
 
 from __future__ import annotations
