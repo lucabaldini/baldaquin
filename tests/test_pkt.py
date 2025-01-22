@@ -124,6 +124,15 @@ def test_docs():
     print(packet.seconds)
 
 
+def test_text_output():
+    """Test the text representation of the packet.
+    """
+    header = Readout.text_header()
+    print(header)
+    readout = Readout(0xaa, 2, 3)
+    print(readout.to_text())
+
+
 def test_packets_statistics():
     """Small test for the PacketStatistics class.
     """
