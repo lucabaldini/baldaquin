@@ -557,7 +557,10 @@ def upload_sketch(file_path: str, board_designator: str,
         raise RuntimeError(f'Could not find file {file_path}')
     board = ArduinoBoard.by_designator(board_designator)
     if port_name is None:
-        port_name = autodetect_arduino_board(board).name
+        port = autodetect_arduino_board(board)
+        if port is None:
+            raise RuntimeError(f'Could not autodetect port')
+        port_name = port.name
     logger.info(f'Uploading sketch {file_path} for {board} to port {port_name}...')
     return ArduinoCli.upload(file_path, port_name, board, verbose)
 
