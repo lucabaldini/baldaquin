@@ -18,7 +18,7 @@
 
 import pytest
 
-from baldaquin import logger, BALDAQUIN_DATA, BALDAQUIN_TEST_DATA
+from baldaquin import logger, BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA
 from baldaquin import arduino_
 from baldaquin.serial_ import DeviceId
 
@@ -67,14 +67,18 @@ def test_autodetect():
     print(ports)
 
 
-# def test_upload():
-#     """Test the sketch upload.
-#     """
-#     file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
-#     try:
-#         arduino_.upload_sketch(file_path, BALDAQUIN_DATA, 'uno', verbose=False)
-#     except RuntimeError as info:
-#         logger.info(info)
+def test_upload():
+    """Test the sketch upload.
+
+    Note this is within a try/except block because we cannot assume we have
+    arduino-cli installed.
+    """
+    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino.hex'
+    try:
+        arduino_.upload_sketch(file_path, 'uno')
+    except RuntimeError as info:
+        logger.info(info)
+
 
 def test_compile():
     """Test the sketch compilation.
@@ -84,6 +88,6 @@ def test_compile():
     """
     file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
     try:
-        arduino_.compile_sketch(file_path, BALDAQUIN_DATA, 'uno', verbose=False)
+        arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
     except RuntimeError as info:
         logger.info(info)
