@@ -256,10 +256,9 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
             return
 
         # Otherwise we have to upload the proper sketch.
-        logger.info(f'About to upload sketch {self.SKETCH_ID} version {self.SKETCH_VERSION}...')
         file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
         board = arduino_.ArduinoBoard.by_device_id(port.device_id)
-        arduino_.ArduinoCli.upload(file_path, port.name, board)
+        arduino_.upload_sketch(file_path, board.designator, port.name)
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
         if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
             raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
