@@ -8,10 +8,14 @@ Release notes
 * Sketch auto-upload implemented in plasduino.
 * Sketch compilation capability added.
 * BALDAQUIN_SCRATCH folder added.
+* New ``pre_start()`` hook added to the ``UserApplicationBase`` class.
+* Added specific hooks for text sinks in the ``AbstractPacket`` class, and default
+  implementation provided in ``FixedSizePacketBase``.
 * Documentation expanded and revised.
 * Unit tests added.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/27
+      * https://github.com/lucabaldini/baldaquin/pull/30
 * Issue(s) closed
       * https://github.com/lucabaldini/baldaquin/issues/25
 
