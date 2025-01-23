@@ -4,6 +4,13 @@ Release notes
 =============
 
 
+* Release manager now updating the pyproject.toml file.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/33
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/32
+
+
 *baldaquin 0.2.0 (Thu, 23 Jan 2025 14:17:00 +0100)*
 
 * Major refactoring of the serial_ and arduino_ modules.
