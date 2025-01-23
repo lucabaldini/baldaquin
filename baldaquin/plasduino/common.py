@@ -27,7 +27,8 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
-from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
+from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
+     InterruptMode
 from baldaquin.plasduino.sketches import sketch_file_path
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
@@ -167,7 +168,7 @@ class PlasduinoSerialInterface(SerialInterface):
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
     def setup_analog_sampling_sketch(self, sampling_interval: int) -> None:
-        """ Setup the sktchAnalogSampling sketch.
+        """Setup the `analog_sampling` sketch.
 
         Note that we are taking a minimal approach, here, where exactly two input
         analog pins are used, and they are those dictated by the Lab 1 shield, i.e.,
@@ -182,6 +183,12 @@ class PlasduinoSerialInterface(SerialInterface):
         for pin in Lab1.ANALOG_PINS:
             self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
         self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
+
+    def setup_digital_timer_sketch(self, interrupt_mode0, interrupt_mode1) -> None:
+        """Setup the `digital_timer` sketch.
+        """
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode0, 'B')
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode1, 'B')
 
 
 class PlasduinoRunControl(RunControlBase):
@@ -352,7 +359,7 @@ class PlasduinoAnalogConfiguration(ConfigurationBase):
 class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
 
     """Specialized base class for plasduino user applications relying on the
-    sktchAnalogSampling.ino sketch.
+    `analog_sampling` sketch.
     """
 
     _SAMPLING_INTERVAL = None
@@ -392,3 +399,40 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
         self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)
+
+
+class PlasduinoDigitalUserApplicationBase(UserApplicationBase):
+
+    """Specialized base class for plasduino user applications relying on the
+    `digital_timer` sketch.
+    """
+
+    def configure(self):
+        """Overloaded method.
+        """
+        raise NotImplementedError
+
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
+        """
+        self.event_handler.open_serial_interface()
+        args = InterruptMode.CHANGE, InterruptMode.DISABLED
+        self.event_handler.serial_interface.setup_digital_timer_sketch(*args)
+
+    def teardown(self) -> None:
+        """Overloaded method (STOPPED -> RESET).
+        """
+        self.event_handler.close_serial_interface()
+
+    def start_run(self) -> None:
+        """Overloaded method (STOPPED -> RUNNING).
+        """
+        self.event_handler.serial_interface.write_start_run()
+        super().start_run()
+
+    def stop_run(self) -> None:
+        """Overloaded method (RUNNING -> STOPPED).
+        """
+        super().stop_run()
+        self.event_handler.serial_interface.write_stop_run()
+        #self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)
