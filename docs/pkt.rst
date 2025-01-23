@@ -44,6 +44,14 @@ is useful from a testing standpoint, and that is the very reason for provinding 
   class and the associated :meth:`packetclass <baldaquin.pkt.packetclass>`
   decorator.
 
+In addition, the :class:`AbstractPacket <baldaquin.pkt.AbstractPacket>` provides
+placeholders for helping redirecting packet buffers to text sink. More specifically:
+
+* ``text_header()`` is meant to return a sensible header for a text output file
+  containing packets;
+* ``to_text()`` is meant to provide a sensible text representation of the single
+  packet, appropriate to write the packet to disk.
+
 
 Fixed-size packets
 ------------------
@@ -163,9 +171,12 @@ with the understanding that
 >>> print(packet.seconds)
 >>> 15.426782
 
-
-
-
+Note the :class:`FixedSizePacketBasePacket <baldaquin.pkt.FixedSizePacketBase>`
+base class provides a sensible implementation of the
+:meth:`text_header() <baldaquin.pkt.FixedSizePacketBase.text_header()>` and
+:meth:`to_text() <baldaquin.pkt.FixedSizePacketBase.to_text()>` hooks, although
+in practical situations one is often better off re-implementing them for the
+specific application at hand.
 
 
 Module documentation
