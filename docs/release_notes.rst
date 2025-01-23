@@ -4,6 +4,8 @@ Release notes
 =============
 
 
+*baldaquin 0.2.1 (Thu, 23 Jan 2025 15:57:29 +0100)*
+
 * Release manager now updating the pyproject.toml file.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/33
