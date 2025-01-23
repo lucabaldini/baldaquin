@@ -19,7 +19,6 @@
 from pathlib import Path
 
 from baldaquin import plasduino
-from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
