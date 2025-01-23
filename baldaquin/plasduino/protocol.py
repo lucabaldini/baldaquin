@@ -16,7 +16,7 @@
 """Basic definition of the plasduino communication protocol.
 """
 
-from enum import Enum
+from enum import Enum, IntEnum
 
 from baldaquin.pkt import packetclass, FixedSizePacketBase, Format, Layout
 
@@ -68,29 +68,15 @@ class OpCode(Enum):
     OP_CODE_TOGGLE_DIGITAL_PIN = 0x0D
 
 
-@packetclass
-class DigitalTransition(FixedSizePacketBase):
+class InterruptMode(IntEnum):
 
-    """A plasduino digital transition is a 6-bit binary array containing:
-
-    * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
-    * byte(s) 1  : the transition information (pin number and edge type);
-    * byte(s) 2-5: the timestamp of the readout from micros().
+    """Definition of the interrupt modes.
     """
 
-    layout = Layout.BIG_ENDIAN
-    header: Format.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER.value
-    info: Format.UNSIGNED_CHAR
-    microseconds: Format.UNSIGNED_LONG
-
-    def __post_init__(self) -> None:
-        """Post initialization.
-        """
-        # Note the _info field is packing into a single byte the edge type
-        # (the MSB) and the pin number.
-        self.pin_number = self.info & 0x7F
-        self.edge = (self.info >> 7) & 0x1
-        self.seconds = 1.e-6 * self.seconds
+    DISABLED = 0
+    CHANGE = 1
+    FALLING = 2
+    RISING = 3
 
 
 @packetclass
@@ -114,3 +100,28 @@ class AnalogReadout(FixedSizePacketBase):
         """Post initialization.
         """
         self.seconds = 1.e-3 * self.milliseconds
+
+
+@packetclass
+class DigitalTransition(FixedSizePacketBase):
+
+    """A plasduino digital transition is a 6-bit binary array containing:
+
+    * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
+    * byte(s) 1  : the transition information (pin number and edge type);
+    * byte(s) 2-5: the timestamp of the readout from micros().
+    """
+
+    layout = Layout.BIG_ENDIAN
+    header: Format.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER.value
+    info: Format.UNSIGNED_CHAR
+    microseconds: Format.UNSIGNED_LONG
+
+    def __post_init__(self) -> None:
+        """Post initialization.
+        """
+        # Note the _info field is packing into a single byte the edge type
+        # (the MSB) and the pin number.
+        self.pin_number = self.info & 0x7F
+        self.edge = (self.info >> 7) & 0x1
+        self.seconds = 1.e-6 * self.microseconds
