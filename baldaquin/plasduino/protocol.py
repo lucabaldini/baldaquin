@@ -21,6 +21,10 @@ from enum import Enum
 from baldaquin.pkt import packetclass, FixedSizePacketBase, Format, Layout
 
 
+COMMENT_PREFIX = '# '
+TEXT_SEPARATOR = ', '
+
+
 class Marker(Enum):
 
     """Relevant protocol markers, verbatim from

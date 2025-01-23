@@ -27,7 +27,7 @@ from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
-from baldaquin.plasduino.protocol import AnalogReadout
+from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, AnalogReadout
 from baldaquin.plasduino.shields import Lab1
 
 
@@ -83,12 +83,13 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Return the header for the output text file.
         """
         return f'{AbstractPacket.text_header()}\n' \
-               f'{AbstractPacket.COMMENT_PREFIX}Pin number, Time [s], Temperature [deg C]\n'
+               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
+               f'{TEXT_SEPARATOR}Temperature [deg C]\n'
 
     def readout_to_text(self, readout: AnalogReadout) -> str:
         """Convert a temperature readout to text for use in a custom sink.
         """
-        return f'{readout.pin_number}, {readout.seconds:.3f}, ' \
+        return f'{readout.pin_number}{TEXT_SEPARATOR}{readout.seconds:.3f}{TEXT_SEPARATOR}' \
                f'{self.adc_to_celsius(readout.adc_value):.3f}\n'
 
     def configure(self) -> None:
