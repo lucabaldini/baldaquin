@@ -74,11 +74,15 @@ BALDAQUIN_TEST_DATA = BALDAQUIN_TESTS / 'data'
 
 
 # Version information.
-BALDAQUIN_VERSION_FILE_PATH = os.path.join(BALDAQUIN_ROOT, '_version.py')
+BALDAQUIN_VERSION_FILE_PATH = BALDAQUIN_ROOT / '_version.py'
+
+
+# pyproject.toml file.
+BALDAQUIN_TOML_FILE_PATH = BALDAQUIN_BASE / 'pyproject.toml'
 
 
 # Release notes file.
-BALDAQUIN_RELEASE_NOTES_PATH = os.path.join(BALDAQUIN_DOCS, 'release_notes.rst')
+BALDAQUIN_RELEASE_NOTES_PATH = BALDAQUIN_DOCS / 'release_notes.rst'
 
 
 # Default character encoding.
