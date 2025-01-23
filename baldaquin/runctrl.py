@@ -331,6 +331,14 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return data_folder_path(self._PROJECT_NAME) / self._file_name_base()
 
+    def output_file_path_base(self) -> Path:
+        """Return the base pattern for all the output files.
+
+        This is use to pass the message about where to write output files to
+        user applications.
+        """
+        return self.data_folder_path() / self._file_name_base()
+
     def data_file_name(self) -> str:
         """Return the current data file name.
 
@@ -507,6 +515,8 @@ class RunControlBase(FiniteStateMachineBase):
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.event_handler.set_primary_sink(self.data_file_path())
+        self._user_application.current_output_file_base = self.output_file_path_base()
+        self._user_application.pre_start()
         self._user_application.start_run()
         self._update_timer.start()
         self.update_stats()

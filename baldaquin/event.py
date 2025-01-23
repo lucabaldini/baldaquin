@@ -18,12 +18,14 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
-from baldaquin.buf import CircularBuffer
+from baldaquin.buf import CircularBuffer, WriteMode
 from baldaquin.pkt import AbstractPacket, PacketStatistics
 
 
@@ -80,6 +82,12 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self._buffer.set_primary_sink(file_path)
         self.output_file_set.emit(file_path)
+
+    def add_custom_sink(self, file_path: Path, mode: WriteMode, formatter: Callable = None,
+                        header: Any = None) -> None:
+        """Add a custom sink to the underlying packet buffer.
+        """
+        self._buffer.add_custom_sink(file_path, mode, formatter, header)
 
     def flush_buffer(self) -> None:
         """Write all the buffer data to disk.

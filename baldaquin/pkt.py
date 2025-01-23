@@ -21,6 +21,8 @@ from dataclasses import dataclass
 from enum import Enum
 import struct
 
+from baldaquin.timeline import Timeline
+
 
 class Format(Enum):
 
@@ -75,6 +77,9 @@ class AbstractPacket(ABC):
     """Abstract base class for binary packets.
     """
 
+    COMMENT_PREFIX = '# '
+    TEXT_SEPARATOR = ', '
+
     def __post_init__(self) -> None:
         """Hook for post-initialization.
         """
@@ -111,6 +116,19 @@ class AbstractPacket(ABC):
     def unpack(cls, data: bytes):
         """Unpack the binary data into the corresponding field values.
         """
+
+    @classmethod
+    def text_header(cls) -> str:
+        """Hook that subclasses can overload to provide a sensible header for an
+        output text file.
+        """
+        return f'{cls.COMMENT_PREFIX}Created on {Timeline().latch()}'
+
+    def to_text(self) -> str:
+        """Hook that subclasses can overload to provide a text representation of
+        the buffer to be written in an output text file.
+        """
+        raise NotImplementedError
 
 
 class FieldMismatchError(RuntimeError):
@@ -240,6 +258,18 @@ class FixedSizePacketBase(AbstractPacket):
         attrs = self._fields + ('payload', '_format')
         info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
         return f'{self.__class__.__name__}({info})'
+
+    @classmethod
+    def text_header(cls) -> str:
+        """Overloaded method.
+        """
+        return f'{super().text_header()}\n' \
+               f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}\n'
+
+    def to_text(self) -> str:
+        """Overloaded method.
+        """
+        return f'{self.TEXT_SEPARATOR.join([str(item) for item in self])}\n'
 
 
 @dataclass
