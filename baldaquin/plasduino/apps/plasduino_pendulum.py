@@ -82,10 +82,10 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         """
         file_path = Path(f'{self.current_output_file_base}_data.dat')
         logger.info(f'Post-processing {file_path}...')
-        #with PacketFile(DigitalTransition).open(file_path) as input_file:
-        #    transitions = input_file.read_all()
-        #for transition in transitions:
-        #    print(transition)
+        with PacketFile(DigitalTransition).open(file_path) as input_file:
+            transitions = input_file.read_all()
+        for transition in transitions:
+            print(transition)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
