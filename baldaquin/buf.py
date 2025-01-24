@@ -255,7 +255,7 @@ class AbstractBuffer(ABC):
         """
         num_bytes_written = 0
         for _ in range(num_packets):
-            num_bytes_written += output_file.write(self.pop().payload)
+            num_bytes_written += output_file.write(self.pop().data)
         logger.debug(f'{num_bytes_written} bytes written to disk.')
         return num_bytes_written
 

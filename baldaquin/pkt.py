@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2024 the baldaquin team.
+# Copyright (C) 2022--2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ class AbstractPacket(ABC):
 
     @property
     @abstractmethod
-    def payload(self) -> bytes:
+    def data(self) -> bytes:
         """Return the packet binary data.
         """
 
@@ -184,9 +184,9 @@ def packetclass(cls: type) -> type:
     cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
     cls.size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
-    cls.__frozenattrs__ = ('_fields', '_format', 'size', '_payload') + cls._fields
+    cls.__frozenattrs__ = ('_fields', '_format', 'size', '_data') + cls._fields
 
-    def _init(self, *args, payload: bytes = None):
+    def _init(self, *args, data: bytes = None):
         # Make sure we have the correct number of arguments---they should match
         # the class annotations.
         if len(args) != len(cls._fields):
@@ -200,9 +200,9 @@ def packetclass(cls: type) -> type:
             if expected is not None and expected != value:
                 raise FieldMismatchError(cls, field, expected, value)
             object.__setattr__(self, field, value)
-        if payload is None:
-            payload = self.pack()
-        object.__setattr__(self, '_payload', payload)
+        if data is None:
+            data = self.pack()
+        object.__setattr__(self, '_data', data)
         # Make sure the post-initialization is correctly performed.
         self.__post_init__()
 
@@ -222,11 +222,11 @@ class FixedSizePacketBase(AbstractPacket):
     _format = None
     size = 0
     __frozenattrs__ = None
-    _payload = None
+    _data = None
 
     @property
-    def payload(self) -> bytes:
-        return self._payload
+    def data(self) -> bytes:
+        return self._data
 
     @property
     def fields(self) -> tuple:
@@ -243,7 +243,7 @@ class FixedSizePacketBase(AbstractPacket):
 
     @classmethod
     def unpack(cls, data: bytes) -> AbstractPacket:
-        return cls(*struct.unpack(cls._format, data), payload=data)
+        return cls(*struct.unpack(cls._format, data), data=data)
 
     def __setattr__(self, key, value) -> None:
         """Overloaded method to make class instances frozen.
@@ -255,7 +255,7 @@ class FixedSizePacketBase(AbstractPacket):
     def __str__(self):
         """String formatting.
         """
-        attrs = self._fields + ('payload', '_format')
+        attrs = self._fields + ('data', '_format')
         info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
         return f'{self.__class__.__name__}({info})'
 
