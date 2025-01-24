@@ -290,24 +290,28 @@ class PacketFile:
         """Open the file.
         """
         logger.debug(f'Opening input packet file {file_path}...')
-        self._input_file = open(file_path, 'rb')
-        yield self
-        self._input_file.close()
-        self._input_file = None
-        logger.debug(f'Ouput file {file_path} closed.')
+        with open(file_path, 'rb') as f:
+            self._input_file = f
+            yield self
+            self._input_file = None
+        logger.debug(f'Output file {file_path} closed.')
 
-    def __iter__(self):
-        """
+    def __iter__(self) -> 'PacketFile':
+        """Return the iterator object (self).
         """
         return self
 
-    def __next__(self):
+    def __next__(self) -> AbstractPacket:
+        """Read the next packet in the buffer.
         """
-        """
-        try:
-            return self._packet_class.unpack(self._input_file.read(self._packet_class.size))
-        except struct.error:
+        data = self._input_file.read(self._packet_class.size)
+        if not data:
             raise StopIteration
+        return self._packet_class.unpack(data)
+
+    def read_all(self) -> tuple[AbstractPacket]:
+        """Read in memory all the packets in the file.
+        """
 
 
 @dataclass
