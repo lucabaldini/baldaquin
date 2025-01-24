@@ -17,10 +17,12 @@
 """
 
 from abc import ABC, abstractmethod
+from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum
 import struct
 
+from baldaquin import logger
 from baldaquin.timeline import Timeline
 
 
@@ -270,6 +272,42 @@ class FixedSizePacketBase(AbstractPacket):
         """Overloaded method.
         """
         return f'{self.TEXT_SEPARATOR.join([str(item) for item in self])}\n'
+
+
+class PacketFile:
+
+    """Class describing a binary file containing packets.
+    """
+
+    def __init__(self, packet_class: type) -> None:
+        """Constructor.
+        """
+        self._packet_class = packet_class
+        self._input_file = None
+
+    @contextmanager
+    def open(self, file_path: str):
+        """Open the file.
+        """
+        logger.debug(f'Opening input packet file {file_path}...')
+        self._input_file = open(file_path, 'rb')
+        yield self
+        self._input_file.close()
+        self._input_file = None
+        logger.debug(f'Ouput file {file_path} closed.')
+
+    def __iter__(self):
+        """
+        """
+        return self
+
+    def __next__(self):
+        """
+        """
+        try:
+            return self._packet_class.unpack(self._input_file.read(self._packet_class.size))
+        except struct.error:
+            raise StopIteration
 
 
 @dataclass

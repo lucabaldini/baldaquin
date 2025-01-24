@@ -18,9 +18,9 @@
 
 import pytest
 
-from baldaquin import logger
+from baldaquin import logger, BALDAQUIN_SCRATCH
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import Layout, Format, FieldMismatchError
+from baldaquin.pkt import Layout, Format, FieldMismatchError, PacketFile
 
 
 @packetclass
@@ -131,6 +131,20 @@ def test_text_output():
     print(header)
     readout = Readout(0xaa, 2, 3)
     print(readout.to_text())
+
+
+def test_binary_io():
+    """Write to and read from file in binary format.
+    """
+    file_path = BALDAQUIN_SCRATCH / 'test_pkt.dat'
+    logger.info(f'Writing output file {file_path}')
+    with open(file_path, 'wb') as output_file:
+        for i in range(10):
+            output_file.write(Readout(0xaa, 1 * 1000, i + 100).data)
+    logger.info('Done.')
+    with PacketFile(Readout).open(file_path) as input_file:
+        for packet in input_file:
+            print(packet)
 
 
 def test_packets_statistics():
