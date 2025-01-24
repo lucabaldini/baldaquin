@@ -79,9 +79,15 @@ class UserApplicationBase:
         sink to the underlying packet buffer.)
         """
 
+    def post_process(self) -> None:
+        """Hook that subclasses can use to post-process the data collected in
+        the run.
+        """
+
     def start_run(self) -> None:
         """Start the event handler.
         """
+        self.pre_start()
         logger.info(f'Starting {self.NAME} user application...')
         self.event_handler.reset_statistics()
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
@@ -93,6 +99,7 @@ class UserApplicationBase:
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
+        self.post_process()
 
     def pause(self) -> None:
         """Pause the event handler.

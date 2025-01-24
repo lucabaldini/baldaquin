@@ -516,7 +516,6 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.event_handler.set_primary_sink(self.data_file_path())
         self._user_application.current_output_file_base = self.output_file_path_base()
-        self._user_application.pre_start()
         self._user_application.start_run()
         self._update_timer.start()
         self.update_stats()
