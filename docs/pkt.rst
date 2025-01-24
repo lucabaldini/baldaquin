@@ -179,6 +179,27 @@ in practical situations one is often better off re-implementing them for the
 specific application at hand.
 
 
+Reading packet fields
+~~~~~~~~~~~~~~~~~~~~~
+
+In order to ease the packet I/O, the module provides a
+:class:`PacketFile <baldaquin.pkt.PacketFile>` class to interface with binary
+files containing packets. The :meth:`open() <baldaquin.pkt.PacketFile.open()>`
+method supports the context manager protocol, and the class itself supports the
+iterator protocol. The basic use semantics is
+
+>>> with PacketFile(PacketClass).open(file_path) as input_file:
+>>>     for packet in input_file:
+>>>         print(packet)
+
+For application where a given post-processing requires to put in memory all
+the packets in the file (e.g., when it is necessary to combine adjacent packets
+in more complex, high-level quantities), the
+:meth:`read_all() <baldaquin.pkt.PacketFile.read_all()>` method is provided.
+(It goes without saying, this comes with all the caveats of putting a potentially
+large amount of information in memory.)
+
+
 Module documentation
 --------------------
 

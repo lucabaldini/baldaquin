@@ -301,7 +301,7 @@ class PacketFile:
         """
         return self
 
-    def __next__(self) -> AbstractPacket:
+    def __next__(self) -> FixedSizePacketBase:
         """Read the next packet in the buffer.
         """
         data = self._input_file.read(self._packet_class.size)
@@ -309,8 +309,11 @@ class PacketFile:
             raise StopIteration
         return self._packet_class.unpack(data)
 
-    def read_all(self) -> tuple[AbstractPacket]:
+    def read_all(self) -> tuple[FixedSizePacketBase]:
         """Read in memory all the packets in the file.
+
+        This is meant to support postprocessing applications where one needs
+        all the packets in memory at the same time. Use it `cum grano salis`.
         """
         return tuple(packet for packet in self)
 
