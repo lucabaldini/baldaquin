@@ -133,18 +133,22 @@ def test_text_output():
     print(readout.to_text())
 
 
-def test_binary_io():
+def test_binary_io(num_packets: int = 10):
     """Write to and read from file in binary format.
     """
     file_path = BALDAQUIN_SCRATCH / 'test_pkt.dat'
     logger.info(f'Writing output file {file_path}')
     with open(file_path, 'wb') as output_file:
-        for i in range(10):
+        for i in range(num_packets):
             output_file.write(Readout(0xaa, 1 * 1000, i + 100).data)
     logger.info('Done.')
     with PacketFile(Readout).open(file_path) as input_file:
         for packet in input_file:
-            print(packet)
+            logger.debug(packet)
+    with PacketFile(Readout).open(file_path) as input_file:
+        packets = input_file.read_all()
+        assert len(packets) == num_packets
+        logger.debug(packets)
 
 
 def test_packets_statistics():

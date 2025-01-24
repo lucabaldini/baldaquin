@@ -254,7 +254,7 @@ class FixedSizePacketBase(AbstractPacket):
             raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
         object.__setattr__(self, key, value)
 
-    def __str__(self):
+    def __repr__(self):
         """String formatting.
         """
         attrs = self._fields + ('data', '_format')
@@ -294,7 +294,7 @@ class PacketFile:
             self._input_file = f
             yield self
             self._input_file = None
-        logger.debug(f'Output file {file_path} closed.')
+        logger.debug(f'Input file {file_path} closed.')
 
     def __iter__(self) -> 'PacketFile':
         """Return the iterator object (self).
@@ -312,6 +312,7 @@ class PacketFile:
     def read_all(self) -> tuple[AbstractPacket]:
         """Read in memory all the packets in the file.
         """
+        return tuple(packet for packet in self)
 
 
 @dataclass
