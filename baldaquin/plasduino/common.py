@@ -433,6 +433,8 @@ class PlasduinoDigitalUserApplicationBase(UserApplicationBase):
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).
         """
+        # We need to understand the exact timing of things, here, as swapping the
+        # following two lines seems to break everything.
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
         # self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)

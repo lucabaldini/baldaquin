@@ -70,6 +70,11 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.transition_to_text,
                                            self.text_header())
 
+    def post_process(self) -> None:
+        """Overloaded method.
+        """
+        print('Post-processing!')
+
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """

@@ -87,7 +87,6 @@ class UserApplicationBase:
     def start_run(self) -> None:
         """Start the event handler.
         """
-        self.pre_start()
         logger.info(f'Starting {self.NAME} user application...')
         self.event_handler.reset_statistics()
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
@@ -99,7 +98,6 @@ class UserApplicationBase:
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
-        self.post_process()
 
     def pause(self) -> None:
         """Pause the event handler.
