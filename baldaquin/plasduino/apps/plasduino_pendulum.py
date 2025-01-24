@@ -18,10 +18,11 @@
 
 from pathlib import Path
 
+from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.buf import WriteMode
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import AbstractPacket
+from baldaquin.pkt import AbstractPacket, PacketFile
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoDigitalEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoDigitalUserApplicationBase
@@ -65,6 +66,8 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
 
     def pre_start(self) -> None:
         """Overloaded method.
+
+        This is ugly---we have to build the file path by hand.
         """
         file_path = Path(f'{self.current_output_file_base}_data.txt')
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.transition_to_text,
@@ -72,8 +75,17 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
 
     def post_process(self) -> None:
         """Overloaded method.
+
+        And this is horrible! We need to reconstruct the same thing that we
+        build in the RunContro. Maybe we should pass the RunControl object as an
+        argument?
         """
-        print('Post-processing!')
+        file_path = Path(f'{self.current_output_file_base}_data.dat')
+        logger.info(f'Post-processing {file_path}...')
+        with PacketFile(DigitalTransition).open(file_path) as input_file:
+            transitions = input_file.read_all()
+        #for transition in transitions:
+        #    print(transition)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
