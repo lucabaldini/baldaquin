@@ -179,8 +179,8 @@ in practical situations one is often better off re-implementing them for the
 specific application at hand.
 
 
-Reading packet fields
-~~~~~~~~~~~~~~~~~~~~~
+Reading packet files
+~~~~~~~~~~~~~~~~~~~~
 
 In order to ease the packet I/O, the module provides a
 :class:`PacketFile <baldaquin.pkt.PacketFile>` class to interface with binary
