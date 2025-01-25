@@ -53,7 +53,8 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
     def text_header() -> str:
         """Return the header for the output text file.
         """
-        return f'{AbstractPacket.text_header()}\n' \
+        return f'{AbstractPacket.text_header()}' \
+               f'{COMMENT_PREFIX}Creator: {__file__}\n' \
                f'{COMMENT_PREFIX}Time [s]{TEXT_SEPARATOR}Edge type\n'
 
     def transition_to_text(self, transition: DigitalTransition) -> str:
@@ -68,20 +69,20 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 
-        This is ugly---we have to build the file path by hand.
+        Here we are simply adding a text sink to the underlying data buffer to
+        write the packets in text form.
         """
-        file_path = Path(f'{self.current_output_file_base}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.transition_to_text,
-                                           self.text_header())
+        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        args = file_path, WriteMode.TEXT, self.transition_to_text, self.text_header()
+        self.event_handler.add_custom_sink(*args)
 
-    def post_process(self, run_control: RunControlBase) -> None:
+    def post_stop(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 
-        And this is horrible! We need to reconstruct the same thing that we
-        build in the RunContro. Maybe we should pass the RunControl object as an
-        argument?
+        And here we are post-processing the raw data file to calculate the actual
+        high-level quantities used in the analysis.
         """
-        file_path = Path(f'{self.current_output_file_base}_data.dat')
+        file_path = run_control.data_file_path()
         logger.info(f'Post-processing {file_path}...')
         with PacketFile(DigitalTransition).open(file_path) as input_file:
             transitions = input_file.read_all()
