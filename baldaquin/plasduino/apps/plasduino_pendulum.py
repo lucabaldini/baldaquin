@@ -27,6 +27,7 @@ from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoDigitalEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoDigitalUserApplicationBase
 from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, DigitalTransition
+from baldaquin.runctrl import RunControlBase
 
 
 class AppMainWindow(MainWindow):
@@ -64,7 +65,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         """Overloaded method.
         """
 
-    def pre_start(self) -> None:
+    def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 
         This is ugly---we have to build the file path by hand.
@@ -73,7 +74,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.transition_to_text,
                                            self.text_header())
 
-    def post_process(self) -> None:
+    def post_process(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 
         And this is horrible! We need to reconstruct the same thing that we

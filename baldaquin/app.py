@@ -16,10 +16,15 @@
 """User application framework.
 """
 
+from typing import TYPE_CHECKING
+
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.config import ConfigurationBase
+if TYPE_CHECKING:
+    # We only need RunControl for type annotations, hence the if clause.
+    from baldaquin.runctrl import RunControlBase
 
 
 class UserApplicationBase:
@@ -73,17 +78,6 @@ class UserApplicationBase:
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def pre_start(self) -> None:
-        """Hook that subclasses can use to perform any operation that needs to
-        be done right before the application is stared (e.g., adding a custom
-        sink to the underlying packet buffer.)
-        """
-
-    def post_process(self) -> None:
-        """Hook that subclasses can use to post-process the data collected in
-        the run.
-        """
-
     def start_run(self) -> None:
         """Start the event handler.
         """
@@ -117,6 +111,17 @@ class UserApplicationBase:
         """Stop the event handler.
         """
         self.stop_run()
+
+    def pre_start(self, run_control: 'RunControlBase') -> None:
+        """Hook that subclasses can use to perform any operation that needs to
+        be done right before the application is stared (e.g., adding a custom
+        sink to the underlying packet buffer.)
+        """
+
+    def post_process(self, run_control: 'RunControlBase') -> None:
+        """Hook that subclasses can use to post-process the data collected in
+        the run.
+        """
 
     def process_packet(self, packet):
         """Optional hook for a user application to do something with the event data.
