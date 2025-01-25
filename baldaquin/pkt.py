@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from enum import Enum
 import struct
 
-from baldaquin import logger
+from baldaquin import logger, __version__
 from baldaquin.timeline import Timeline
 
 
@@ -124,7 +124,8 @@ class AbstractPacket(ABC):
         """Hook that subclasses can overload to provide a sensible header for an
         output text file.
         """
-        return f'{cls.COMMENT_PREFIX}Created on {Timeline().latch()}'
+        return f'{cls.COMMENT_PREFIX}Created on {Timeline().latch()}\n' \
+               f'{cls.COMMENT_PREFIX}baldaquin version: {__version__}\n'
 
     def to_text(self) -> str:
         """Hook that subclasses can overload to provide a text representation of
@@ -265,7 +266,7 @@ class FixedSizePacketBase(AbstractPacket):
     def text_header(cls) -> str:
         """Overloaded method.
         """
-        return f'{super().text_header()}\n' \
+        return f'{super().text_header()}' \
                f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}\n'
 
     def to_text(self) -> str:
