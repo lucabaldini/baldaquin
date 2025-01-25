@@ -43,7 +43,6 @@ class UserApplicationBase:
         """
         # pylint: disable=not-callable
         self.event_handler = self.EVENT_HANDLER_CLASS()
-        self.current_output_file_base = None
         # We should think about whether there is a more elegant way to do this.
         # Pass the user application to the child event handler? Use inheritance
         # rather than composition?
@@ -118,7 +117,7 @@ class UserApplicationBase:
         sink to the underlying packet buffer.)
         """
 
-    def post_process(self, run_control: 'RunControlBase') -> None:
+    def post_stop(self, run_control: 'RunControlBase') -> None:
         """Hook that subclasses can use to post-process the data collected in
         the run.
         """
