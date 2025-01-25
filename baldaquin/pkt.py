@@ -290,8 +290,8 @@ class PacketFile:
         """Open the file.
         """
         logger.debug(f'Opening input packet file {file_path}...')
-        with open(file_path, 'rb') as f:
-            self._input_file = f
+        with open(file_path, 'rb') as input_file:
+            self._input_file = input_file
             yield self
             self._input_file = None
         logger.debug(f'Input file {file_path} closed.')
