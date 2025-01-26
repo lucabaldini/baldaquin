@@ -78,9 +78,9 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        args = file_path, WriteMode.TEXT, AnalogReadout.to_text, \
-            AnalogReadout.text_header('Position [ADC counts]')
-        self.event_handler.add_custom_sink(*args)
+        header = AnalogReadout.text_header('Position [ADC counts]')
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
+                                           header)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.

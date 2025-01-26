@@ -290,7 +290,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         """
         return self.serial_interface.read(AnalogReadout.size)
 
-    def wait_pending_packets(self, sleep_time: int = None) -> int:
+    def wait_pending_packets(self, wait_time: int = None) -> int:
         """Wait and read all the pending packets from the serial port, then consume
         the run end marker.
 
@@ -309,19 +309,19 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
 
         Arguments
         ---------
-        sleep_time : int (default None)
+        wait_time : int (default None)
             The amount of time (in ms) we wait before polling the serial port
             for additional pending packets.
         """
-        logger.info('Waiting for pending packet(s)...')
-        if sleep_time is not None:
-            time.sleep(sleep_time / 1000.)
+        logger.info(f'Waiting {wait_time} ms for pending packet(s)...')
+        if wait_time is not None:
+            time.sleep(wait_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
         # At this point we expect a number of events which is a multiple of
         # AnalogReadout.size, + 1. If this is not the case, it might indicate that
         # we have not waited enough.
         if num_bytes % AnalogReadout.size != 1:
-            logger.warning(f'{num_bytes} pending on the serial port, expected 1, 9 or 17...')
+            logger.warning(f'{num_bytes} pending bytes on the serial port, expected 1, 9 or 17...')
         num_packets = num_bytes // AnalogReadout.size
         if num_packets > 0:
             logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
@@ -363,6 +363,7 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
     """
 
     _SAMPLING_INTERVAL = None
+    _ADDITIONAL_PENDING_WAIT = 200
 
     @staticmethod
     def create_strip_charts(ylabel: str = 'ADC counts'):
@@ -398,7 +399,8 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)
+        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL + \
+                                                self._ADDITIONAL_PENDING_WAIT)
 
 
 class PlasduinoDigitalUserApplicationBase(UserApplicationBase):

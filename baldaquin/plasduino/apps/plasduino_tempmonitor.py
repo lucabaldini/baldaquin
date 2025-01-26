@@ -131,8 +131,8 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        args = file_path, WriteMode.TEXT, TemperatureReadout.to_text, TemperatureReadout.text_header()
-        self.event_handler.add_custom_sink(*args)
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
+                                           TemperatureReadout.text_header())
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
