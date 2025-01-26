@@ -56,6 +56,21 @@ class AppMainWindow(MainWindow):
 @packetclass
 class TemperatureReadout(AnalogReadout):
 
+    """Specialized class inheriting from ``AnalogReadout`` describing a temperature
+    readout---this is essentially adding the coversion between ADC counts and
+    temperature on top of the basic functions.
+
+    We have decided to go this route for two reasons:
+
+    * it makes it easy to guarantee that the conversion is performed once and
+      forever when the packet object is created;
+    * it allows to easily implement the text conversion.
+
+    .. warning::
+        It would be cool if we could subclass AnalogReadout without having to
+        redifine all the fields!
+    """
+
     layout = AnalogReadout.layout
     header: Format.UNSIGNED_CHAR = AnalogReadout.header
     pin_number: Format.UNSIGNED_CHAR
