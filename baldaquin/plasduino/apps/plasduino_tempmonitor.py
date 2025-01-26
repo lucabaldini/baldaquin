@@ -28,6 +28,7 @@ from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, AnalogReadout
+from baldaquin.runctrl import RunControlBase
 from baldaquin.plasduino.shields import Lab1
 
 
@@ -98,12 +99,12 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         for chart in self.strip_chart_dict.values():
             chart.reset(self.configuration.value('strip_chart_max_length'))
 
-    def pre_start(self) -> None:
+    def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
-        file_path = Path(f'{self.current_output_file_base}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.readout_to_text,
-                                           self.text_header())
+        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        args = file_path, WriteMode.TEXT, self.readout_to_text, self.text_header()
+        self.event_handler.add_custom_sink(*args)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.

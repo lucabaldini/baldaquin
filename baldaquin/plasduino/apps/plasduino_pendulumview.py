@@ -26,7 +26,8 @@ from baldaquin.pkt import AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
-from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, AnalogReadout
+from baldaquin.plasduino.protocol import AnalogReadout
+from baldaquin.runctrl import RunControlBase
 
 
 class AppMainWindow(MainWindow):
@@ -67,32 +68,19 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         super().__init__()
         self.strip_chart_dict = self.create_strip_charts(ylabel='Position [ADC counts]')
 
-    @staticmethod
-    def text_header() -> str:
-        """Return the header for the output text file.
-        """
-        return f'{AbstractPacket.text_header()}\n' \
-               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
-               f'{TEXT_SEPARATOR}Position [ADC counts]\n'
-
-    def readout_to_text(self, readout: AnalogReadout) -> str:
-        """Convert a temperature readout to text for use in a custom sink.
-        """
-        return f'{readout.pin_number}{TEXT_SEPARATOR}{readout.seconds:.3f}' \
-               f'{TEXT_SEPARATOR}{readout.adc_value}\n'
-
     def configure(self) -> None:
         """Overloaded method.
         """
         for chart in self.strip_chart_dict.values():
             chart.reset(self.configuration.value('strip_chart_max_length'))
 
-    def pre_start(self) -> None:
+    def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
-        file_path = Path(f'{self.current_output_file_base}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, self.readout_to_text,
-                                           self.text_header())
+        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        args = file_path, WriteMode.TEXT, AnalogReadout.to_text, \
+            AnalogReadout.text_header('Position [ADC counts]')
+        self.event_handler.add_custom_sink(*args)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
