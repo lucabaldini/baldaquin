@@ -82,7 +82,7 @@ class InterruptMode(IntEnum):
 @packetclass
 class AnalogReadout(FixedSizePacketBase):
 
-    """A plasduino analog readout is a 8-bit binary array containing:
+    """A plasduino analog readout is a 8-byte binary array containing:
 
     * byte(s) 0  : the array header (``Marker.ANALOG_READOUT_HEADER.value``);
     * byte(s) 1  : the analog pin number;
@@ -113,7 +113,7 @@ class AnalogReadout(FixedSizePacketBase):
 @packetclass
 class DigitalTransition(FixedSizePacketBase):
 
-    """A plasduino digital transition is a 6-bit binary array containing:
+    """A plasduino digital transition is a 6-byte binary array containing:
 
     * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
     * byte(s) 1  : the transition information (pin number and edge type);
