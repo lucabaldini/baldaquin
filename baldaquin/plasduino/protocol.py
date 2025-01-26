@@ -101,6 +101,14 @@ class AnalogReadout(FixedSizePacketBase):
         """
         self.seconds = 1.e-3 * self.milliseconds
 
+    def __str__(self):
+        """String formatting.
+
+        Note that we are overloading the `__str__()` method, leaving alone the
+        default `__repr__()` dunder from the base class.
+        """
+        return self._repr(('pin_number', 'seconds', 'adc_value'), ('%d', '%.6f', '%d'))
+
 
 @packetclass
 class DigitalTransition(FixedSizePacketBase):
@@ -125,3 +133,11 @@ class DigitalTransition(FixedSizePacketBase):
         self.pin_number = self.info & 0x7F
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.microseconds
+
+    def __str__(self):
+        """String formatting.
+
+        Note that we are overloading the `__str__()` method, leaving alone the
+        default `__repr__()` dunder from the base class.
+        """
+        return self._repr(('pin_number', 'edge', 'seconds'), ('%d', '%d', '%.6f'))
