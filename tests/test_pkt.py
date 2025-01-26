@@ -83,6 +83,21 @@ def test_readout():
     logger.info(info.value)
 
 
+def test_readout_subclass():
+    """Test subclassing a concrete FixedSizePacketBase subclass.
+    """
+
+    @packetclass
+    class SpecialReadout(Readout):
+
+        board_number: Format.UNSIGNED_SHORT
+
+    readout = SpecialReadout(0xaa, 100, 127, 3)
+    assert readout.milliseconds == 100
+    assert readout.adc_value == 127
+    assert readout.board_number == 3
+
+
 def test_repr():
     """Test the terminal formatting helper function.
     """

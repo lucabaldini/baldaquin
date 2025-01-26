@@ -171,14 +171,28 @@ class FieldMismatchError(RuntimeError):
 def _class_annotations(cls) -> dict:
     """Small convienience function to retrieve the class annotations.
 
-    This is needed because in Python 3.7 cls.__annotations__ is not defined
-    when a class has no annotations, while in subsequent Python versions an empty
-    dictionary is returned, instead.
+    Note that, in order to support inheritance of @packetclasses, we do iterate
+    over all the ancestors of the class at hand, starting from ``AbstractPacket``,
+    and collect all the annotations along the way. The iteration is in reverse
+    order, so that the final order of annotations is what one would expect.
+
+    The try/except clause is needed because in Python 3.7 cls.__annotations__ is
+    not defined when a class has no annotations, while in subsequent Python
+    versions an empty dictionary is returned, instead.
     """
-    try:
-        return cls.__annotations__
-    except AttributeError:
-        return {}
+    # The typical mro, here, is object -> ABC -> AbstractPacket -> ...
+    # Although object and ABC seem to have no annotations, and might very well
+    # never have one, we only start the annotation-collection loop from
+    # AbstractPacket, so that the situation is under our full control (cross your)
+    # fingers.
+    ancestors = cls.__mro__[:cls.__mro__.index(AbstractPacket)]
+    annotations = {}
+    for _cls in reversed(ancestors):
+        try:
+            annotations.update(_cls.__annotations__)
+        except AttributeError:
+            pass
+    return annotations
 
 
 def _check_format_characters(cls: type) -> None:

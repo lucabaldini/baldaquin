@@ -23,7 +23,7 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import packetclass, AbstractPacket, Format
+from baldaquin.pkt import packetclass, AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
@@ -65,17 +65,7 @@ class TemperatureReadout(AnalogReadout):
     * it makes it easy to guarantee that the conversion is performed once and
       forever when the packet object is created;
     * it allows to easily implement the text conversion.
-
-    .. warning::
-        It would be cool if we could subclass AnalogReadout without having to
-        redifine all the fields!
     """
-
-    layout = AnalogReadout.layout
-    header: Format.UNSIGNED_CHAR = AnalogReadout.header
-    pin_number: Format.UNSIGNED_CHAR
-    milliseconds: Format.UNSIGNED_LONG
-    adc_value: Format.UNSIGNED_SHORT
 
     _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
     _ADC_NUM_BITS = 10
