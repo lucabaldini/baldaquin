@@ -25,5 +25,9 @@ def test_protocol():
     """
     readout = AnalogReadout(0xa2, 1, 1000, 255)
     logger.info(readout)
+    logger.info(AnalogReadout.text_header('Something [a. u.]'))
+    logger.info(readout.to_text())
     transition = DigitalTransition(0xa1, 1, 1000000)
     logger.info(transition)
+    logger.info(DigitalTransition.text_header())
+    logger.info(transition.to_text())

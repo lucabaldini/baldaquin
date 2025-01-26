@@ -18,7 +18,7 @@
 
 from enum import Enum, IntEnum
 
-from baldaquin.pkt import packetclass, FixedSizePacketBase, Format, Layout
+from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, Format, Layout
 
 
 COMMENT_PREFIX = '# '
@@ -101,6 +101,24 @@ class AnalogReadout(FixedSizePacketBase):
         """
         self.seconds = 1.e-3 * self.milliseconds
 
+    @staticmethod
+    def text_header(label: str) -> str:
+        """Return the header for the output text file.
+        """
+        return f'{AbstractPacket.text_header()}' \
+               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
+               f'{TEXT_SEPARATOR}{label}\n'
+
+    def to_text(self) -> str:
+        """Convert a readout to text for use in a custom sink.
+
+        Note that this is potentially tricky, as if any conversion is required
+        downstream (e.g., if we are reading a temperature), we might end up needing
+        to define a custom class anyway.
+        """
+        return f'{self.pin_number}{TEXT_SEPARATOR}{self.seconds:.3f}' \
+               f'{TEXT_SEPARATOR}{self.adc_value}\n'
+
     def __str__(self):
         """String formatting.
 
@@ -133,6 +151,18 @@ class DigitalTransition(FixedSizePacketBase):
         self.pin_number = self.info & 0x7F
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.microseconds
+
+    @staticmethod
+    def text_header() -> str:
+        """Return the header for the output text file.
+        """
+        return f'{AbstractPacket.text_header()}' \
+               f'{COMMENT_PREFIX}Time [s]{TEXT_SEPARATOR}Edge type\n'
+
+    def to_text(self) -> str:
+        """Convert a temperature readout to text for use in a custom sink.
+        """
+        return f'{self.seconds:.6f}{TEXT_SEPARATOR}{self.edge}\n'
 
     def __str__(self):
         """String formatting.
