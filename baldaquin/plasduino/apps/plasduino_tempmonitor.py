@@ -23,7 +23,7 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import AbstractPacket
+from baldaquin.pkt import packetclass, AbstractPacket, Format
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
@@ -53,6 +53,42 @@ class AppMainWindow(MainWindow):
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
 
 
+@packetclass
+class TemperatureReadout(AnalogReadout):
+
+    layout = AnalogReadout.layout
+    header: Format.UNSIGNED_CHAR = AnalogReadout.header
+    pin_number: Format.UNSIGNED_CHAR
+    milliseconds: Format.UNSIGNED_LONG
+    adc_value: Format.UNSIGNED_SHORT
+
+    _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
+    _ADC_NUM_BITS = 10
+    _CONVERSION_COLS = (0, 2)
+    _CONVERTER = ThermistorConversion.from_file(_CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE,
+                                                _ADC_NUM_BITS, *_CONVERSION_COLS)
+
+    def __post_init__(self) -> None:
+        """Post initialization.
+        """
+        AnalogReadout.__post_init__(self)
+        self.temperature = self._CONVERTER(self.adc_value)
+
+    @staticmethod
+    def text_header() -> str:
+        """Return the header for the output text file.
+        """
+        return f'{AbstractPacket.text_header()}' \
+               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
+               f'{TEXT_SEPARATOR}Temperature [deg C]\n'
+
+    def to_text(self) -> str:
+        """Convert a temperature readout to text for use in a custom sink.
+        """
+        return f'{self.pin_number}{TEXT_SEPARATOR}{self.seconds:.3f}{TEXT_SEPARATOR}' \
+               f'{self.temperature:.3f}\n'
+
+
 class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
@@ -63,35 +99,12 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_tempmonitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _SAMPLING_INTERVAL = 500
-    _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
-    _CONVERSION_COLS = (0, 2)
 
     def __init__(self) -> None:
         """Overloaded Constructor.
         """
         super().__init__()
         self.strip_chart_dict = self.create_strip_charts(ylabel='Temperature [deg C]')
-        args = self._CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE, 10, *self._CONVERSION_COLS
-        self._converter = ThermistorConversion.from_file(*args)
-
-    def adc_to_celsius(self, adc_value) -> float:
-        """Convert an analog readout in ADC count to a temperature in degrees C.
-        """
-        return self._converter(adc_value)
-
-    @staticmethod
-    def text_header() -> str:
-        """Return the header for the output text file.
-        """
-        return f'{AbstractPacket.text_header()}\n' \
-               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
-               f'{TEXT_SEPARATOR}Temperature [deg C]\n'
-
-    def readout_to_text(self, readout: AnalogReadout) -> str:
-        """Convert a temperature readout to text for use in a custom sink.
-        """
-        return f'{readout.pin_number}{TEXT_SEPARATOR}{readout.seconds:.3f}{TEXT_SEPARATOR}' \
-               f'{self.adc_to_celsius(readout.adc_value):.3f}\n'
 
     def configure(self) -> None:
         """Overloaded method.
@@ -103,14 +116,14 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        args = file_path, WriteMode.TEXT, self.readout_to_text, self.text_header()
+        args = file_path, WriteMode.TEXT, TemperatureReadout.to_text, TemperatureReadout.text_header()
         self.event_handler.add_custom_sink(*args)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
-        readout = AnalogReadout.unpack(packet_data)
-        x, y = readout.seconds, self.adc_to_celsius(readout.adc_value)
+        readout = TemperatureReadout.unpack(packet_data)
+        x, y = readout.seconds, readout.temperature
         self.strip_chart_dict[readout.pin_number].add_point(x, y)
         return readout
 
