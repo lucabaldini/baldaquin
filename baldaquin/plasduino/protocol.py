@@ -101,6 +101,7 @@ class AnalogReadout(FixedSizePacketBase):
         """
         self.seconds = 1.e-3 * self.milliseconds
 
+    # pylint: disable=arguments-differ
     @staticmethod
     def text_header(label: str) -> str:
         """Return the header for the output text file.
