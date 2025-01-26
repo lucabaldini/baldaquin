@@ -121,6 +121,26 @@ class AbstractPacket(ABC):
         """Unpack the binary data into the corresponding field values.
         """
 
+    def _repr(self, attrs: tuple[str], fmts: tuple[str] = None) -> str:
+        """Helper function to provide sensible string formatting for the packets.
+
+        The basic idea is that concrete classes would use this to implement their
+        `__repr__()` and/or `__str__()` special dunder methods.
+
+        Arguments
+        ---------
+        attrs : tuple
+            The names of the class attributes we want to include in the representation.
+
+        fmts : tuple, optional
+            If present determines the formatting of the given attributes.
+        """
+        vals = (getattr(self, attr) for attr in attrs)
+        if fmts is not None:
+            vals = (fmt % val for val, fmt in zip(vals, fmts))
+        info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
+        return f'{self.__class__.__name__}({info})'
+
     @classmethod
     def text_header(cls) -> str:
         """Hook that subclasses can overload to provide a sensible header for an
@@ -259,10 +279,14 @@ class FixedSizePacketBase(AbstractPacket):
 
     def __repr__(self):
         """String formatting.
+
+        Note that this provides the low-level string formatting, according to the
+        typical Python conventions. Subclasses are welcome to provide more
+        succinct and human-readable `__str__()` special dunder implementations, but
+        are encouraged not to reimplement this special method, as it inclues all
+        the nitty-gritty details of the packet, which might be useful when debugging.
         """
-        attrs = self._fields + ('data', '_format')
-        info = ', '.join([f'{attr}={getattr(self, attr)}' for attr in attrs])
-        return f'{self.__class__.__name__}({info})'
+        return self._repr(self._fields + ('data', '_format'))
 
     @classmethod
     def text_header(cls) -> str:

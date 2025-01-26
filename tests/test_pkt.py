@@ -83,6 +83,16 @@ def test_readout():
     logger.info(info.value)
 
 
+def test_repr():
+    """Test the terminal formatting helper function.
+    """
+    attrs = ('seconds', 'adc_value')
+    fmts = ('%.6f', '%d')
+    packet = Readout(0xaa, 100, 127)
+    assert packet._repr(attrs) == 'Readout(seconds=0.1, adc_value=127)'
+    assert packet._repr(attrs, fmts) == 'Readout(seconds=0.100000, adc_value=127)'
+
+
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.
     """
