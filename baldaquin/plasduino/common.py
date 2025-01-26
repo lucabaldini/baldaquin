@@ -399,7 +399,7 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL + \
+        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL +
                                                 self._ADDITIONAL_PENDING_WAIT)
 
 
