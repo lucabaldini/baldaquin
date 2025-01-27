@@ -121,6 +121,28 @@ class AbstractPacket(ABC):
         """Unpack the binary data into the corresponding field values.
         """
 
+    def _format_attributes(self, attrs: tuple[str], fmts: tuple[str] = None) -> tuple[str]:
+        """Helper function to join a given set of class attributes in a properly
+        formatted string.
+
+        This is used, most notably, in the :meth:`_repr() <baldaquin.pkt.AbstractPacket._repr>`
+        hook below, which in turn is used in the various ``__repr__()`` and/or ``__str__``
+        implementations, and in the :meth:`to_text() <baldaquin.pkt.AbstractPacket.to_text>`
+        implementations in sub-classes.
+
+        Arguments
+        ---------
+        attrs : tuple
+            The names of the class attributes we want to include in the representation.
+
+        fmts : tuple, optional
+            If present determines the formatting of the given attributes.
+        """
+        vals = (getattr(self, attr) for attr in attrs)
+        if fmts is None:
+            fmts = ('%s' for _ in attrs)
+        return (fmt % val for val, fmt in zip(vals, fmts))
+
     def _repr(self, attrs: tuple[str], fmts: tuple[str] = None) -> str:
         """Helper function to provide sensible string formatting for the packets.
 
@@ -135,11 +157,14 @@ class AbstractPacket(ABC):
         fmts : tuple, optional
             If present determines the formatting of the given attributes.
         """
-        vals = (getattr(self, attr) for attr in attrs)
-        if fmts is not None:
-            vals = (fmt % val for val, fmt in zip(vals, fmts))
+        vals = self._format_attributes(attrs, fmts)
         info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
         return f'{self.__class__.__name__}({info})'
+
+    def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
+        """
+        """
+        return separator.join(self._format_attributes(attrs, fmts))
 
     @classmethod
     def text_header(cls) -> str:

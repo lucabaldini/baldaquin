@@ -98,6 +98,14 @@ def test_readout_subclass():
     assert readout.board_number == 3
 
 
+def test_text():
+    """Test the join_attributes() method.
+    """
+    attrs = ('seconds', 'adc_value')
+    fmts = ('%.6f', '%d')
+    packet = Readout(0xaa, 100, 127)
+    assert packet._text(attrs, fmts, ', ') == '0.100000, 127'
+
 def test_repr():
     """Test the terminal formatting helper function.
     """
