@@ -93,7 +93,8 @@ class PlasduinoPacketBase(FixedSizePacketBase):
     def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
         """Return the header for the output text file.
         """
-        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
+        headers = ', '.join(map(str, cls.OUTPUT_HEADERS))
+        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{headers}\n'
 
     def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
         """Convert a readout to text for use in a custom sink.
