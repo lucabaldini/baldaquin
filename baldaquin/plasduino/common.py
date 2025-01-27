@@ -356,6 +356,14 @@ class PlasduinoAnalogConfiguration(ConfigurationBase):
     )
 
 
+class PlasduinoDigitalConfiguration(ConfigurationBase):
+
+    """User application configuration for plasduino digital applications.
+    """
+
+    PARAMETER_SPECS = ()
+
+
 class PlasduinoUserApplicationBase(UserApplicationBase):
 
     """Base class for all the plasduino applications.

@@ -29,7 +29,7 @@ from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket, PacketFile, Edge
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoDigitalEventHandler, \
-    PlasduinoAnalogConfiguration, PlasduinoDigitalUserApplicationBase
+    PlasduinoDigitalConfiguration, PlasduinoDigitalUserApplicationBase
 from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, DigitalTransition
 from baldaquin.runctrl import RunControlBase
 
@@ -73,7 +73,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
     """
 
     NAME = 'Pendulum'
-    CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
+    CONFIGURATION_CLASS = PlasduinoDigitalConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_pendulum.cfg'
     EVENT_HANDLER_CLASS = PlasduinoDigitalEventHandler
 
