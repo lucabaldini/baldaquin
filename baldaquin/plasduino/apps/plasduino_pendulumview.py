@@ -79,7 +79,7 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
-                                           AnalogReadout.text_header())
+                                           AnalogReadout.text_header(creator=self.NAME))
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.

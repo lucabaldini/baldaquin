@@ -89,7 +89,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, DigitalTransition.to_text,
-                                           DigitalTransition.text_header())
+                                           DigitalTransition.text_header(creator=self.NAME))
 
     @staticmethod
     def _secs_avg(data: tuple[DigitalTransition], i: int, j: int) -> float:
@@ -174,7 +174,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         file_path = Path(f'{run_control.output_file_path_base()}_data_proc.txt')
         logger.info(f'Writing output file {file_path}...')
         with open(file_path, 'w') as output_file:
-            output_file.write(Oscillation.text_header())
+            output_file.write(Oscillation.text_header(creator=self.NAME))
             for oscillation in oscillations:
                 output_file.write(oscillation.to_text())
         logger.info('Done.')
