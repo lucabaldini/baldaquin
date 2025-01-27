@@ -4,6 +4,21 @@ Release notes
 =============
 
 
+* Three basic plasduino apps fully operational.
+* Inheritance supported in the ``@packetclass`` decorator.
+* ``payload`` class member renamed as ``data`` in the ``AbstractPacket`` class.
+* Major restructuring of the packet text formatting facilities.
+* New ``PacketFile`` class added to support packet text output.
+* ``pre_start()`` and ``post_stop`` hooks added to the ``UserApplicationBase``
+  class.
+* Docs updated and unit tests added.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/36
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/20
+      * https://github.com/lucabaldini/baldaquin/issues/12
+
+
 *baldaquin 0.2.1 (Thu, 23 Jan 2025 15:57:29 +0100)*
 
 * Release manager now updating the pyproject.toml file.
