@@ -30,7 +30,7 @@ Release notes
 
 *baldaquin 0.2.0 (Thu, 23 Jan 2025 14:17:00 +0100)*
 
-* Major refactoring of the serial_ and arduino_ modules.
+* Major refactoring of the ``serial_`` and ``arduino_`` modules.
 * New, experimental, baldaquin command-line utility added.
 * Sketch auto-upload implemented in plasduino.
 * Sketch compilation capability added.
