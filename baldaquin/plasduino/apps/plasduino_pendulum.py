@@ -77,10 +77,6 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_pendulum.cfg'
     EVENT_HANDLER_CLASS = PlasduinoDigitalEventHandler
 
-    def configure(self) -> None:
-        """Overloaded method.
-        """
-
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 

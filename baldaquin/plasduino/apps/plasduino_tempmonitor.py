@@ -57,7 +57,7 @@ class AppMainWindow(MainWindow):
 class TemperatureReadout(AnalogReadout):
 
     """Specialized class inheriting from ``AnalogReadout`` describing a temperature
-    readout---this is essentially adding the coversion between ADC counts and
+    readout---this is essentially adding the conversion between ADC counts and
     temperature on top of the basic functions.
 
     We have decided to go this route for two reasons:

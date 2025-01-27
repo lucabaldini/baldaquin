@@ -356,7 +356,28 @@ class PlasduinoAnalogConfiguration(ConfigurationBase):
     )
 
 
-class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
+class PlasduinoUserApplicationBase(UserApplicationBase):
+
+    """Base class for all the plasduino applications.
+    """
+
+    def configure(self):
+        """Overloaded method.
+        """
+
+    def teardown(self) -> None:
+        """Overloaded method (STOPPED -> RESET).
+        """
+        self.event_handler.close_serial_interface()
+
+    def start_run(self) -> None:
+        """Overloaded method (STOPPED -> RUNNING).
+        """
+        self.event_handler.serial_interface.write_start_run()
+        super().start_run()
+
+
+class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
 
     """Specialized base class for plasduino user applications relying on the
     `analog_sampling` sketch.
@@ -372,27 +393,11 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
         return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in Lab1.ANALOG_PINS}
 
-    def configure(self):
-        """Overloaded method.
-        """
-        raise NotImplementedError
-
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
         self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
-
-    def teardown(self) -> None:
-        """Overloaded method (STOPPED -> RESET).
-        """
-        self.event_handler.close_serial_interface()
-
-    def start_run(self) -> None:
-        """Overloaded method (STOPPED -> RUNNING).
-        """
-        self.event_handler.serial_interface.write_start_run()
-        super().start_run()
 
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).
@@ -403,16 +408,11 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
                                                 self._ADDITIONAL_PENDING_WAIT)
 
 
-class PlasduinoDigitalUserApplicationBase(UserApplicationBase):
+class PlasduinoDigitalUserApplicationBase(PlasduinoUserApplicationBase):
 
     """Specialized base class for plasduino user applications relying on the
     `digital_timer` sketch.
     """
-
-    def configure(self):
-        """Overloaded method.
-        """
-        raise NotImplementedError
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
@@ -420,17 +420,6 @@ class PlasduinoDigitalUserApplicationBase(UserApplicationBase):
         self.event_handler.open_serial_interface()
         args = InterruptMode.CHANGE, InterruptMode.DISABLED
         self.event_handler.serial_interface.setup_digital_timer_sketch(*args)
-
-    def teardown(self) -> None:
-        """Overloaded method (STOPPED -> RESET).
-        """
-        self.event_handler.close_serial_interface()
-
-    def start_run(self) -> None:
-        """Overloaded method (STOPPED -> RUNNING).
-        """
-        self.event_handler.serial_interface.write_start_run()
-        super().start_run()
 
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).

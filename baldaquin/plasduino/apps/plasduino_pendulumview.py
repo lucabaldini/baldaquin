@@ -22,7 +22,7 @@ from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import AbstractPacket
+from baldaquin.pkt import packetclass, AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
@@ -49,6 +49,16 @@ class AppMainWindow(MainWindow):
         """
         super().setup_user_application(user_application)
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
+
+
+@packetclass
+class PositionReadout(AnalogReadout):
+
+    """Specialized class inheriting from ``AnalogReadout`` describing a position
+    readout---this is just changing the label for the text otuput.
+    """
+
+    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Position [a. u.]')
 
 
 class PendulumView(PlasduinoAnalogUserApplicationBase):
@@ -78,13 +88,13 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
-                                           AnalogReadout.text_header(creator=self.NAME))
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, PositionReadout.to_text,
+                                           PositionReadout.text_header(creator=self.NAME))
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
-        readout = AnalogReadout.unpack(packet_data)
+        readout = PositionReadout.unpack(packet_data)
         self.strip_chart_dict[readout.pin_number].add_point(readout.seconds, readout.adc_value)
         return readout
 
