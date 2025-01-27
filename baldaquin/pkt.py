@@ -81,6 +81,7 @@ class AbstractPacket(ABC):
     """Abstract base class for binary packets.
     """
 
+    # Remove these fields!
     COMMENT_PREFIX = '# '
     TEXT_SEPARATOR = ', '
 
@@ -145,6 +146,17 @@ class AbstractPacket(ABC):
 
     def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
         """Helper function for text formatting.
+
+        Arguments
+        ---------
+        attrs : tuple
+            The names of the class attributes we want to include in the representation.
+
+        fmts : tuple,
+            Determines the formatting of the given attributes.
+
+        separator : str
+            The separator between different fields.
         """
         vals = self._format_attributes(attrs, fmts)
         return separator.join(vals)
