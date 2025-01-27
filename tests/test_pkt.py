@@ -108,6 +108,7 @@ def test_text():
     assert packet._format_attributes(attrs, fmts) == ('0.100000', '127')
     assert packet._text(attrs, fmts, ', ') == '0.100000, 127'
 
+
 def test_repr():
     """Test the terminal formatting helper function.
     """
