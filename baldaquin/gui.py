@@ -76,16 +76,16 @@ class Button(QtWidgets.QPushButton):
 
     Arguments
     ---------
-    icon_name: str
+    icon_name : str
         The name of the icon to be associated to the button.
 
-    size: int
+    size : int
         The button size.
 
-    icon_size: int
+    icon_size : int
         The icon  size.
 
-    tooltip: str, optional
+    tooltip : str, optional
         An optional tooltip to be associated to the button.
     """
 
@@ -521,19 +521,20 @@ class PlotCanvasWidget(FigureCanvas):
 
     Arguments
     ---------
-    kwrgs: dict
+    update_interval : int
+        The target interval for the update timer in ms.
+
+    kwargs : dict
         The keyword arguments to be passed to the subplot() call.
     """
 
-    UPDATE_TIMER_INTERVAL = 750
-
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, update_interval: int, **kwargs) -> None:
         """Constructor.
         """
         super().__init__(Figure())
         self.axes = self.figure.subplots(**kwargs)
         self._update_timer = QtCore.QTimer()
-        self._update_timer.setInterval(self.UPDATE_TIMER_INTERVAL)
+        self._update_timer.setInterval(update_interval)
         self._update_timer.timeout.connect(self._update)
         self._plot_list = []
 
@@ -805,19 +806,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Arguments
         ---------
-        widget: QtWidgets.QWidget
+        widget : QtWidgets.QWidget
             The widget to be added to the underlying layout.
 
-        row: int
+        row : int
             The starting row position for the widget.
 
-        col: int
+        col : int
             The starting column position for the widget.
 
-        row_span: int, optional (default 1)
+        row_span : int, optional (default 1)
             The number of rows spanned by the widget.
 
-        col_span: int, optional (default 1)
+        col_span : int, optional (default 1)
             The number of columns spanned by the widget.
         """
         # pylint: disable=too-many-arguments
@@ -829,13 +830,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Arguments
         ---------
-        page: QtWidgets.QWidget
+        page : QtWidgets.QWidget
             The widget to be added to the tab widget.
 
-        label: str
+        label : str
             The text label to be displayed on the tab.
 
-        icon_name: str, optional
+        icon_name : str, optional
             The name of the icon to be displayed on the tab (if None, non icon is shown).
         """
         pos = self.tab_widget.addTab(page, label)
@@ -843,7 +844,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tab_widget.setTabIcon(pos, load_icon(icon_name))
         return page
 
-    def add_plot_canvas_tab(self, label: str, icon_name: str = None, **kwargs):
+    def add_plot_canvas_tab(self, label: str, update_interval: int = 750,
+                            icon_name: str = None, **kwargs):
         """Add a page to the tab widget holding a matplotlib plot.
 
         Note that the proper signals of the control bar are automatically connected
@@ -852,16 +854,19 @@ class MainWindow(QtWidgets.QMainWindow):
 
         Arguments
         ---------
-        label: str
+        label : str
             The text label to be displayed on the tab.
 
-        icon_name: str, optional
+        update_interval : int
+            The update interval in ms.
+
+        icon_name : str, optional
             The name of the icon to be displayed on the tab (if None, non icon is shown).
 
-        kwargs: dict
+        kwargs : dict
             All the keyword arguments to be passed to the matplotlib subplots() call.
         """
-        widget = PlotCanvasWidget(**kwargs)
+        widget = PlotCanvasWidget(update_interval, **kwargs)
         self.control_bar.set_running_triggered.connect(widget.start_updating)
         self.control_bar.set_stopped_triggered.connect(widget.stop_updating)
         return self.add_tab(widget, label, icon_name)

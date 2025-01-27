@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2024 the baldaquin team.
+# Copyright (C) 2022--2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,15 @@
 """User application framework.
 """
 
+from typing import TYPE_CHECKING
+
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.config import ConfigurationBase
+if TYPE_CHECKING:
+    # We only need RunControl for type annotations, hence the if clause.
+    from baldaquin.runctrl import RunControlBase
 
 
 class UserApplicationBase:
@@ -38,7 +43,6 @@ class UserApplicationBase:
         """
         # pylint: disable=not-callable
         self.event_handler = self.EVENT_HANDLER_CLASS()
-        self.current_output_file_base = None
         # We should think about whether there is a more elegant way to do this.
         # Pass the user application to the child event handler? Use inheritance
         # rather than composition?
@@ -73,12 +77,6 @@ class UserApplicationBase:
         """
         logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
 
-    def pre_start(self) -> None:
-        """Hook that subclasses can use to perform any operation that needs to
-        be done right before the application is stared (e.g., adding a custom
-        sink to the underlying packet buffer.)
-        """
-
     def start_run(self) -> None:
         """Start the event handler.
         """
@@ -112,6 +110,17 @@ class UserApplicationBase:
         """Stop the event handler.
         """
         self.stop_run()
+
+    def pre_start(self, run_control: 'RunControlBase') -> None:
+        """Hook that subclasses can use to perform any operation that needs to
+        be done right before the application is stared (e.g., adding a custom
+        sink to the underlying packet buffer.)
+        """
+
+    def post_stop(self, run_control: 'RunControlBase') -> None:
+        """Hook that subclasses can use to post-process the data collected in
+        the run.
+        """
 
     def process_packet(self, packet):
         """Optional hook for a user application to do something with the event data.

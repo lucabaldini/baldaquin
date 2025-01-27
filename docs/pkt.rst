@@ -13,14 +13,14 @@ The module provides the :class:`AbstractPacket <baldaquin.pkt.AbstractPacket>`
 abstract class as a base for all the packet classes. Subclass should implement
 the following interfaces
 
-* a ``payload`` property, returning the underlying binary buffer (typically a ``bytes``
+* a ``data`` property, returning the underlying binary buffer (typically a ``bytes``
   object);
 * a ``fields`` property, i.e., a tuple of string with the names of all the fields
-  that have to be extracted from the payload when a class instance is unpacked;
-* the ``__len__()`` dunder method, returning the size of the payload in bytes;
+  that have to be extracted from the data when a class instance is unpacked;
+* the ``__len__()`` dunder method, returning the size of the data in bytes;
 * the ``__iter__()`` dunder method, that makes the class iterable;
-* a ``pack()`` method, packing all the fields into the corresponding payload;
-* an ``unpack()`` method, unpacking the payload into the corresponding fields, with
+* a ``pack()`` method, packing all the fields into the corresponding data;
+* an ``unpack()`` method, unpacking the data into the corresponding fields, with
   the understanding that ``pack()`` and ``unpack()`` should be guardanteed to roundtrip.
 
 From a DAQ standpoint, the main use of concrete packet classes should be something
@@ -113,7 +113,7 @@ runtime) and that can be used as advertised:
 >>> packet = Trigger(0xff, 1, 15426782)
 >>> print(packet)
 >>> Trigger(header=255, pin_number=1, timestamp=15426782,
->>>         payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
+>>>         data=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
 >>> print(len(packet))
 >>> 10
 >>> print(isinstance(packet, AbstractPacket))
@@ -128,7 +128,7 @@ find yourself unpacking things, i.e.,
 >>> packet = Trigger.unpack(b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde')
 >>> print(packet)
 >>> Trigger(header=255, pin_number=1, timestamp=15426782,
->>>         payload=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
+>>>         data=b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde', _format=>BBQ)
 
 (i.e., you have binary data from your hardware, and you can seamlessly turned into
 a useful data structure that you can interact with.)
@@ -177,6 +177,27 @@ base class provides a sensible implementation of the
 :meth:`to_text() <baldaquin.pkt.FixedSizePacketBase.to_text()>` hooks, although
 in practical situations one is often better off re-implementing them for the
 specific application at hand.
+
+
+Reading packet files
+~~~~~~~~~~~~~~~~~~~~
+
+In order to ease the packet I/O, the module provides a
+:class:`PacketFile <baldaquin.pkt.PacketFile>` class to interface with binary
+files containing packets. The :meth:`open() <baldaquin.pkt.PacketFile.open()>`
+method supports the context manager protocol, and the class itself supports the
+iterator protocol. The basic use semantics is
+
+>>> with PacketFile(PacketClass).open(file_path) as input_file:
+>>>     for packet in input_file:
+>>>         print(packet)
+
+For application where a given post-processing requires to put in memory all
+the packets in the file (e.g., when it is necessary to combine adjacent packets
+in more complex, high-level quantities), the
+:meth:`read_all() <baldaquin.pkt.PacketFile.read_all()>` method is provided.
+(It goes without saying, this comes with all the caveats of putting a potentially
+large amount of information in memory.)
 
 
 Module documentation

@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Plasduino temperature monitor application.
+"""Plasduino pendulum viewer application.
 """
 
 from pathlib import Path
@@ -21,15 +21,13 @@ from pathlib import Path
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
-from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import packetclass, AbstractPacket
-from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
+from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.runctrl import RunControlBase
-from baldaquin.plasduino.shields import Lab1
 
 
 class AppMainWindow(MainWindow):
@@ -44,7 +42,7 @@ class AppMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
-        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts')
+        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts', update_interval=100)
 
     def setup_user_application(self, user_application):
         """Overloaded method.
@@ -54,52 +52,31 @@ class AppMainWindow(MainWindow):
 
 
 @packetclass
-class TemperatureReadout(AnalogReadout):
+class PositionReadout(AnalogReadout):
 
-    """Specialized class inheriting from ``AnalogReadout`` describing a temperature
-    readout---this is essentially adding the conversion between ADC counts and
-    temperature on top of the basic functions.
-
-    We have decided to go this route for two reasons:
-
-    * it makes it easy to guarantee that the conversion is performed once and
-      forever when the packet object is created;
-    * it allows to easily implement the text conversion.
+    """Specialized class inheriting from ``AnalogReadout`` describing a position
+    readout---this is just changing the label for the text otuput.
     """
 
-    _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
-    _ADC_NUM_BITS = 10
-    _CONVERSION_COLS = (0, 2)
-    _CONVERTER = ThermistorConversion.from_file(_CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE,
-                                                _ADC_NUM_BITS, *_CONVERSION_COLS)
-
-    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Temperature [deg C]')
-    OUTPUT_ATTRIBUTES = ('pin_number', 'seconds', 'temperature')
-    OUTPUT_FMTS = ('%d', '%.3f', '%.2f')
-
-    def __post_init__(self) -> None:
-        """Post initialization.
-        """
-        AnalogReadout.__post_init__(self)
-        self.temperature = self._CONVERTER(self.adc_value)
+    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Position [a. u.]')
 
 
-class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
+class PendulumView(PlasduinoAnalogUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Temperature Monitor'
+    NAME = 'Pendulum View'
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
-    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_tempmonitor.cfg'
+    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_pendulumview.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
-    _SAMPLING_INTERVAL = 500
+    _SAMPLING_INTERVAL = 100
 
     def __init__(self) -> None:
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = self.create_strip_charts(ylabel='Temperature [deg C]')
+        self.strip_chart_dict = self.create_strip_charts(ylabel='Position [ADC counts]')
 
     def configure(self) -> None:
         """Overloaded method.
@@ -111,17 +88,16 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
-                                           TemperatureReadout.text_header(creator=self.NAME))
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, PositionReadout.to_text,
+                                           PositionReadout.text_header(creator=self.NAME))
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
-        readout = TemperatureReadout.unpack(packet_data)
-        x, y = readout.seconds, readout.temperature
-        self.strip_chart_dict[readout.pin_number].add_point(x, y)
+        readout = PositionReadout.unpack(packet_data)
+        self.strip_chart_dict[readout.pin_number].add_point(readout.seconds, readout.adc_value)
         return readout
 
 
 if __name__ == '__main__':
-    bootstrap_window(AppMainWindow, PlasduinoRunControl(), TemperatureMonitor())
+    bootstrap_window(AppMainWindow, PlasduinoRunControl(), PendulumView())

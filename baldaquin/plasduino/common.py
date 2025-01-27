@@ -27,7 +27,8 @@ from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import EventHandlerBase
-from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition
+from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
+     InterruptMode
 from baldaquin.plasduino.sketches import sketch_file_path
 from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
@@ -167,7 +168,7 @@ class PlasduinoSerialInterface(SerialInterface):
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
     def setup_analog_sampling_sketch(self, sampling_interval: int) -> None:
-        """ Setup the sktchAnalogSampling sketch.
+        """Setup the `analog_sampling` sketch.
 
         Note that we are taking a minimal approach, here, where exactly two input
         analog pins are used, and they are those dictated by the Lab 1 shield, i.e.,
@@ -182,6 +183,12 @@ class PlasduinoSerialInterface(SerialInterface):
         for pin in Lab1.ANALOG_PINS:
             self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
         self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
+
+    def setup_digital_timer_sketch(self, interrupt_mode0, interrupt_mode1) -> None:
+        """Setup the `digital_timer` sketch.
+        """
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode0, 'B')
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode1, 'B')
 
 
 class PlasduinoRunControl(RunControlBase):
@@ -283,7 +290,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         """
         return self.serial_interface.read(AnalogReadout.size)
 
-    def wait_pending_packets(self, sleep_time: int = None) -> int:
+    def wait_pending_packets(self, wait_time: int = None) -> int:
         """Wait and read all the pending packets from the serial port, then consume
         the run end marker.
 
@@ -302,19 +309,19 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
 
         Arguments
         ---------
-        sleep_time : int (default None)
+        wait_time : int (default None)
             The amount of time (in ms) we wait before polling the serial port
             for additional pending packets.
         """
-        logger.info('Waiting for pending packet(s)...')
-        if sleep_time is not None:
-            time.sleep(sleep_time / 1000.)
+        logger.info(f'Waiting {wait_time} ms for pending packet(s)...')
+        if wait_time is not None:
+            time.sleep(wait_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
         # At this point we expect a number of events which is a multiple of
         # AnalogReadout.size, + 1. If this is not the case, it might indicate that
         # we have not waited enough.
         if num_bytes % AnalogReadout.size != 1:
-            logger.warning(f'{num_bytes} pending on the serial port, expected 1, 9 or 17...')
+            logger.warning(f'{num_bytes} pending bytes on the serial port, expected 1, 9 or 17...')
         num_packets = num_bytes // AnalogReadout.size
         if num_packets > 0:
             logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
@@ -349,31 +356,22 @@ class PlasduinoAnalogConfiguration(ConfigurationBase):
     )
 
 
-class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
+class PlasduinoDigitalConfiguration(ConfigurationBase):
 
-    """Specialized base class for plasduino user applications relying on the
-    sktchAnalogSampling.ino sketch.
+    """User application configuration for plasduino digital applications.
     """
 
-    _SAMPLING_INTERVAL = None
+    PARAMETER_SPECS = ()
 
-    @staticmethod
-    def create_strip_charts(ylabel: str = 'ADC counts'):
-        """Create all the strip charts for displaying real-time data.
-        """
-        kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
-        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in Lab1.ANALOG_PINS}
+
+class PlasduinoUserApplicationBase(UserApplicationBase):
+
+    """Base class for all the plasduino applications.
+    """
 
     def configure(self):
         """Overloaded method.
         """
-        raise NotImplementedError
-
-    def setup(self) -> None:
-        """Overloaded method (RESET -> STOPPED).
-        """
-        self.event_handler.open_serial_interface()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).
@@ -386,9 +384,54 @@ class PlasduinoAnalogUserApplicationBase(UserApplicationBase):
         self.event_handler.serial_interface.write_start_run()
         super().start_run()
 
+
+class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
+
+    """Specialized base class for plasduino user applications relying on the
+    `analog_sampling` sketch.
+    """
+
+    _SAMPLING_INTERVAL = None
+    _ADDITIONAL_PENDING_WAIT = 200
+
+    @staticmethod
+    def create_strip_charts(ylabel: str = 'ADC counts'):
+        """Create all the strip charts for displaying real-time data.
+        """
+        kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
+        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in Lab1.ANALOG_PINS}
+
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
+        """
+        self.event_handler.open_serial_interface()
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
+
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).
         """
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
-        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL)
+        self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL +
+                                                self._ADDITIONAL_PENDING_WAIT)
+
+
+class PlasduinoDigitalUserApplicationBase(PlasduinoUserApplicationBase):
+
+    """Specialized base class for plasduino user applications relying on the
+    `digital_timer` sketch.
+    """
+
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
+        """
+        self.event_handler.open_serial_interface()
+        args = InterruptMode.CHANGE, InterruptMode.DISABLED
+        self.event_handler.serial_interface.setup_digital_timer_sketch(*args)
+
+    def stop_run(self) -> None:
+        """Overloaded method (RUNNING -> STOPPED).
+        """
+        super().stop_run()
+        self.event_handler.serial_interface.write_stop_run()
+        self.event_handler.serial_interface.read_run_end_marker()

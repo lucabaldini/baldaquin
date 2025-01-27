@@ -18,9 +18,9 @@
 
 import pytest
 
-from baldaquin import logger
+from baldaquin import logger, BALDAQUIN_SCRATCH
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import Layout, Format, FieldMismatchError
+from baldaquin.pkt import Layout, Format, FieldMismatchError, PacketFile
 
 
 @packetclass
@@ -83,6 +83,42 @@ def test_readout():
     logger.info(info.value)
 
 
+def test_readout_subclass():
+    """Test subclassing a concrete FixedSizePacketBase subclass.
+    """
+
+    @packetclass
+    class SpecialReadout(Readout):
+
+        board_number: Format.UNSIGNED_SHORT
+
+    readout = SpecialReadout(0xaa, 100, 127, 3)
+    assert readout.milliseconds == 100
+    assert readout.adc_value == 127
+    assert readout.board_number == 3
+
+
+def test_text():
+    """Test the join_attributes() method.
+    """
+    attrs = ('seconds', 'adc_value')
+    fmts = ('%.6f', '%d')
+    packet = Readout(0xaa, 100, 127)
+    logger.info(packet)
+    assert packet._format_attributes(attrs, fmts) == ('0.100000', '127')
+    assert packet._text(attrs, fmts, ', ') == '0.100000, 127\n'
+
+
+def test_repr():
+    """Test the terminal formatting helper function.
+    """
+    attrs = ('seconds', 'adc_value')
+    fmts = ('%.6f', '%d')
+    packet = Readout(0xaa, 100, 127)
+    assert packet._repr(attrs) == 'Readout(seconds=0.1, adc_value=127)'
+    assert packet._repr(attrs, fmts) == 'Readout(seconds=0.100000, adc_value=127)'
+
+
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.
     """
@@ -127,10 +163,28 @@ def test_docs():
 def test_text_output():
     """Test the text representation of the packet.
     """
-    header = Readout.text_header()
+    header = Readout.text_header('#', creator='test_pkt.py')
     print(header)
     readout = Readout(0xaa, 2, 3)
-    print(readout.to_text())
+    print(readout.to_text(', '))
+
+
+def test_binary_io(num_packets: int = 10):
+    """Write to and read from file in binary format.
+    """
+    file_path = BALDAQUIN_SCRATCH / 'test_pkt.dat'
+    logger.info(f'Writing output file {file_path}')
+    with open(file_path, 'wb') as output_file:
+        for i in range(num_packets):
+            output_file.write(Readout(0xaa, 1 * 1000, i + 100).data)
+    logger.info('Done.')
+    with PacketFile(Readout).open(file_path) as input_file:
+        for packet in input_file:
+            logger.debug(packet)
+    with PacketFile(Readout).open(file_path) as input_file:
+        packets = input_file.read_all()
+        assert len(packets) == num_packets
+        logger.debug(packets)
 
 
 def test_packets_statistics():

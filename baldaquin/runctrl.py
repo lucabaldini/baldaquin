@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -515,8 +515,7 @@ class RunControlBase(FiniteStateMachineBase):
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
         self._user_application.event_handler.set_primary_sink(self.data_file_path())
-        self._user_application.current_output_file_base = self.output_file_path_base()
-        self._user_application.pre_start()
+        self._user_application.pre_start(self)
         self._user_application.start_run()
         self._update_timer.start()
         self.update_stats()
@@ -527,6 +526,7 @@ class RunControlBase(FiniteStateMachineBase):
         self._check_user_application()
         self._update_timer.stop()
         self._user_application.stop_run()
+        self._user_application.post_stop(self)
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
