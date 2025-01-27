@@ -1,4 +1,4 @@
-# Copyright (C) 2024 the baldaquin team.
+# Copyright (C) 2024--25 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,18 +54,17 @@ class Oscillation:
     transit_time: float
 
     @staticmethod
-    def text_header() -> str:
+    def text_header(prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
         """Text header for the post-processed output file.
         """
-        return f'{AbstractPacket.text_header()}' \
-               f'{COMMENT_PREFIX}Time [s]{TEXT_SEPARATOR}Period [s]' \
-               f'{TEXT_SEPARATOR}Transit time [s]\n'
+        return f'{AbstractPacket.text_header(prefix, creator)}' \
+               f'{prefix}Time [s], Period [s], Transit time [s]\n'
 
-    def to_text(self) -> str:
+    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
         """Text representation for the output file.
         """
-        return f'{self.average_time:.6f}{TEXT_SEPARATOR}{self.period:.6f}' \
-               f'{TEXT_SEPARATOR}{self.transit_time:.6f}\n'
+        return f'{self.average_time:.6f}{separator}{self.period:.6f}' \
+               f'{separator}{self.transit_time:.6f}\n'
 
 
 class Pendulum(PlasduinoDigitalUserApplicationBase):

@@ -1,4 +1,4 @@
-# Copyright (C) 2024 the baldaquin team.
+# Copyright (C) 2024--25 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,9 +78,8 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        header = AnalogReadout.text_header('Position [ADC counts]')
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, AnalogReadout.to_text,
-                                           header)
+                                           AnalogReadout.text_header())
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.

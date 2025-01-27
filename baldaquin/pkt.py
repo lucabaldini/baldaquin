@@ -81,10 +81,6 @@ class AbstractPacket(ABC):
     """Abstract base class for binary packets.
     """
 
-    # Remove these fields!
-    COMMENT_PREFIX = '# '
-    TEXT_SEPARATOR = ', '
-
     def __post_init__(self) -> None:
         """Hook for post-initialization.
         """
@@ -147,6 +143,8 @@ class AbstractPacket(ABC):
     def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
         """Helper function for text formatting.
 
+        Note the output includes a trailing endline.
+
         Arguments
         ---------
         attrs : tuple
@@ -159,7 +157,7 @@ class AbstractPacket(ABC):
             The separator between different fields.
         """
         vals = self._format_attributes(attrs, fmts)
-        return separator.join(vals)
+        return f'{separator.join(vals)}\n'
 
     def _repr(self, attrs: tuple[str], fmts: tuple[str] = None) -> str:
         """Helper function to provide sensible string formatting for the packets.
@@ -179,15 +177,27 @@ class AbstractPacket(ABC):
         info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
         return f'{self.__class__.__name__}({info})'
 
-    @classmethod
-    def text_header(cls) -> str:
+    @staticmethod
+    def text_header(prefix: str, creator: str = None) -> str:
         """Hook that subclasses can overload to provide a sensible header for an
         output text file.
-        """
-        return f'{cls.COMMENT_PREFIX}Created on {Timeline().latch()}\n' \
-               f'{cls.COMMENT_PREFIX}baldaquin version: {__version__}\n'
 
-    def to_text(self) -> str:
+        Arguments
+        ---------
+        prefix : str
+            The prefix to be prepended to each line to signal that that line is
+            a comment and contains no data.
+
+        creator : str, optional
+            An optional string indicating the application that created the file.
+        """
+        header = f'{prefix}Created on {Timeline().latch()}\n' \
+                 f'{prefix}baldaquin version: {__version__}\n'
+        if creator is not None:
+            header = f'{header}{prefix}Creator: {creator}\n'
+        return header
+
+    def to_text(self, separator: str) -> str:
         """Hook that subclasses can overload to provide a text representation of
         the buffer to be written in an output text file.
         """
@@ -341,16 +351,16 @@ class FixedSizePacketBase(AbstractPacket):
         return self._repr(self._fields + ('data', '_format'))
 
     @classmethod
-    def text_header(cls) -> str:
+    def text_header(cls, prefix: str, creator: str = None) -> str:
         """Overloaded method.
         """
-        return f'{super().text_header()}' \
-               f'{cls.COMMENT_PREFIX}{cls.TEXT_SEPARATOR.join(cls._fields)}\n'
+        return f'{AbstractPacket.text_header(prefix, creator)}' \
+               f'{prefix}{", ".join(cls._fields)}\n'
 
-    def to_text(self) -> str:
+    def to_text(self, separator: str) -> str:
         """Overloaded method.
         """
-        return f'{self.TEXT_SEPARATOR.join([str(item) for item in self])}\n'
+        return f'{separator.join([str(item) for item in self])}\n'
 
 
 class PacketFile:

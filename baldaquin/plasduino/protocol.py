@@ -96,29 +96,29 @@ class AnalogReadout(FixedSizePacketBase):
     milliseconds: Format.UNSIGNED_LONG
     adc_value: Format.UNSIGNED_SHORT
 
+    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'ADC counts')
+    OUTPUT_ATTRIBUTES = ('pin_number', 'seconds', 'adc_value')
+    OUTPUT_FMTS = ('%d', '%.3f', '%d')
+
     def __post_init__(self) -> None:
         """Post initialization.
         """
         self.seconds = 1.e-3 * self.milliseconds
 
-    # pylint: disable=arguments-differ
-    @staticmethod
-    def text_header(label: str) -> str:
+    @classmethod
+    def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
         """Return the header for the output text file.
         """
-        return f'{AbstractPacket.text_header()}' \
-               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
-               f'{TEXT_SEPARATOR}{label}\n'
+        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
 
-    def to_text(self) -> str:
+    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
         """Convert a readout to text for use in a custom sink.
 
         Note that this is potentially tricky, as if any conversion is required
         downstream (e.g., if we are reading a temperature), we might end up needing
         to define a custom class anyway.
         """
-        return f'{self.pin_number}{TEXT_SEPARATOR}{self.seconds:.3f}' \
-               f'{TEXT_SEPARATOR}{self.adc_value}\n'
+        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
 
     def __str__(self):
         """String formatting.
@@ -126,7 +126,7 @@ class AnalogReadout(FixedSizePacketBase):
         Note that we are overloading the `__str__()` method, leaving alone the
         default `__repr__()` dunder from the base class.
         """
-        return self._repr(('pin_number', 'seconds', 'adc_value'), ('%d', '%.6f', '%d'))
+        return self._repr(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS)
 
 
 @packetclass
@@ -144,6 +144,10 @@ class DigitalTransition(FixedSizePacketBase):
     info: Format.UNSIGNED_CHAR
     microseconds: Format.UNSIGNED_LONG
 
+    OUTPUT_HEADERS = ('Pin number', 'Edge type', 'Time [s]')
+    OUTPUT_ATTRIBUTES = ('pin_number', 'edge', 'seconds')
+    OUTPUT_FMTS = ('%d', '%d', '%.6f')
+
     def __post_init__(self) -> None:
         """Post initialization.
         """
@@ -153,17 +157,16 @@ class DigitalTransition(FixedSizePacketBase):
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.microseconds
 
-    @staticmethod
-    def text_header() -> str:
+    @classmethod
+    def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
         """Return the header for the output text file.
         """
-        return f'{AbstractPacket.text_header()}' \
-               f'{COMMENT_PREFIX}Time [s]{TEXT_SEPARATOR}Edge type\n'
+        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
 
-    def to_text(self) -> str:
+    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
         """Convert a temperature readout to text for use in a custom sink.
         """
-        return f'{self.seconds:.6f}{TEXT_SEPARATOR}{self.edge}\n'
+        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
 
     def __str__(self):
         """String formatting.
@@ -171,4 +174,4 @@ class DigitalTransition(FixedSizePacketBase):
         Note that we are overloading the `__str__()` method, leaving alone the
         default `__repr__()` dunder from the base class.
         """
-        return self._repr(('pin_number', 'edge', 'seconds'), ('%d', '%d', '%.6f'))
+        return self._repr(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS)

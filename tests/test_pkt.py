@@ -163,10 +163,10 @@ def test_docs():
 def test_text_output():
     """Test the text representation of the packet.
     """
-    header = Readout.text_header()
+    header = Readout.text_header('#', creator='test_pkt.py')
     print(header)
     readout = Readout(0xaa, 2, 3)
-    print(readout.to_text())
+    print(readout.to_text(', '))
 
 
 def test_binary_io(num_packets: int = 10):

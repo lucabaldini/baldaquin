@@ -1,4 +1,4 @@
-# Copyright (C) 2024 the baldaquin team.
+# Copyright (C) 2024--25 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ from baldaquin.pkt import packetclass, AbstractPacket
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
-from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, AnalogReadout
+from baldaquin.plasduino.protocol import AnalogReadout
 from baldaquin.runctrl import RunControlBase
 from baldaquin.plasduino.shields import Lab1
 
@@ -73,25 +73,15 @@ class TemperatureReadout(AnalogReadout):
     _CONVERTER = ThermistorConversion.from_file(_CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE,
                                                 _ADC_NUM_BITS, *_CONVERSION_COLS)
 
+    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Temperature [deg C]')
+    OUTPUT_ATTRIBUTES = ('pin_number', 'seconds', 'temperature')
+    OUTPUT_FMTS = ('%d', '%.3f', '%.2f')
+
     def __post_init__(self) -> None:
         """Post initialization.
         """
         AnalogReadout.__post_init__(self)
         self.temperature = self._CONVERTER(self.adc_value)
-
-    @staticmethod
-    def text_header() -> str:
-        """Return the header for the output text file.
-        """
-        return f'{AbstractPacket.text_header()}' \
-               f'{COMMENT_PREFIX}Pin number{TEXT_SEPARATOR}Time [s]' \
-               f'{TEXT_SEPARATOR}Temperature [deg C]\n'
-
-    def to_text(self) -> str:
-        """Convert a temperature readout to text for use in a custom sink.
-        """
-        return f'{self.pin_number}{TEXT_SEPARATOR}{self.seconds:.3f}{TEXT_SEPARATOR}' \
-               f'{self.temperature:.3f}\n'
 
 
 class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
