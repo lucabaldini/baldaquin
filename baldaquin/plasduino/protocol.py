@@ -80,7 +80,34 @@ class InterruptMode(IntEnum):
 
 
 @packetclass
-class AnalogReadout(FixedSizePacketBase):
+class PlasduinoPacketBase(FixedSizePacketBase):
+
+    """Base class for the plasduino packets.
+    """
+
+    OUTPUT_HEADERS = None
+    OUTPUT_ATTRIBUTES = None
+    OUTPUT_FMTS = None
+
+    @classmethod
+    def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
+        """Return the header for the output text file.
+        """
+        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
+
+    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
+        """Convert a readout to text for use in a custom sink.
+        """
+        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
+
+    def __str__(self):
+        """String formatting.
+        """
+        return self._repr(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS)
+
+
+@packetclass
+class AnalogReadout(PlasduinoPacketBase):
 
     """A plasduino analog readout is a 8-byte binary array containing:
 
@@ -105,32 +132,9 @@ class AnalogReadout(FixedSizePacketBase):
         """
         self.seconds = 1.e-3 * self.milliseconds
 
-    @classmethod
-    def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
-        """Return the header for the output text file.
-        """
-        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
-
-    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
-        """Convert a readout to text for use in a custom sink.
-
-        Note that this is potentially tricky, as if any conversion is required
-        downstream (e.g., if we are reading a temperature), we might end up needing
-        to define a custom class anyway.
-        """
-        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
-
-    def __str__(self):
-        """String formatting.
-
-        Note that we are overloading the `__str__()` method, leaving alone the
-        default `__repr__()` dunder from the base class.
-        """
-        return self._repr(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS)
-
 
 @packetclass
-class DigitalTransition(FixedSizePacketBase):
+class DigitalTransition(PlasduinoPacketBase):
 
     """A plasduino digital transition is a 6-byte binary array containing:
 
@@ -156,22 +160,3 @@ class DigitalTransition(FixedSizePacketBase):
         self.pin_number = self.info & 0x7F
         self.edge = (self.info >> 7) & 0x1
         self.seconds = 1.e-6 * self.microseconds
-
-    @classmethod
-    def text_header(cls, prefix: str = COMMENT_PREFIX, creator: str = None) -> str:
-        """Return the header for the output text file.
-        """
-        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{cls.OUTPUT_HEADERS}\n'
-
-    def to_text(self, separator: str = TEXT_SEPARATOR) -> str:
-        """Convert a temperature readout to text for use in a custom sink.
-        """
-        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
-
-    def __str__(self):
-        """String formatting.
-
-        Note that we are overloading the `__str__()` method, leaving alone the
-        default `__repr__()` dunder from the base class.
-        """
-        return self._repr(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS)
