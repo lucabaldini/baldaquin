@@ -350,6 +350,14 @@ class FixedSizePacketBase(AbstractPacket):
         """
         return self._repr(self._fields + ('data', '_format'))
 
+    def __str__(self):
+        """String formatting.
+
+        This is a slightly more concise test representation of the packet. Again,
+        subclasses can reimplement this at their leisure.
+        """
+        return self._repr(self._fields)
+
     @classmethod
     def text_header(cls, prefix: str, creator: str = None) -> str:
         """Overloaded method.
