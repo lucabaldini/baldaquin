@@ -141,7 +141,13 @@ class AbstractPacket(ABC):
         vals = (getattr(self, attr) for attr in attrs)
         if fmts is None:
             fmts = ('%s' for _ in attrs)
-        return (fmt % val for val, fmt in zip(vals, fmts))
+        return tuple(fmt % val for val, fmt in zip(vals, fmts))
+
+    def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
+        """Helper function for text formatting.
+        """
+        vals = self._format_attributes(attrs, fmts)
+        return separator.join(vals)
 
     def _repr(self, attrs: tuple[str], fmts: tuple[str] = None) -> str:
         """Helper function to provide sensible string formatting for the packets.
@@ -160,11 +166,6 @@ class AbstractPacket(ABC):
         vals = self._format_attributes(attrs, fmts)
         info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
         return f'{self.__class__.__name__}({info})'
-
-    def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
-        """
-        """
-        return separator.join(self._format_attributes(attrs, fmts))
 
     @classmethod
     def text_header(cls) -> str:
