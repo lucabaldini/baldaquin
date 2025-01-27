@@ -106,7 +106,7 @@ def test_text():
     packet = Readout(0xaa, 100, 127)
     logger.info(packet)
     assert packet._format_attributes(attrs, fmts) == ('0.100000', '127')
-    assert packet._text(attrs, fmts, ', ') == '0.100000, 127'
+    assert packet._text(attrs, fmts, ', ') == '0.100000, 127\n'
 
 
 def test_repr():
