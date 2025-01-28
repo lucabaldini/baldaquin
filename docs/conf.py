@@ -21,7 +21,7 @@ from baldaquin import __version__  # noqa E402
 # -- Project information -----------------------------------------------------
 
 project = 'baldaquin'
-copyright = '2022--2024, The baldaquin team'
+copyright = '2022-2025, The baldaquin team'
 author = 'The baldaquin team'
 
 # The full version, including alpha/beta/rc tags
