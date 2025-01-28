@@ -16,7 +16,7 @@
 """Basic definition of the plasduino communication protocol.
 """
 
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, Format, Layout
 
@@ -25,7 +25,7 @@ COMMENT_PREFIX = '# '
 TEXT_SEPARATOR = ', '
 
 
-class Marker(Enum):
+class Marker(IntEnum):
 
     """Relevant protocol markers, verbatim from
     https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol.h
@@ -35,14 +35,14 @@ class Marker(Enum):
     hardly relevant.)
     """
 
-    NO_OP_HEADER = 0xA0
-    DIGITAL_TRANSITION_HEADER = 0xA1
-    ANALOG_READOUT_HEADER = 0xA2
-    GPS_MEASSGE_HEADER = 0xA3
-    RUN_END_MARKER = 0xB0
+    NO_OP_HEADER = 0xa0
+    DIGITAL_TRANSITION_HEADER = 0xa1
+    ANALOG_READOUT_HEADER = 0xa2
+    GPS_MEASSGE_HEADER = 0xa3
+    RUN_END_MARKER = 0xb0
 
 
-class OpCode(Enum):
+class OpCode(IntEnum):
 
     """Definition of the operational codes, verbatim from
     https://bitbucket.org/lbaldini/plasduino/src/master/arduino/protocol.h
@@ -62,10 +62,10 @@ class OpCode(Enum):
     OP_CODE_SELECT_SAMPLING_INTERVAL = 0x07
     OP_CODE_SELECT_INTERRUPT_MODE = 0x08
     OP_CODE_SELECT_PWM_DUTY_CYCLE = 0x09
-    OP_CODE_SELECT_POLLING_MODE = 0x0A
-    OP_CODE_AD9833_CMD = 0x0B
-    OP_CODE_TOGGLE_LED = 0x0C
-    OP_CODE_TOGGLE_DIGITAL_PIN = 0x0D
+    OP_CODE_SELECT_POLLING_MODE = 0x0a
+    OP_CODE_AD9833_CMD = 0x0b
+    OP_CODE_TOGGLE_LED = 0x0c
+    OP_CODE_TOGGLE_DIGITAL_PIN = 0x0d
 
 
 class InterruptMode(IntEnum):
@@ -112,14 +112,14 @@ class AnalogReadout(PlasduinoPacketBase):
 
     """A plasduino analog readout is a 8-byte binary array containing:
 
-    * byte(s) 0  : the array header (``Marker.ANALOG_READOUT_HEADER.value``);
+    * byte(s) 0  : the array header (``Marker.ANALOG_READOUT_HEADER``);
     * byte(s) 1  : the analog pin number;
     * byte(s) 2-5: the timestamp of the readout from millis();
     * byte(s) 6-7: the actual adc value.
     """
 
     layout = Layout.BIG_ENDIAN
-    header: Format.UNSIGNED_CHAR = Marker.ANALOG_READOUT_HEADER.value
+    header: Format.UNSIGNED_CHAR = Marker.ANALOG_READOUT_HEADER
     pin_number: Format.UNSIGNED_CHAR
     milliseconds: Format.UNSIGNED_LONG
     adc_value: Format.UNSIGNED_SHORT
@@ -139,13 +139,13 @@ class DigitalTransition(PlasduinoPacketBase):
 
     """A plasduino digital transition is a 6-byte binary array containing:
 
-    * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER.value``);
+    * byte(s) 0  : the array header (``Marker.DIGITAL_TRANSITION_HEADER``);
     * byte(s) 1  : the transition information (pin number and edge type);
     * byte(s) 2-5: the timestamp of the readout from micros().
     """
 
     layout = Layout.BIG_ENDIAN
-    header: Format.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER.value
+    header: Format.UNSIGNED_CHAR = Marker.DIGITAL_TRANSITION_HEADER
     info: Format.UNSIGNED_CHAR
     microseconds: Format.UNSIGNED_LONG
 

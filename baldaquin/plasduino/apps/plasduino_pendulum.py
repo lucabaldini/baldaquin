@@ -151,7 +151,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         data acquisition is started with the flag covering the optical gate.
         """
         # Note when Edge is an IntEnum we can get rid of the value, here.
-        if data[0].edge == Edge.RISING.value:
+        if data[0].edge == Edge.RISING:
             logger.info('Wrong edge detected on the first transition, skipping it...')
             data = data[1:]
         return Pendulum._postprocess_data_smooth(data)
