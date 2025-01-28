@@ -3,7 +3,7 @@
 Release notes
 =============
 
-
+* IntEnum used where appropriate.
 * Three basic plasduino apps fully operational.
 * Inheritance supported in the ``@packetclass`` decorator.
 * ``payload`` class member renamed as ``data`` in the ``AbstractPacket`` class.
@@ -13,8 +13,10 @@ Release notes
   class.
 * Docs updated and unit tests added.
 * Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/39
       * https://github.com/lucabaldini/baldaquin/pull/36
 * Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/34
       * https://github.com/lucabaldini/baldaquin/issues/20
       * https://github.com/lucabaldini/baldaquin/issues/12
 

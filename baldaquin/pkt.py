@@ -21,7 +21,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
-from enum import Enum
+from enum import Enum, IntEnum
 import struct
 
 from baldaquin import logger, __version__
@@ -67,7 +67,7 @@ class Layout(Enum):
     DEFAULT = '@'
 
 
-class Edge(Enum):
+class Edge(IntEnum):
 
     """Small Enum class encapsulating the edge type of a transition on a digital line.
     """

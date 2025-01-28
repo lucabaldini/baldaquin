@@ -82,9 +82,9 @@ class PlasduinoSerialInterface(SerialInterface):
         """
         logger.info('Waiting for the run end marker...')
         marker = self.read_and_unpack('B')
-        if not marker == Marker.RUN_END_MARKER.value:
+        if not marker == Marker.RUN_END_MARKER:
             raise RuntimeError(f'Run end marker mismatch '
-                  f'(expected {hex(Marker.RUN_END_MARKER.value)}, found {hex(marker)}).')
+                  f'(expected {hex(Marker.RUN_END_MARKER)}, found {hex(marker)}).')
         logger.info('Run end marker correctly read.')
 
     def read_until_run_end_marker(self, timeout: float = None) -> None:
@@ -103,7 +103,7 @@ class PlasduinoSerialInterface(SerialInterface):
         if timeout != self.timeout:
             self.timeout = timeout
             logger.debug(f'Serial port timeout temporarily set to {self.timeout} s...')
-        data = self.read_until(struct.pack('B', Marker.RUN_END_MARKER.value))
+        data = self.read_until(struct.pack('B', Marker.RUN_END_MARKER))
         if len(data) > 0:
             logger.debug(f'{len(data)} byte(s) found: {data}')
         if previous_timeout != self.timeout:
@@ -164,7 +164,7 @@ class PlasduinoSerialInterface(SerialInterface):
         actual_opcode = self.read_and_unpack('B')
         actual_value = self.read_and_unpack(fmt)
         logger.debug(f'Board response ({target_opcode}, {actual_opcode}, {actual_value})...')
-        if actual_opcode != opcode.value or actual_value != value:
+        if actual_opcode != opcode or actual_value != value:
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
     def setup_analog_sampling_sketch(self, sampling_interval: int) -> None:
