@@ -94,5 +94,11 @@ class MainArgumentParser(argparse.ArgumentParser):
         command(**kwargs)
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     MainArgumentParser().run_command()
+
+
+if __name__ == '__main__':
+    main()
