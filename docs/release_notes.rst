@@ -3,7 +3,7 @@
 Release notes
 =============
 
-* baldaquini main command-line interface revamped, and rudimentary application
+* baldaquin main command-line interface revamped, and rudimentary application
   launcher added.
 * ``pyproject.toml`` file updated to ship the baldaquin cli.
 * ``requirements.txt`` removed, as it was redundant with ``pyproject.toml``.
