@@ -3,6 +3,9 @@
 Release notes
 =============
 
+
+*baldaquin 0.3.0 (Tue, 28 Jan 2025 15:09:37 +0100)*
+
 * baldaquin main command-line interface revamped, and rudimentary application
   launcher added.
 * ``pyproject.toml`` file updated to ship the baldaquin cli.
