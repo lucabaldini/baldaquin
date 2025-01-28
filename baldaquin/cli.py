@@ -15,6 +15,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+"""baldaquin command-line interface.
+"""
 
 import argparse
 
@@ -48,39 +50,39 @@ class MainArgumentParser(argparse.ArgumentParser):
         """Overloaded method.
         """
         super().__init__(description=self._DESCRIPTION, epilog=self._EPILOG,
-            formatter_class=self._FORMATTER_CLASS)
+                         formatter_class=self._FORMATTER_CLASS)
         subparsers = self.add_subparsers(required=True, help='sub-command help')
         # See https://stackoverflow.com/questions/8757338/
         subparsers._parser_class = argparse.ArgumentParser
 
         # Simply list the COM ports.
         list_com_ports = subparsers.add_parser('list-com-ports',
-            help='list the available COM ports',
-            formatter_class=self._FORMATTER_CLASS)
+            help='list the available COM ports',  # noqa: E128
+            formatter_class=self._FORMATTER_CLASS)  # noqa: E128
         list_com_ports.set_defaults(func=serial_.list_com_ports)
 
         # Arduino autodetect.
         arduino_autodetect = subparsers.add_parser('arduino-autodetect',
-            help='autodetect arduino boards attached to the COM ports',
-            formatter_class=self._FORMATTER_CLASS)
+            help='autodetect arduino boards attached to the COM ports',  # noqa: E128
+            formatter_class=self._FORMATTER_CLASS)  # noqa: E128
         arduino_autodetect.set_defaults(func=arduino_.autodetect_arduino_boards)
 
         # Arduino upload.
         arduino_compile = subparsers.add_parser('arduino-compile',
-            help='compile a sketch for a given arduino board',
-            formatter_class=self._FORMATTER_CLASS)
+            help='compile a sketch for a given arduino board',  # noqa: E128
+            formatter_class=self._FORMATTER_CLASS)  # noqa: E128
         arduino_compile.add_argument('file_path',
-            help='the path to the sketch source file')
+            help='the path to the sketch source file')  # noqa: E128
         arduino_compile.add_argument('--output_dir', default=BALDAQUIN_DATA)
         arduino_compile.add_argument('--board-designator', default='uno')
         arduino_compile.set_defaults(func=arduino_.compile_sketch)
 
         # Arduino upload.
         arduino_upload = subparsers.add_parser('arduino-upload',
-            help='upload a sketch to an arduino board',
-            formatter_class=self._FORMATTER_CLASS)
+            help='upload a sketch to an arduino board',  # noqa: E128
+            formatter_class=self._FORMATTER_CLASS)  # noqa: E128
         arduino_upload.add_argument('file_path',
-            help='the path to the compiled sketch file')
+            help='the path to the compiled sketch file')  # noqa: E128
         arduino_upload.add_argument('--board', default=arduino_.UNO)
         arduino_upload.set_defaults(func=arduino_.upload_sketch)
 
