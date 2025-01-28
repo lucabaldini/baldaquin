@@ -23,9 +23,11 @@ Release notes
       * https://github.com/lucabaldini/baldaquin/pull/39
       * https://github.com/lucabaldini/baldaquin/pull/36
 * Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/38
       * https://github.com/lucabaldini/baldaquin/issues/34
       * https://github.com/lucabaldini/baldaquin/issues/20
       * https://github.com/lucabaldini/baldaquin/issues/12
+      * https://github.com/lucabaldini/baldaquin/issues/10
 
 
 *baldaquin 0.2.1 (Thu, 23 Jan 2025 15:57:29 +0100)*
