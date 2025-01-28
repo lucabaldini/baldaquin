@@ -13,6 +13,14 @@ This should get you up and running. (Of course all the usual suggestions about u
 a virtual environment apply here, see the `venv <https://docs.python.org/3/library/venv.html>`_
 documentation page.)
 
+Once you have installed the package, you should be able to type
+
+.. code-block:: shell
+
+    baldaquin start-app silly_hist
+
+and see a GUI appear. Press play and enjoy the histogram filling itself.
+
 
 Pre-requisites
 --------------
