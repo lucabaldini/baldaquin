@@ -24,7 +24,7 @@ maintainers = [
 description = "BALanced DAQ User INterface"
 readme = "README.md"
 license = {file = "LICENSE.txt"}
-keywords = ["DAQ"]
+keywords = ["DAQ", "Physics", "detector", "data flow"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Programming Language :: Python"
@@ -39,14 +39,14 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/lucabaldini/baldaquin"
-#Documentation = "https://readthedocs.org"
+Documentation = "https://lucabaldini.github.io/baldaquin/"
 Repository = "https://github.com/lucabaldini/baldaquin"
-#"Bug Tracker" = "https://github.com/me/spam/issues"
-#Changelog = "https://github.com/me/spam/blob/master/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/lucabaldini/baldaquin/issues"
+Changelog = "https://lucabaldini.github.io/baldaquin/release_notes.html"
 
-# [project.scripts]
-# spam-cli = "spam:main_cli"
-#
+#[project.scripts]
+#baldaquin = "cli:main"
+
 # [project.gui-scripts]
 # spam-gui = "spam:main_gui"
 #
