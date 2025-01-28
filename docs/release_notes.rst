@@ -16,6 +16,7 @@ Release notes
       * https://github.com/lucabaldini/baldaquin/pull/39
       * https://github.com/lucabaldini/baldaquin/pull/36
 * Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/34
       * https://github.com/lucabaldini/baldaquin/issues/20
       * https://github.com/lucabaldini/baldaquin/issues/12
 
