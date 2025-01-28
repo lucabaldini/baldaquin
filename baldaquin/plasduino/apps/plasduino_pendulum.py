@@ -182,5 +182,11 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         return transition
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     bootstrap_window(AppMainWindow, PlasduinoRunControl(), Pendulum())
+
+
+if __name__ == '__main__':
+    main()

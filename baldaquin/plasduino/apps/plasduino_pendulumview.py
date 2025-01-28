@@ -99,5 +99,11 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         return readout
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     bootstrap_window(AppMainWindow, PlasduinoRunControl(), PendulumView())
+
+
+if __name__ == '__main__':
+    main()

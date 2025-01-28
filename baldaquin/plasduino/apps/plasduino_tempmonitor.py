@@ -123,5 +123,11 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         return readout
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     bootstrap_window(AppMainWindow, PlasduinoRunControl(), TemperatureMonitor())
+
+
+if __name__ == '__main__':
+    main()

@@ -65,5 +65,11 @@ class SillyHist(SillyUserApplicationBase):
         return packet
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     bootstrap_window(MainWindow, SillyRunControl(), SillyHist())
+
+
+if __name__ == '__main__':
+    main()

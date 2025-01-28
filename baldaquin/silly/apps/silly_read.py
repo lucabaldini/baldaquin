@@ -42,5 +42,14 @@ class SillyRead(SillyUserApplicationBase):
         return packet
 
 
-if __name__ == '__main__':
+def main() -> None:
+    """Main entry point.
+    """
     bootstrap_window(SillyMainWindow, SillyRunControl(), SillyRead())
+
+
+if __name__ == '__main__':
+    main()
+
+
+
