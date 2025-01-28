@@ -37,13 +37,19 @@ application.
 
 
 .. toctree::
+   :caption: Overview
    :maxdepth: 2
 
    about
    install
    technologies
 
-   plasduino
-
    release_notes
    api
+
+
+.. toctree::
+   :caption: Projects
+   :maxdepth: 2
+
+   plasduino

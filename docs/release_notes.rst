@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* baldaquin main command-line interface revamped, and rudimentary application
+  launcher added.
+* ``pyproject.toml`` file updated to ship the baldaquin cli.
+* ``requirements.txt`` removed, as it was redundant with ``pyproject.toml``.
+* New ``main()`` entry point added to all the applications.
+* Installation notes added to the documentation, and a few other minor tweaks.
 * IntEnum used where appropriate.
 * Three basic plasduino apps fully operational.
 * Inheritance supported in the ``@packetclass`` decorator.
@@ -13,12 +19,15 @@ Release notes
   class.
 * Docs updated and unit tests added.
 * Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/41
       * https://github.com/lucabaldini/baldaquin/pull/39
       * https://github.com/lucabaldini/baldaquin/pull/36
 * Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/38
       * https://github.com/lucabaldini/baldaquin/issues/34
       * https://github.com/lucabaldini/baldaquin/issues/20
       * https://github.com/lucabaldini/baldaquin/issues/12
+      * https://github.com/lucabaldini/baldaquin/issues/10
 
 
 *baldaquin 0.2.1 (Thu, 23 Jan 2025 15:57:29 +0100)*
