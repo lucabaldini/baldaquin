@@ -45,7 +45,7 @@ Repository = "https://github.com/lucabaldini/baldaquin"
 Changelog = "https://lucabaldini.github.io/baldaquin/release_notes.html"
 
 [project.scripts]
-baldaquin = "cli:main"
+baldaquin = "baldaquin.cli:main"
 
 # [project.gui-scripts]
 # spam-gui = "spam:main_gui"
