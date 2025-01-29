@@ -293,9 +293,9 @@ class RunReport:
     def save(self, file_path: str) -> None:
         """Save the report to file.
         """
+        logger.info(f'Writing run report to {file_path}...')
         with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
             output_file.write(self.dumps())
-        logger.info(f'Run report saved to {file_path}')
 
     @classmethod
     def load(cls, file_path):
@@ -445,6 +445,17 @@ class RunControlBase(FiniteStateMachineBase):
         """Return the path to the current log file.
         """
         return self.data_folder_path() / self.log_file_name()
+
+    def config_file_name(self) -> str:
+        """Return the file name for the current configuration.
+        """
+        return self._file_name_base('config', 'json')
+
+    def config_file_path(self) -> Path:
+        """Return the path to the current configuration.
+        """
+        return self.data_folder_path() / self.config_file_name()
+
 
     def report_file_name(self) -> str:
         """Return the file name for the current run report.
@@ -610,6 +621,7 @@ class RunControlBase(FiniteStateMachineBase):
         self._check_user_application()
         self._increment_run_id()
         self._create_data_folder()
+        self._user_application.configuration.save(self.config_file_path())
         self._log_file_handler_id = logger.add(self.log_file_path())
         self.start_timestamp = self.timeline.latch()
         self.stop_timestamp = None
