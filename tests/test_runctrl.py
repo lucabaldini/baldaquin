@@ -86,7 +86,7 @@ def test_report():
     time.sleep(0.5)
     stop_timestamp = timeline.latch()
     stats = PacketStatistics(10, 10, 100)
-    report = RunReport('0.3.1', 101, 66, start_timestamp, stop_timestamp, \
+    report = RunReport('0.3.1', 101, 66, start_timestamp, stop_timestamp,
                        'Test project', 'TestApplication', stats)
 
     # Make sure that the serialization/deserialization roundtrips.

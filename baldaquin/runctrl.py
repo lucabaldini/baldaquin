@@ -24,7 +24,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from baldaquin import __version__
+from baldaquin import __version__, DEFAULT_CHARACTER_ENCODING
 from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
@@ -293,7 +293,7 @@ class RunReport:
     def save(self, file_path: str) -> None:
         """Save the report to file.
         """
-        with open(file_path, 'w') as output_file:
+        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
             output_file.write(self.dumps())
         logger.info(f'Run report saved to {file_path}')
 
@@ -302,7 +302,7 @@ class RunReport:
         """Load the report from file.
         """
         logger.info(f'Loading run report from {file_path}...')
-        with open(file_path, 'r') as input_file:
+        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             return cls.from_dict(**json.load(input_file))
 
 
@@ -421,7 +421,7 @@ class RunControlBase(FiniteStateMachineBase):
         return self.data_folder_path() / self._file_name_base()
 
     def data_file_name(self) -> str:
-        """Return the current data file name.
+        """Return the file name for the current data file.
 
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
@@ -429,12 +429,12 @@ class RunControlBase(FiniteStateMachineBase):
         return self._file_name_base('data', 'dat')
 
     def data_file_path(self) -> Path:
-        """Return the current
+        """Return the path to the current data file.
         """
         return self.data_folder_path() / self.data_file_name()
 
     def log_file_name(self):
-        """Return the current log file name.
+        """Return the file name for the current log file.
 
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
@@ -442,17 +442,17 @@ class RunControlBase(FiniteStateMachineBase):
         return self._file_name_base('run', 'log')
 
     def log_file_path(self) -> Path:
-        """Return the current
+        """Return the path to the current log file.
         """
         return self.data_folder_path() / self.log_file_name()
 
     def report_file_name(self) -> str:
-        """
+        """Return the file name for the current run report.
         """
         return self._file_name_base('report', 'json')
 
     def report_file_path(self) -> Path:
-        """Return the current
+        """Return the path to the current run report.
         """
         return self.data_folder_path() / self.report_file_name()
 
