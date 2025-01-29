@@ -17,17 +17,20 @@
 """Basic run control structure.
 """
 
+from dataclasses import dataclass
 from enum import Enum
+import json
 from pathlib import Path
 
 from loguru import logger
 
+from baldaquin import __version__
 from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import PacketStatistics
-from baldaquin.timeline import Timeline
+from baldaquin.timeline import Timeline, Timestamp
 
 
 class FsmState(Enum):
@@ -244,6 +247,46 @@ class AppNotLoadedError(RuntimeError):
         super().__init__('User application not loaded.')
 
 
+@dataclass
+class RunReport:
+
+    """Small container class describing a run report.
+    """
+
+    baldaquin_version: str
+    test_stand_id: int
+    run_id: int
+    start_timestamp: Timestamp
+    stop_timestamp: Timestamp
+    user_application: str
+    statistics: PacketStatistics
+
+    def to_dict(self):
+        """
+        """
+        _dict = {}
+        for key, value in self.__dict__.items():
+            if isinstance(value, (int, str)):
+                _dict[key] = value
+            else:
+                _dict[key] = value.__dict__
+        return _dict
+
+    def dump(self, file_path: str) -> None:
+        """
+        """
+        logger.info(f'Writing run report to {file_path}...')
+        with open(file_path, 'w') as output_file:
+            json.dump(self.to_dict(), output_file, indent=4, default=str)
+        logger.info('Done.')
+
+    @classmethod
+    def load(cls, file_path):
+        """
+        """
+        pass
+
+
 class RunControlBase(FiniteStateMachineBase):
 
     """Run control class.
@@ -384,6 +427,16 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return self.data_folder_path() / self.log_file_name()
 
+    def report_file_name(self) -> str:
+        """
+        """
+        return self._file_name_base('report', 'json')
+
+    def report_file_path(self) -> Path:
+        """Return the current
+        """
+        return self.data_folder_path() / self.report_file_name()
+
     @staticmethod
     def _read_config_file(file_path: Path, default: int) -> int:
         """Read a single integer value from a given configuration file.
@@ -483,6 +536,14 @@ class RunControlBase(FiniteStateMachineBase):
         self.uptime_updated.emit(elapsed_time)
         self.event_handler_stats_updated.emit(statistics, event_rate)
 
+    def write_run_report(self) -> None:
+        """Write an end-of-run report in the output folder.
+        """
+        report = RunReport(__version__, self._test_stand_id, self._run_id, self.start_timestamp,
+                           self.stop_timestamp, self._user_application.__class__.__name__,
+                           self._user_application.event_handler.statistics())
+        report.dump(self.report_file_path())
+
     def load_user_application(self, user_application: UserApplicationBase) -> None:
         """Set the user application to be run.
         """
@@ -551,6 +612,7 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
         logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
+        self.write_run_report()
         self.update_stats()
 
     def pause(self) -> None:
