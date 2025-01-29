@@ -18,7 +18,8 @@
 
 import time
 
-from baldaquin.timeline import Timeline
+from baldaquin import logger
+from baldaquin.timeline import Timeline, Timestamp
 
 
 def test_default_timeline():
@@ -49,3 +50,26 @@ def test_offset_timeline_leap(origin='1973-01-01'):
     tstamp = timeline.latch()
     delta = tstamp.seconds - time.time()
     assert abs(delta + 3600. * 24 * (3 * 365 + 1)) < 0.001
+
+
+def test_serialization():
+    """Test the serialization/deserialization facilities.
+    """
+    # Create a timeline and a timestamp.
+    timeline = Timeline()
+    timestamp = timeline.latch()
+    logger.info(timestamp)
+    # Serialize...
+    kwargs = timestamp.to_dict()
+    logger.info(kwargs)
+    # ... and deserialize.
+    twin = Timestamp.from_dict(**kwargs)
+    # The two things should be identical.
+    assert twin == timestamp
+    assert twin.utc_datetime == timestamp.utc_datetime
+    assert twin.local_datetime == timestamp.local_datetime
+    assert twin.seconds == timestamp.seconds
+    assert id(twin) != id(timestamp)
+    # And, just for fun, make sure a different timestamp is really different.
+    impostor = timeline.latch()
+    assert impostor != timestamp
