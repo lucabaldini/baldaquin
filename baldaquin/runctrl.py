@@ -258,15 +258,17 @@ class RunReport:
     run_id: int
     start_timestamp: Timestamp
     stop_timestamp: Timestamp
-    user_application: str
+    project_name: str
+    application_name: str
     statistics: PacketStatistics
 
     _VERSION = 1
+    _VERSION_FIELD_NAME = 'report_version'
 
     def to_dict(self):
         """Serialization.
         """
-        _dict = {'report_version': self._VERSION}
+        _dict = {self._VERSION_FIELD_NAME: self._VERSION}
         _dict.update(self.__dict__)
         for key in ('start_timestamp', 'stop_timestamp', 'statistics'):
             _dict[key] = _dict[key].to_dict()
@@ -276,25 +278,32 @@ class RunReport:
     def from_dict(cls, **kwargs) -> 'RunReport':
         """Deserialization.
         """
+        _ = kwargs.pop(cls._VERSION_FIELD_NAME)
+        for key in ('start_timestamp', 'stop_timestamp'):
+            kwargs.update({key: Timestamp.from_dict(**kwargs[key])})
+        for key in ('statistics', ):
+            kwargs.update({key: PacketStatistics.from_dict(**kwargs[key])})
+        return cls(**kwargs)
 
-    def dumps(self) -> str:
+    def dumps(self, indent: int = 4) -> str:
+        """Return a text representation of the object in json format.
         """
-        """
-        return json.dumps(self.to_dict(), indent=4)
+        return json.dumps(self.to_dict(), indent=indent)
 
-    def dump(self, file_path: str) -> None:
+    def save(self, file_path: str) -> None:
+        """Save the report to file.
         """
-        """
-        logger.info(f'Writing run report to {file_path}...')
         with open(file_path, 'w') as output_file:
-            json.dump(self.to_dict(), output_file, indent=4, default=str)
-        logger.info('Done.')
+            output_file.write(self.dumps())
+        logger.info(f'Run report saved to {file_path}')
 
     @classmethod
     def load(cls, file_path):
+        """Load the report from file.
         """
-        """
-        pass
+        logger.info(f'Loading run report from {file_path}...')
+        with open(file_path, 'r') as input_file:
+            return cls.from_dict(**json.load(input_file))
 
 
 class RunControlBase(FiniteStateMachineBase):
@@ -550,9 +559,10 @@ class RunControlBase(FiniteStateMachineBase):
         """Write an end-of-run report in the output folder.
         """
         report = RunReport(__version__, self._test_stand_id, self._run_id, self.start_timestamp,
-                           self.stop_timestamp, self._user_application.__class__.__name__,
+                           self.stop_timestamp, self._PROJECT_NAME,
+                           self._user_application.__class__.__name__,
                            self._user_application.event_handler.statistics())
-        report.dump(self.report_file_path())
+        report.save(self.report_file_path())
 
     def load_user_application(self, user_application: UserApplicationBase) -> None:
         """Set the user application to be run.
