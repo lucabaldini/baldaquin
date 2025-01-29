@@ -438,3 +438,14 @@ class PacketStatistics:
         self.packets_processed += packets_processed
         self.packets_written += packets_written
         self.bytes_written += bytes_written
+
+    def to_dict(self) -> dict:
+        """Serialization.
+        """
+        return self.__dict__
+
+    @classmethod
+    def from_dict(cls, **kwargs) -> 'PacketStatistics':
+        """Deserialization.
+        """
+        return cls(**kwargs)
