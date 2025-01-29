@@ -4,6 +4,8 @@ Release notes
 =============
 
 
+*baldaquin 0.3.1 (Wed, 29 Jan 2025 06:13:22 +0100)*
+
 * RunControl properly reset when the window is closed.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/43
