@@ -81,6 +81,12 @@ class Timestamp:
     Timestamp objects support subtraction aritmethics as a handy shortcut
     to calculate time differences.
 
+    Timestamp objects also support serialization/deserialization through the
+    :meth:`to_dict() <baldaquin.timeline.Timestamp.to_dict>` and
+    :meth:`from_dict() <baldaquin.timeline.Timestamp.from_dict>`, which, in turn, use
+    internally a string conversion to ISO format. (``datetime`` objects
+    are implemented in C and therefore have no ``__dict__`` slot.)
+
     Arguments
     ---------
     utc_datetime : datetime.datetime
@@ -96,6 +102,25 @@ class Timestamp:
     utc_datetime: datetime.datetime
     local_datetime: datetime.datetime
     seconds: float
+
+    # These are the fields that need special handling when serializing/deserializing.
+    _DATETIME_FIELDS = ('utc_datetime', 'local_datetime')
+
+    def to_dict(self) -> dict:
+        """Serialization.
+        """
+        dict_ = {**self.__dict__}
+        for key in self._DATETIME_FIELDS:
+            dict_.update({key: dict_[key].isoformat()})
+        return dict_
+
+    @classmethod
+    def from_dict(cls, **kwargs) -> 'Timestamp':
+        """Deserialization.
+        """
+        for key in cls._DATETIME_FIELDS:
+            kwargs.update({key: datetime.datetime.fromisoformat(kwargs[key])})
+        return cls(**kwargs)
 
     def __sub__(self, other: Timestamp) -> float:
         """Overloaded operator to support timestamp subtraction.

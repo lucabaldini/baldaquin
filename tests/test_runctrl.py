@@ -16,9 +16,15 @@
 """Test suite for runctrl.py
 """
 
+import time
+
 import pytest
 
-from baldaquin.runctrl import FiniteStateMachineBase, InvalidFsmTransitionError
+from baldaquin import logger, BALDAQUIN_SCRATCH
+from baldaquin.pkt import PacketStatistics
+from baldaquin.runctrl import FiniteStateMachineBase, InvalidFsmTransitionError, \
+    RunReport
+from baldaquin.timeline import Timeline
 
 
 def test_finite_state_machine():
@@ -69,3 +75,44 @@ def test_finite_state_machine():
     fsm.set_stopped()
     fsm.set_reset()
     assert fsm.is_reset()
+
+
+def test_report():
+    """Small unit test for the run report.
+    """
+    # Create a report.
+    timeline = Timeline()
+    start_timestamp = timeline.latch()
+    time.sleep(0.5)
+    stop_timestamp = timeline.latch()
+    stats = PacketStatistics(10, 10, 100)
+    report = RunReport('0.3.1', 101, 66, start_timestamp, stop_timestamp,
+                       'Test project', 'TestApplication', stats)
+
+    # Make sure that the serialization/deserialization roundtrips.
+    kwargs = report.to_dict()
+    logger.info(kwargs)
+    logger.info(report.dumps())
+    twin = RunReport.from_dict(**kwargs)
+    assert twin == report
+    assert twin.baldaquin_version == report.baldaquin_version
+    assert twin.test_stand_id == report.test_stand_id
+    assert twin.run_id == report.run_id
+    assert twin.start_timestamp == report.start_timestamp
+    assert twin.stop_timestamp == report.stop_timestamp
+    assert twin.application_name == report.application_name
+    assert twin.statistics == report.statistics
+
+    # Test the file IO.
+    file_path = BALDAQUIN_SCRATCH / 'test_report.json'
+    report.save(file_path)
+    twin = RunReport.load(file_path)
+    logger.info(report)
+    assert twin == report
+    assert twin.baldaquin_version == report.baldaquin_version
+    assert twin.test_stand_id == report.test_stand_id
+    assert twin.run_id == report.run_id
+    assert twin.start_timestamp == report.start_timestamp
+    assert twin.stop_timestamp == report.stop_timestamp
+    assert twin.application_name == report.application_name
+    assert twin.statistics == report.statistics

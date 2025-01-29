@@ -17,17 +17,20 @@
 """Basic run control structure.
 """
 
+from dataclasses import dataclass
 from enum import Enum
+import json
 from pathlib import Path
 
 from loguru import logger
 
+from baldaquin import __version__, DEFAULT_CHARACTER_ENCODING
 from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import ConfigurationBase
 from baldaquin.event import PacketStatistics
-from baldaquin.timeline import Timeline
+from baldaquin.timeline import Timeline, Timestamp
 
 
 class FsmState(Enum):
@@ -244,6 +247,65 @@ class AppNotLoadedError(RuntimeError):
         super().__init__('User application not loaded.')
 
 
+@dataclass
+class RunReport:
+
+    """Small container class describing a run report.
+    """
+
+    baldaquin_version: str
+    test_stand_id: int
+    run_id: int
+    start_timestamp: Timestamp
+    stop_timestamp: Timestamp
+    project_name: str
+    application_name: str
+    statistics: PacketStatistics
+
+    _VERSION = 1
+    _VERSION_FIELD_NAME = 'report_version'
+
+    def to_dict(self):
+        """Serialization.
+        """
+        _dict = {self._VERSION_FIELD_NAME: self._VERSION}
+        _dict.update(self.__dict__)
+        for key in ('start_timestamp', 'stop_timestamp', 'statistics'):
+            _dict[key] = _dict[key].to_dict()
+        return _dict
+
+    @classmethod
+    def from_dict(cls, **kwargs) -> 'RunReport':
+        """Deserialization.
+        """
+        _ = kwargs.pop(cls._VERSION_FIELD_NAME)
+        for key in ('start_timestamp', 'stop_timestamp'):
+            kwargs.update({key: Timestamp.from_dict(**kwargs[key])})
+        for key in ('statistics', ):
+            kwargs.update({key: PacketStatistics.from_dict(**kwargs[key])})
+        return cls(**kwargs)
+
+    def dumps(self, indent: int = 4) -> str:
+        """Return a text representation of the object in json format.
+        """
+        return json.dumps(self.to_dict(), indent=indent)
+
+    def save(self, file_path: str) -> None:
+        """Save the report to file.
+        """
+        logger.info(f'Writing run report to {file_path}...')
+        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+            output_file.write(self.dumps())
+
+    @classmethod
+    def load(cls, file_path):
+        """Load the report from file.
+        """
+        logger.info(f'Loading run report from {file_path}...')
+        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+            return cls.from_dict(**json.load(input_file))
+
+
 class RunControlBase(FiniteStateMachineBase):
 
     """Run control class.
@@ -359,7 +421,7 @@ class RunControlBase(FiniteStateMachineBase):
         return self.data_folder_path() / self._file_name_base()
 
     def data_file_name(self) -> str:
-        """Return the current data file name.
+        """Return the file name for the current data file.
 
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
@@ -367,12 +429,12 @@ class RunControlBase(FiniteStateMachineBase):
         return self._file_name_base('data', 'dat')
 
     def data_file_path(self) -> Path:
-        """Return the current
+        """Return the path to the current data file.
         """
         return self.data_folder_path() / self.data_file_name()
 
     def log_file_name(self):
-        """Return the current log file name.
+        """Return the file name for the current log file.
 
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
@@ -380,9 +442,29 @@ class RunControlBase(FiniteStateMachineBase):
         return self._file_name_base('run', 'log')
 
     def log_file_path(self) -> Path:
-        """Return the current
+        """Return the path to the current log file.
         """
         return self.data_folder_path() / self.log_file_name()
+
+    def config_file_name(self) -> str:
+        """Return the file name for the current configuration.
+        """
+        return self._file_name_base('config', 'json')
+
+    def config_file_path(self) -> Path:
+        """Return the path to the current configuration.
+        """
+        return self.data_folder_path() / self.config_file_name()
+
+    def report_file_name(self) -> str:
+        """Return the file name for the current run report.
+        """
+        return self._file_name_base('report', 'json')
+
+    def report_file_path(self) -> Path:
+        """Return the path to the current run report.
+        """
+        return self.data_folder_path() / self.report_file_name()
 
     @staticmethod
     def _read_config_file(file_path: Path, default: int) -> int:
@@ -483,6 +565,15 @@ class RunControlBase(FiniteStateMachineBase):
         self.uptime_updated.emit(elapsed_time)
         self.event_handler_stats_updated.emit(statistics, event_rate)
 
+    def write_run_report(self) -> None:
+        """Write an end-of-run report in the output folder.
+        """
+        report = RunReport(__version__, self._test_stand_id, self._run_id, self.start_timestamp,
+                           self.stop_timestamp, self._PROJECT_NAME,
+                           self._user_application.__class__.__name__,
+                           self._user_application.event_handler.statistics())
+        report.save(self.report_file_path())
+
     def load_user_application(self, user_application: UserApplicationBase) -> None:
         """Set the user application to be run.
         """
@@ -529,6 +620,7 @@ class RunControlBase(FiniteStateMachineBase):
         self._check_user_application()
         self._increment_run_id()
         self._create_data_folder()
+        self._user_application.configuration.save(self.config_file_path())
         self._log_file_handler_id = logger.add(self.log_file_path())
         self.start_timestamp = self.timeline.latch()
         self.stop_timestamp = None
@@ -551,6 +643,7 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
         logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
+        self.write_run_report()
         self.update_stats()
 
     def pause(self) -> None:

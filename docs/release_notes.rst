@@ -3,6 +3,16 @@
 Release notes
 =============
 
+* Serialization/deserialization methods implemented for Timestamp and PacketStatistics
+  objects.
+* RunReport class added.
+* RunControl now saving the run report and the configuration in the output folder.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/47
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/45
+      * https://github.com/lucabaldini/baldaquin/issues/44
+
 
 *baldaquin 0.3.1 (Wed, 29 Jan 2025 06:13:22 +0100)*
 
