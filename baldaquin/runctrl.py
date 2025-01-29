@@ -127,6 +127,25 @@ class FiniteStateMachineLogic:
         """
         raise NotImplementedError
 
+    def force_reset(self) -> None:
+        """Go through all the necessary transitions to bring the FSM from the current
+        state all the way to the ``RESET`` state.
+
+        This is used, e.g., when the GUI is closed abruptly from the top-right cross
+        and we still need to stop the data acquisition and put the hardware in a
+        secure state before we actually shut everything down.
+        """
+        # If the run control is in either the RUNNING or PAUSED states, we first
+        # need to transition to STOPPED.
+        if self.is_running():
+            self.stop_run()
+        elif self.is_paused():
+            self.stop()
+        # At this point the status is STOPPED, and we just have to call teardown().
+        if self.is_stopped():
+            self.teardown()
+        # And if the thing was in the RESET state to start with, then we're good.
+
     def set_reset(self) -> None:
         """Set the FSM in the ``RESET`` state.
 

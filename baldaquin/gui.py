@@ -797,6 +797,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
 
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        """Overloaded method to avoid closing the main GUI with the run control
+        still running, see https://github.com/lucabaldini/baldaquin/issues/28.
+        """
+        # pylint: disable = invalid-name
+        if self.run_control is not None:
+            self.run_control.force_reset()
+            event.accept()
+
     def add_widget(self, widget: QtWidgets.QWidget, row: int, col: int,
                    row_span: int = 1, col_span: int = 1) -> None:
         """Add a widget to the underlying layout.
