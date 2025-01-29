@@ -456,7 +456,6 @@ class RunControlBase(FiniteStateMachineBase):
         """
         return self.data_folder_path() / self.config_file_name()
 
-
     def report_file_name(self) -> str:
         """Return the file name for the current run report.
         """
