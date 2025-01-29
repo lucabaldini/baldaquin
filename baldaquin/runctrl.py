@@ -261,16 +261,26 @@ class RunReport:
     user_application: str
     statistics: PacketStatistics
 
+    _VERSION = 1
+
     def to_dict(self):
+        """Serialization.
         """
-        """
-        _dict = {}
-        for key, value in self.__dict__.items():
-            if isinstance(value, (int, str)):
-                _dict[key] = value
-            else:
-                _dict[key] = value.__dict__
+        _dict = {'report_version': self._VERSION}
+        _dict.update(self.__dict__)
+        for key in ('start_timestamp', 'stop_timestamp', 'statistics'):
+            _dict[key] = _dict[key].to_dict()
         return _dict
+
+    @classmethod
+    def from_dict(cls, **kwargs) -> 'RunReport':
+        """Deserialization.
+        """
+
+    def dumps(self) -> str:
+        """
+        """
+        return json.dumps(self.to_dict(), indent=4)
 
     def dump(self, file_path: str) -> None:
         """
