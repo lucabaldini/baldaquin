@@ -103,20 +103,22 @@ class Timestamp:
     local_datetime: datetime.datetime
     seconds: float
 
+    # These are the fields that need special handling when serializing/deserializing.
+    _DATETIME_FIELDS = ('utc_datetime', 'local_datetime')
+
     def to_dict(self) -> dict:
-        """Serialization utility used, e.g, to write a timestamp to json.
+        """Serialization.
         """
-        return dict(
-            utc_datetime=self.utc_datetime.isoformat(),
-            local_datetime=self.local_datetime.isoformat(),
-            seconds=self.seconds
-        )
+        dict_ = {**self.__dict__}
+        for key in self._DATETIME_FIELDS:
+            dict_.update({key: dict_[key].isoformat()})
+        return dict_
 
     @classmethod
     def from_dict(cls, **kwargs) -> 'Timestamp':
-        """De-serialization utility used, e.g., when loading from json.
+        """Deserialization.
         """
-        for key in ('utc_datetime', 'local_datetime'):
+        for key in cls._DATETIME_FIELDS:
             kwargs.update({key: datetime.datetime.fromisoformat(kwargs[key])})
         return cls(**kwargs)
 
