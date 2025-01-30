@@ -329,6 +329,19 @@ class EventHandlerCard(CardWidget):
         EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
         }
 
+    def set_file_path(self, file_path: Path) -> None:
+        """Specialize method to set the path to the output file.
+
+        This gets its own method as we are also adding a hyperlink to the output
+        folder.
+        """
+        self.set(EventHandlerCardField.FILE_PATH, file_path)
+        key = EventHandlerCardField.FILE_PATH.value
+        widget = self._widget_dict[key].title_widget
+        text = f'{key} (<a href="{file_path.parent}">link to folder</a>)'
+        widget.setText(text)
+        widget.linkActivated.connect(MainWindow.open_url)
+
 
 class ParameterCheckBox(DataWidgetBase):
 
@@ -806,6 +819,15 @@ class MainWindow(QtWidgets.QMainWindow):
             self.run_control.force_reset()
             event.accept()
 
+    @staticmethod
+    def open_url(url: str) -> None:
+        """Open a local URL using the underlying OS facilities.
+
+        See https://doc.qt.io/qtforpython-6/PySide6/QtGui/QDesktopServices.html
+        for more details.
+        """
+        QtGui.QDesktopServices.openUrl(url)
+
     def add_widget(self, widget: QtWidgets.QWidget, row: int, col: int,
                    row_span: int = 1, col_span: int = 1) -> None:
         """Add a widget to the underlying layout.
@@ -908,7 +930,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def update_event_handler_output_file(self, file_path: Path):
         """Update the output file path in the event handler card.
         """
-        self.event_handler_card.set(EventHandlerCardField.FILE_PATH, file_path)
+        self.event_handler_card.set_file_path(file_path)
 
     def update_event_handler_stats(self, statistics: PacketStatistics, event_rate: float) -> None:
         """Update the data taking statistics in the event handler card.
