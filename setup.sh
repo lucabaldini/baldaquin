@@ -16,9 +16,3 @@ export BALDAQUIN_ROOT=$SETUP_DIR
 # the relevant modules.
 #
 export PYTHONPATH=$BALDAQUIN_ROOT:$PYTHONPATH
-
-
-#
-# Add the bin folder to the $PATH so that we have the executables off hand.
-#
-export PATH=$BALDAQUIN_ROOT/bin:$PATH
