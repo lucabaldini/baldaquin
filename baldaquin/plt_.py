@@ -151,30 +151,44 @@ class VerticalCursor:
     """Small class representing a vertical cursor.
     """
 
-    def __init__(self, ax) -> None:
+    def __init__(self, axes: matplotlib.axes.Axes) -> None:
         """Constructor.
         """
-        self.ax = ax
-        self.vertical_line = ax.axvline(color='k', lw=0.8, ls='--')
-        self.text = ax.text(0.72, 0.9, '', transform=ax.transAxes)
+        self.axes = axes
+        self.line = self.axes.axvline(color='k', lw=0.8, ls='--')
+        self.text = self.axes.text(0.72, 0.05, '', transform=self.axes.transAxes)
 
-    def set_cross_hair_visible(self, visible):
-        need_redraw = self.vertical_line.get_visible() != visible
-        self.vertical_line.set_visible(visible)
+    def set_visible(self, visible: bool) -> bool:
+        """Set the visibilityof the cursor elements.
+
+        Arguments
+        ---------
+        visible : bool
+            Flag indicating whether the cursor elements should be visible or not.
+        """
+        need_redraw = self.line.get_visible() != visible
+        self.line.set_visible(visible)
         self.text.set_visible(visible)
         return need_redraw
 
-    def on_mouse_move(self, event):
+    def on_mouse_move(self, event: matplotlib.backend_bases.MouseEvent) -> None:
+        """Function processing the mouse events.
+
+        Arguments
+        ---------
+        event : matplotlib.backend_bases.MouseEvent
+            The mouse event we want to respond to.
+        """
         if not event.inaxes:
-            need_redraw = self.set_cross_hair_visible(False)
+            need_redraw = self.set_visible(False)
             if need_redraw:
-                self.ax.figure.canvas.draw()
+                self.axes.figure.canvas.draw()
         else:
-            self.set_cross_hair_visible(True)
+            self.set_visible(True)
             x = event.xdata
-            self.vertical_line.set_xdata([x])
+            self.line.set_xdata([x])
             self.text.set_text(f'x = {x:1.2f}')
-            self.ax.figure.canvas.draw()
+            self.axes.figure.canvas.draw()
 
 
 def last_line_color(default: str = 'black'):
