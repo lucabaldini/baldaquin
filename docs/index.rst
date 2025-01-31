@@ -47,6 +47,7 @@ application.
    release_notes
    api
 
+   develop
 
 .. toctree::
    :caption: Projects
