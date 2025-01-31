@@ -1,11 +1,11 @@
 @ECHO OFF
 
-:: Get the current directory (PWD)
+:: $BALDAQUIN_ROOT points to the folder where the setup file lives.
 set "BALDAQUIN_ROOT=%CD%"
 
-:: Prepend the current directory to PYTHONPATH
+:: Prepend $BALDAQUIN_ROOT to the $PYTHONPATH environmental variable.
 set "PYTHONPATH=%BALDAQUIN_ROOT%;%PYTHONPATH%"
 
-:: Print the new PYTHONPATH for verification
-echo BALDAQUIN_ROOT: %BALDAQUIN_ROOT%
-echo Updated PYTHONPATH: %PYTHONPATH%
+:: Print the new environment for verification.
+echo BALDAQUIN_ROOT -> %BALDAQUIN_ROOT%
+echo PYTHONPATH -> %PYTHONPATH%

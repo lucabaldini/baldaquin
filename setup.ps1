@@ -1,9 +1,10 @@
-# Get the current directory (PWD)
+
+# $BALDAQUIN_ROOT points to the folder where the setup file lives.
 $env:BALDAQUIN_ROOT = Get-Location
 
-# Prepend it to the PYTHONPATH environment variable
+# Prepend $BALDAQUIN_ROOT to the $PYTHONPATH environmental variable.
 $env:PYTHONPATH = "$env:BALDAQUIN_ROOT;$env:PYTHONPATH"
 
-# Print the updated PYTHONPATH
+# Print the new environment for verification.
 Write-Output "BALDAQUIN_ROOT: $env:BALDAQUIN_ROOT"
 Write-Output "Updated PYTHONPATH: $env:PYTHONPATH"
