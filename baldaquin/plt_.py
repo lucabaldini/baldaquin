@@ -146,6 +146,37 @@ class PlotCard(dict):
             y -= value_norm * line_spacing
 
 
+class VerticalCursor:
+
+    """Small class representing a vertical cursor.
+    """
+
+    def __init__(self, ax) -> None:
+        """Constructor.
+        """
+        self.ax = ax
+        self.vertical_line = ax.axvline(color='k', lw=0.8, ls='--')
+        self.text = ax.text(0.72, 0.9, '', transform=ax.transAxes)
+
+    def set_cross_hair_visible(self, visible):
+        need_redraw = self.vertical_line.get_visible() != visible
+        self.vertical_line.set_visible(visible)
+        self.text.set_visible(visible)
+        return need_redraw
+
+    def on_mouse_move(self, event):
+        if not event.inaxes:
+            need_redraw = self.set_cross_hair_visible(False)
+            if need_redraw:
+                self.ax.figure.canvas.draw()
+        else:
+            self.set_cross_hair_visible(True)
+            x = event.xdata
+            self.vertical_line.set_xdata([x])
+            self.text.set_text(f'x = {x:1.2f}')
+            self.ax.figure.canvas.draw()
+
+
 def last_line_color(default: str = 'black'):
     """Return the color used to draw the last line
     """
