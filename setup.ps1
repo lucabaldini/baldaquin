@@ -1,8 +1,9 @@
 # Get the current directory (PWD)
-$CURRENT_DIR = Get-Location
+$env:BALDAQUIN_ROOT = Get-Location
 
 # Prepend it to the PYTHONPATH environment variable
-$env:PYTHONPATH = "$CURRENT_DIR;$env:PYTHONPATH"
+$env:PYTHONPATH = "$env:BALDAQUIN_ROOT;$env:PYTHONPATH"
 
 # Print the updated PYTHONPATH
+Write-Output "BALDAQUIN_ROOT: $env:BALDAQUIN_ROOT"
 Write-Output "Updated PYTHONPATH: $env:PYTHONPATH"
