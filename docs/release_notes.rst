@@ -3,6 +3,9 @@
 Release notes
 =============
 
+
+*baldaquin 0.4.0 (Fri, 31 Jan 2025 15:53:59 +0100)*
+
 * Development notes added to the documentation.
 * Setup files for Windows added.
 * Link to the otuput folder added in the main GUI.
