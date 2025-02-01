@@ -18,19 +18,24 @@
 
 import numpy as np
 
-from baldaquin.plt_ import plt, VerticalCursor
+from baldaquin.plt_ import plt, VerticalCursor, setup_gca
 
 
 def test_cursor():
     """Test the vertical cursor thing.
     """
-    x = np.linspace(0., 10., 100)
-    y = np.sin(x)
+    x = np.linspace(0., 2. * np.pi, 100)
+    y1 = np.sin(x)
+    y2 = np.cos(x)
     fig, ax = plt.subplots()
-    lines = ax.plot(x, y)
-    line = lines[0]
+    lines1 = ax.plot(x, y1)
+    line1 = lines1[0]
+    lines2 = ax.plot(x, y2)
+    line2 = lines2[0]
     cursor = VerticalCursor(ax)
-    cursor.add_data_set(x, y, line.get_color())
+    cursor.add_data_set(x, y1, line1.get_color())
+    cursor.add_data_set(x, y2, line2.get_color())
+    setup_gca(xmin=0., xmax=2. * np.pi, ymin=-1.25, ymax=1.25, grids=True)
     fig.canvas.mpl_connect('motion_notify_event', cursor.on_mouse_move)
     return cursor
 

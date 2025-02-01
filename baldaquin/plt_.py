@@ -150,19 +150,36 @@ class PlotCard(dict):
 
 class ConstrainedMarker(matplotlib.lines.Line2D):
 
-    """
+    """Small class describing a marker constained to move along a given path.
     """
 
-    def __init__(x=0., y=0., **kwargs):
+    def __init__(self, x: np.array, y: np.array,
+                 axes: matplotlib.axes.Axes, **kwargs) -> None:
         """Constructor.
         """
+        x0, y0 = 0., 0.
         kwargs.setdefault('marker', 'o')
-        super().__init__([x], [y], **kwargs)
+        super().__init__([x0], [y0], **kwargs)
+        self.axes = axes
+        self.axes.add_line(self)
+        self._spline = InterpolatedUnivariateSpline(x, y, k=1)
+        self.text = self.axes.text(x0, y0, '', size='x-small', color=kwargs.get('color', 'k'))
+        self.set_visible(False)
 
-    def move(self, x, y) -> None:
+    def set_visible(self, visible: bool) -> bool:
+        """Set the visibility of the marker.
         """
+        # pylint: disable=arguments-renamed
+        super().set_visible(visible)
+        self.text.set_visible(visible)
+
+    def move(self, x: float) -> None:
+        """Move the marker to a given position.
         """
+        y = self._spline(x)
         self.set_data([x], [y])
+        self.text.set_position((x, y))
+        self.text.set_text(f' {y:.3f}')
 
 
 class VerticalCursor:
@@ -170,29 +187,18 @@ class VerticalCursor:
     """Small class representing a vertical cursor.
     """
 
-    def __init__(self, axes: matplotlib.axes.Axes) -> None:
+    def __init__(self, axes: matplotlib.axes.Axes, text_size: str = 'x-small') -> None:
         """Constructor.
         """
         self.axes = axes
         self.line = self.axes.axvline(color='k', lw=0.8, ls='--')
-        self.text = self.axes.text(0.72, 0.05, '', transform=self.axes.transAxes)
-        self._splines = []
+        self.text = self.axes.text(0.72, 0.05, '', size=text_size, ha='center')
         self._markers = []
-
-    @staticmethod
-    def build_spline(x: np.array, y: np.array) -> InterpolatedUnivariateSpline:
-        """Create an interpolated spline.
-        """
-        return InterpolatedUnivariateSpline(x, y, k=1)
 
     def add_data_set(self, x: np.array, y: np.array, color: str) -> None:
         """Add a data set to the cursor.
         """
-        self._splines.append(self.build_spline(x, y))
-        #marker = ConstrainedMarker(color=color)
-        marker = matplotlib.lines.Line2D([0], [0], marker='o', color=color)
-        self.axes.add_line(marker)
-        self._markers.append(marker)
+        self._markers.append(ConstrainedMarker(x, y, self.axes, color=color))
 
     def set_visible(self, visible: bool) -> bool:
         """Set the visibilityof the cursor elements.
@@ -205,6 +211,8 @@ class VerticalCursor:
         need_redraw = self.line.get_visible() != visible
         self.line.set_visible(visible)
         self.text.set_visible(visible)
+        for marker in self._markers:
+            marker.set_visible(visible)
         return need_redraw
 
     def on_mouse_move(self, event: matplotlib.backend_bases.MouseEvent) -> None:
@@ -223,10 +231,11 @@ class VerticalCursor:
             self.set_visible(True)
             x = event.xdata
             self.line.set_xdata([x])
-            self.text.set_text(f'x = {x:1.2f}')
+            self.text.set_position((x, 1.275))
+            self.text.set_text(f' {x:.3f}')
             self.axes.figure.canvas.draw()
-            for spline, marker in zip(self._splines, self._markers):
-                marker.set_data([x], [spline(x)])
+            for marker in self._markers:
+                marker.move(x)
 
 
 def last_line_color(default: str = 'black'):
