@@ -27,16 +27,13 @@ def test_cursor():
     x = np.linspace(0., 2. * np.pi, 100)
     y1 = np.sin(x)
     y2 = np.cos(x)
-    fig, ax = plt.subplots()
-    lines1 = ax.plot(x, y1)
-    line1 = lines1[0]
-    lines2 = ax.plot(x, y2)
-    line2 = lines2[0]
-    cursor = VerticalCursor(ax)
-    cursor.add_data_set(x, y1, line1.get_color())
-    cursor.add_data_set(x, y2, line2.get_color())
+    cursor = VerticalCursor()
+    plt.plot(x, y1)
+    cursor.add_data_set(x, y1)
+    plt.plot(x, y2)
+    cursor.add_data_set(x, y2)
     setup_gca(xmin=0., xmax=2. * np.pi, ymin=-1.25, ymax=1.25, grids=True)
-    fig.canvas.mpl_connect('motion_notify_event', cursor.on_mouse_move)
+    plt.gcf().canvas.mpl_connect('motion_notify_event', cursor.on_mouse_move)
     return cursor
 
 

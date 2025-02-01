@@ -151,35 +151,54 @@ class PlotCard(dict):
 class ConstrainedMarker(matplotlib.lines.Line2D):
 
     """Small class describing a marker constained to move along a given path.
+
+    This is essentially the datum of a matplotlib marker and a text label that
+    is bound to move on a given path, with the label representing the y value
+    of the curve at a given position.
     """
 
-    def __init__(self, x: np.array, y: np.array,
-                 axes: matplotlib.axes.Axes, **kwargs) -> None:
+    TEXT_SIZE = 'x-small'
+
+    def __init__(self, x: np.array, y: np.array, axes: matplotlib.axes.Axes = None,
+                 **kwargs) -> None:
         """Constructor.
         """
         x0, y0 = 0., 0.
         kwargs.setdefault('marker', 'o')
+        kwargs.setdefault('color', 'black')
         super().__init__([x0], [y0], **kwargs)
-        self.axes = axes
+        self.axes = axes or plt.gca()
         self.axes.add_line(self)
         self._spline = InterpolatedUnivariateSpline(x, y, k=1)
-        self.text = self.axes.text(x0, y0, '', size='x-small', color=kwargs.get('color', 'k'))
+        self.text = self.axes.text(x0, y0, '', size=self.TEXT_SIZE, color=kwargs['color'])
         self.set_visible(False)
 
-    def set_visible(self, visible: bool) -> bool:
-        """Set the visibility of the marker.
+    @staticmethod
+    def format_value(value: float) -> str:
+        """Generic value formatter.
+
+        This is basically a placeholder for a formatting utility that might get
+        more complex in the future, as we learn what we need in different situations.
+        """
+        return f'{value:.3f}'
+
+    def set_visible(self, visible: bool) -> None:
+        """Set the visibility of the marker and associated text label.
         """
         # pylint: disable=arguments-renamed
         super().set_visible(visible)
         self.text.set_visible(visible)
 
     def move(self, x: float) -> None:
-        """Move the marker to a given position.
+        """Move the marker to a given x position.
+
+        Note that the corresponding y position is calculated from the underlying
+        spline.
         """
         y = self._spline(x)
         self.set_data([x], [y])
         self.text.set_position((x, y))
-        self.text.set_text(f' {y:.3f}')
+        self.text.set_text(f' y = {self.format_value(y)}')
 
 
 class VerticalCursor:
@@ -187,17 +206,22 @@ class VerticalCursor:
     """Small class representing a vertical cursor.
     """
 
-    def __init__(self, axes: matplotlib.axes.Axes, text_size: str = 'x-small') -> None:
+    TEXT_SIZE = ConstrainedMarker.TEXT_SIZE
+
+    def __init__(self, axes: matplotlib.axes.Axes = None) -> None:
         """Constructor.
         """
-        self.axes = axes
+        self.axes = axes or plt.gca()
         self.line = self.axes.axvline(color='k', lw=0.8, ls='--')
-        self.text = self.axes.text(0.72, 0.05, '', size=text_size, ha='center')
+        self.text = self.axes.text(0.72, 0.05, '', transform=self.axes.get_xaxis_transform(),
+                                   size=self.TEXT_SIZE, ha='center')
         self._markers = []
 
-    def add_data_set(self, x: np.array, y: np.array, color: str) -> None:
+    def add_data_set(self, x: np.array, y: np.array, color: str = None) -> None:
         """Add a data set to the cursor.
         """
+        if color is None:
+            color = last_line_color()
         self._markers.append(ConstrainedMarker(x, y, self.axes, color=color))
 
     def set_visible(self, visible: bool) -> bool:
@@ -231,8 +255,8 @@ class VerticalCursor:
             self.set_visible(True)
             x = event.xdata
             self.line.set_xdata([x])
-            self.text.set_position((x, 1.275))
-            self.text.set_text(f' {x:.3f}')
+            self.text.set_position((x, 1.01))
+            self.text.set_text(f' x = {ConstrainedMarker.format_value(x)}')
             self.axes.figure.canvas.draw()
             for marker in self._markers:
                 marker.move(x)
