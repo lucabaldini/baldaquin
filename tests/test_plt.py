@@ -27,8 +27,10 @@ def test_cursor():
     x = np.linspace(0., 10., 100)
     y = np.sin(x)
     fig, ax = plt.subplots()
-    ax.plot(x, y)
+    lines = ax.plot(x, y)
+    line = lines[0]
     cursor = VerticalCursor(ax)
+    cursor.add_data_set(x, y, line.get_color())
     fig.canvas.mpl_connect('motion_notify_event', cursor.on_mouse_move)
     return cursor
 

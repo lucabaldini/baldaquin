@@ -23,6 +23,8 @@ from typing import Any
 from loguru import logger
 import matplotlib
 from matplotlib import pyplot as plt
+import numpy as np
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 if sys.flags.interactive:
     plt.ion()
@@ -146,6 +148,14 @@ class PlotCard(dict):
             y -= value_norm * line_spacing
 
 
+class ConstrainedMarker:
+
+    """
+    """
+
+    pass
+
+
 class VerticalCursor:
 
     """Small class representing a vertical cursor.
@@ -157,6 +167,20 @@ class VerticalCursor:
         self.axes = axes
         self.line = self.axes.axvline(color='k', lw=0.8, ls='--')
         self.text = self.axes.text(0.72, 0.05, '', transform=self.axes.transAxes)
+        self._splines = []
+        self._colors = []
+
+    @staticmethod
+    def build_spline(x: np.array, y: np.array) -> InterpolatedUnivariateSpline:
+        """Create an interpolated spline.
+        """
+        return InterpolatedUnivariateSpline(x, y, k=1)
+
+    def add_data_set(self, x: np.array, y: np.array, color: str) -> None:
+        """Add a data set to the cursor.
+        """
+        self._splines.append(self.build_spline(x, y))
+        self._colors.append(color)
 
     def set_visible(self, visible: bool) -> bool:
         """Set the visibilityof the cursor elements.
@@ -189,6 +213,9 @@ class VerticalCursor:
             self.line.set_xdata([x])
             self.text.set_text(f'x = {x:1.2f}')
             self.axes.figure.canvas.draw()
+            #for spline, color in zip(self._splines, self._colors):
+            #    y = spline(x)
+            #    print(plt.plot(x, y, 'o', color=color))
 
 
 def last_line_color(default: str = 'black'):
