@@ -163,14 +163,6 @@ class ConstrainedMarker(matplotlib.lines.Line2D):
         """
         """
         self.set_data([x], [y])
-        #fig.canvas.draw_idle()
-
-    def plot(self, axes=None) -> None:
-        """
-        """
-        if axes is None:
-            axes = plt.gca()
-        axes.add_line(self)
 
 
 class VerticalCursor:
@@ -197,7 +189,10 @@ class VerticalCursor:
         """Add a data set to the cursor.
         """
         self._splines.append(self.build_spline(x, y))
-        self._markers.append(ConstrainedMarker(color=color))
+        #marker = ConstrainedMarker(color=color)
+        marker = matplotlib.lines.Line2D([0], [0], marker='o', color=color)
+        self.axes.add_line(marker)
+        self._markers.append(marker)
 
     def set_visible(self, visible: bool) -> bool:
         """Set the visibilityof the cursor elements.
@@ -231,8 +226,7 @@ class VerticalCursor:
             self.text.set_text(f'x = {x:1.2f}')
             self.axes.figure.canvas.draw()
             for spline, marker in zip(self._splines, self._markers):
-                marker.move(x, spline(x))
-                marker.plot()
+                marker.set_data([x], [spline(x)])
 
 
 def last_line_color(default: str = 'black'):
