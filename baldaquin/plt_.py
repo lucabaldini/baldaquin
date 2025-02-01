@@ -148,12 +148,29 @@ class PlotCard(dict):
             y -= value_norm * line_spacing
 
 
-class ConstrainedMarker:
+class ConstrainedMarker(matplotlib.lines.Line2D):
 
     """
     """
 
-    pass
+    def __init__(x=0., y=0., **kwargs):
+        """Constructor.
+        """
+        kwargs.setdefault('marker', 'o')
+        super().__init__([x], [y], **kwargs)
+
+    def move(self, x, y) -> None:
+        """
+        """
+        self.set_data([x], [y])
+        #fig.canvas.draw_idle()
+
+    def plot(self, axes=None) -> None:
+        """
+        """
+        if axes is None:
+            axes = plt.gca()
+        axes.add_line(self)
 
 
 class VerticalCursor:
@@ -168,7 +185,7 @@ class VerticalCursor:
         self.line = self.axes.axvline(color='k', lw=0.8, ls='--')
         self.text = self.axes.text(0.72, 0.05, '', transform=self.axes.transAxes)
         self._splines = []
-        self._colors = []
+        self._markers = []
 
     @staticmethod
     def build_spline(x: np.array, y: np.array) -> InterpolatedUnivariateSpline:
@@ -180,7 +197,7 @@ class VerticalCursor:
         """Add a data set to the cursor.
         """
         self._splines.append(self.build_spline(x, y))
-        self._colors.append(color)
+        self._markers.append(ConstrainedMarker(color=color))
 
     def set_visible(self, visible: bool) -> bool:
         """Set the visibilityof the cursor elements.
@@ -213,9 +230,9 @@ class VerticalCursor:
             self.line.set_xdata([x])
             self.text.set_text(f'x = {x:1.2f}')
             self.axes.figure.canvas.draw()
-            #for spline, color in zip(self._splines, self._colors):
-            #    y = spline(x)
-            #    print(plt.plot(x, y, 'o', color=color))
+            for spline, marker in zip(self._splines, self._markers):
+                marker.move(x, spline(x))
+                marker.plot()
 
 
 def last_line_color(default: str = 'black'):
