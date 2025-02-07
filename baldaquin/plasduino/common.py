@@ -16,6 +16,8 @@
 """Plasduino common resources.
 """
 
+from __future__ import annotations
+
 import struct
 import time
 from typing import Any
@@ -167,7 +169,7 @@ class PlasduinoSerialInterface(SerialInterface):
         if actual_opcode != opcode or actual_value != value:
             raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
 
-    def setup_analog_sampling_sketch(self, sampling_interval: int) -> None:
+    def setup_analog_sampling_sketch(self, pins: list[int], sampling_interval: int) -> None:
         """Setup the `analog_sampling` sketch.
 
         Note that we are taking a minimal approach, here, where exactly two input
@@ -179,8 +181,8 @@ class PlasduinoSerialInterface(SerialInterface):
         sampling_interval : int
             The sampling interval in ms.
         """
-        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(Lab1.ANALOG_PINS), 'B')
-        for pin in Lab1.ANALOG_PINS:
+        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pins), 'B')
+        for pin in pins:
             self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
         self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
 
@@ -391,21 +393,22 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
     `analog_sampling` sketch.
     """
 
+    _PINS = None
     _SAMPLING_INTERVAL = None
     _ADDITIONAL_PENDING_WAIT = 200
 
     @staticmethod
-    def create_strip_charts(ylabel: str = 'ADC counts'):
+    def create_strip_charts(pins: list[int], ylabel: str = 'ADC counts'):
         """Create all the strip charts for displaying real-time data.
         """
         kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
-        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in Lab1.ANALOG_PINS}
+        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in pins}
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._SAMPLING_INTERVAL)
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PINS, self._SAMPLING_INTERVAL)
 
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).

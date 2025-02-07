@@ -30,21 +30,17 @@ class Lab1:
     VERSION = 2
 
     # Analog inputs for the temperature measurements.
-    #
-    # TODO: these should be renamed as TEMPMONITOR_PIN*
-    ANALOG_PIN_1 = 0
-    ANALOG_PIN_2 = 1
-    ANALOG_PINS = (ANALOG_PIN_1, ANALOG_PIN_2)
+    TEMPMON_PIN_1 = 0
+    TEMPMON_PIN_2 = 1
+    TEMPMON_PINS = (TEMPMON_PIN_1, TEMPMON_PIN_2)
     SHUNT_RESISTANCE = 10.  # kOhm
 
     # Analog inputs for the pendulumview application.
-    PENDULUMVIEW_PIN1 = 4
-    PENDULUMVIEW_PIN2 = 4
-    PENDULUMVIEW_PINS = (PENDULUMVIEW_PIN1, PENDULUMVIEW_PIN2)
+    PENDVIEW_PIN1 = 4
+    PENDVIEW_PIN2 = 5
+    PENDVIEW_PINS = (PENDVIEW_PIN1, PENDVIEW_PIN2)
 
     # Digital inputs for the time measurements.
-    #
-    # TODO: this should be probably renamed as TIMER_PIN*
-    DIGITAL_PIN_1 = 0
-    DIGITAL_PIN_2 = 1
-    DIGITAL_PINS = (DIGITAL_PIN_1, DIGITAL_PIN_2)
+    TIMER_PIN_1 = 0
+    TIMER_PIN_2 = 1
+    TIMER_PINS = (TIMER_PIN_1, TIMER_PIN_2)

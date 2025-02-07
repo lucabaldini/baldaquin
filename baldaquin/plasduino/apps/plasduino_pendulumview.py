@@ -27,6 +27,7 @@ from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
     PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
 from baldaquin.plasduino.protocol import AnalogReadout
+from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
 
 
@@ -70,13 +71,14 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_pendulumview.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
-    _SAMPLING_INTERVAL = 100
+    _PINS = Lab1.PENDVIEW_PINS
+    _SAMPLING_INTERVAL = 50
 
     def __init__(self) -> None:
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = self.create_strip_charts(ylabel='Position [ADC counts]')
+        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel='Position [ADC counts]')
 
     def configure(self) -> None:
         """Overloaded method.
