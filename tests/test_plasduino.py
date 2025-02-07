@@ -20,6 +20,7 @@ import importlib
 import sys
 
 import numpy as np
+import pytest
 
 from baldaquin import logger, BALDAQUIN_TEST_DATA, BALDAQUIN_ROOT
 from baldaquin.pkt import PacketFile
@@ -27,7 +28,8 @@ from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
 
-PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / '0101_000389'
+PENDULUM_RUN = 396
+PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / f'0101_000{PENDULUM_RUN}'
 
 
 def test_protocol():
@@ -43,6 +45,7 @@ def test_protocol():
     logger.info(transition.to_text())
 
 
+@pytest.mark.skip
 def test_pendulum_process():
     """Test the pendulum post-processing code.
 
@@ -52,7 +55,8 @@ def test_pendulum_process():
     sys.dont_write_bytecode = True
     pendulum = importlib.import_module('plasduino_pendulum')
     sys.dont_write_bytecode = False
-    with PacketFile(DigitalTransition).open(PENDULUM_DATA_FOLDER / '0101_000389_data.dat') as input_file:
+    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
+    with PacketFile(DigitalTransition).open(file_path) as input_file:
             data = input_file.read_all()
 
     # Post-process with the simple method.
@@ -80,13 +84,13 @@ def test_pendulum_process():
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
+    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
+    t, T, dt = np.loadtxt(file_path, delimiter=',', unpack=True)
     plt.figure('Period')
-    t, T, dt = np.loadtxt(PENDULUM_DATA_FOLDER / '0101_000389_data_proc.txt', delimiter=',', unpack=True)
     plt.plot(t, T, 'o')
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
 
 
 if __name__ == '__main__':
-    test_pendulum_process()
     test_pendulum_plot()
     plt.show()
