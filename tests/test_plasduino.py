@@ -44,7 +44,9 @@ def test_protocol():
 
 
 def test_pendulum_process():
-    """Test a data file taken with the pendulum.
+    """Test the pendulum post-processing code.
+
+    This was done to debug issue https://github.com/lucabaldini/baldaquin/issues/50
     """
     sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
     sys.dont_write_bytecode = True
