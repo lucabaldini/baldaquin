@@ -16,8 +16,18 @@
 """Test suite for the plasduino project.
 """
 
-from baldaquin import logger
+import importlib
+import sys
+
+import numpy as np
+
+from baldaquin import logger, BALDAQUIN_TEST_DATA, BALDAQUIN_ROOT
+from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
+from baldaquin.plt_ import plt, setup_gca
+
+
+PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / '0101_000389'
 
 
 def test_protocol():
@@ -31,3 +41,50 @@ def test_protocol():
     logger.info(transition)
     logger.info(DigitalTransition.text_header())
     logger.info(transition.to_text())
+
+
+def test_pendulum_process():
+    """Test a data file taken with the pendulum.
+    """
+    sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
+    sys.dont_write_bytecode = True
+    pendulum = importlib.import_module('plasduino_pendulum')
+    sys.dont_write_bytecode = False
+    with PacketFile(DigitalTransition).open(PENDULUM_DATA_FOLDER / '0101_000389_data.dat') as input_file:
+            data = input_file.read_all()
+
+    # Post-process with the simple method.
+    oscillations = pendulum.Pendulum._postprocess_data_simple(data)
+    simple_time = np.array([oscillation.average_time for oscillation in oscillations])
+    simple_period = np.array([oscillation.period for oscillation in oscillations])
+    simple_transit_time = np.array([oscillation.transit_time for oscillation in oscillations])
+
+    # Post-process with the smoothed method.
+    oscillations = pendulum.Pendulum._postprocess_data_smooth(data)
+    smooth_time = np.array([oscillation.average_time for oscillation in oscillations])
+    smooth_period = np.array([oscillation.period for oscillation in oscillations])
+    smooth_transit_time = np.array([oscillation.transit_time for oscillation in oscillations])
+
+    plt.figure('Simple processing: period')
+    plt.plot(simple_time, simple_period, label='Simple')
+    plt.plot(smooth_time, smooth_period, label='Smooth')
+    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
+    plt.figure('Simple processing: transit time')
+    plt.plot(simple_time, simple_transit_time, label='Simple')
+    plt.plot(smooth_time, smooth_transit_time, label='Smooth')
+    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
+
+
+def test_pendulum_plot():
+    """Test a data file taken with the pendulum.
+    """
+    plt.figure('Period')
+    t, T, dt = np.loadtxt(PENDULUM_DATA_FOLDER / '0101_000389_data_proc.txt', delimiter=',', unpack=True)
+    plt.plot(t, T, 'o')
+    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
+
+
+if __name__ == '__main__':
+    test_pendulum_process()
+    test_pendulum_plot()
+    plt.show()
