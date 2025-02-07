@@ -86,7 +86,7 @@ def pendulum_amplitude(transit_time, length, distance, width):
     """
     g = 9.81
     v = width / transit_time * length / distance
-    return np.acos(1. - v**2. / 2. / g / length)
+    return np.arccos(1. - v**2. / 2. / g / length)
 
 
 def period_model(theta, T0):
