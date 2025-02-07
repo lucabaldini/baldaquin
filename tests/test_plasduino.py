@@ -81,14 +81,40 @@ def test_pendulum_process():
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
 
 
+def pendulum_amplitude(transit_time, length, distance, width):
+    """
+    """
+    g = 9.81
+    v = width / transit_time * length / distance
+    return np.acos(1. - v**2. / 2. / g / length)
+
+
+def period_model(theta, T0):
+    """
+    """
+    return T0 * (1. + theta**2 / 16. + 11. / 3072. * theta**4.)
+
+
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
-    t, T, dt = np.loadtxt(file_path, delimiter=',', unpack=True)
+    time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
+    amplitude = pendulum_amplitude(transit_time, 1.120, 1.151, 0.0194)
+
     plt.figure('Period')
-    plt.plot(t, T, 'o')
+    plt.plot(time_, period, 'o')
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
+
+    plt.figure('Transit time')
+    plt.plot(time_, transit_time, 'o')
+    setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
+
+    plt.figure('Amplitude')
+    plt.plot(amplitude, period, 'o')
+    plt.plot(amplitude, period_model(amplitude, 2.115))
+    setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
+
 
 
 if __name__ == '__main__':
