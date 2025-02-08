@@ -102,48 +102,33 @@ def transit_velocity(transit_time: np.array, pendulum_length: float, gate_distan
     return flag_width / transit_time * pendulum_length / gate_distance
 
 
-def pendulum_amplitude(transit_time: np.array, pendulum_length: float, gate_distance: float,
-                       flag_width: float) -> np.array:
-    """Calculate the approximate oscillation amplitude based on the transit time.
-
-    Arguments
-    ---------
-    transit_time : array_like
-        The flag transit time.
-
-    pendulum_length : float
-        The pendulum length.
-
-    gate_distance : float
-        The distance between the suspension point an the optical gate.
-
-    flag_width : float
-        The width of the measuring flag.
-    """
-    g = 9.81
-    v = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
-    return np.arccos(1. - v**2. / 2. / g / pendulum_length)
-
-
 def period_model(theta, T0):
     """Fitting model for the period as a function of the amplitude.
     """
-    return T0 * (1. + theta**2 / 16. + 11. / 3072. * theta**4.)
+    return T0 * (1. + 1. / 16. * theta**2 + 11. / 3072. * theta**4. + 173. / 737280. * theta**6.)
 
 
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
+    g = 9.81
     mass = 0.330
     pendulum_length = 1.111 # 110.9--111.3 cm
     gate_distance = 1.151
     flag_width = 0.0194
+    optical_gate_width = 0.002
 
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
-    energy = 0.5 * mass * transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)**2.
-    amplitude = pendulum_amplitude(transit_time, pendulum_length, gate_distance, flag_width)
+    velocity = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
+
+    # Correct the period for the width of the optical gate!
+    period -= optical_gate_width / velocity
+
+    amplitude = np.arccos(1. - velocity**2. / 2. / g / pendulum_length)
+    energy = 0.5 * mass * velocity**2.
     energy_loss = np.diff(energy) / (0.5 * (energy[:-1] + energy[1:]))
+
 
     plt.figure('Period')
     plt.plot(time_, period, 'o')
