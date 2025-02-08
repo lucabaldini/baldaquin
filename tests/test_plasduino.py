@@ -81,16 +81,52 @@ def test_pendulum_process():
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
 
 
-def pendulum_amplitude(transit_time, length, distance, width):
+def transit_velocity(transit_time: np.array, pendulum_length: float, gate_distance: float,
+                     flag_width: float) -> np.array:
+    """Calculate the average transit velocity based on the transit time.
+
+    Arguments
+    ---------
+    transit_time : array_like
+        The flag transit time.
+
+    pendulum_length : float
+        The pendulum length.
+
+    gate_distance : float
+        The distance between the suspension point an the optical gate.
+
+    flag_width : float
+        The width of the measuring flag.
     """
+    return flag_width / transit_time * pendulum_length / gate_distance
+
+
+def pendulum_amplitude(transit_time: np.array, pendulum_length: float, gate_distance: float,
+                       flag_width: float) -> np.array:
+    """Calculate the approximate oscillation amplitude based on the transit time.
+
+    Arguments
+    ---------
+    transit_time : array_like
+        The flag transit time.
+
+    pendulum_length : float
+        The pendulum length.
+
+    gate_distance : float
+        The distance between the suspension point an the optical gate.
+
+    flag_width : float
+        The width of the measuring flag.
     """
     g = 9.81
-    v = width / transit_time * length / distance
-    return np.arccos(1. - v**2. / 2. / g / length)
+    v = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
+    return np.arccos(1. - v**2. / 2. / g / pendulum_length)
 
 
 def period_model(theta, T0):
-    """
+    """Fitting model for the period as a function of the amplitude.
     """
     return T0 * (1. + theta**2 / 16. + 11. / 3072. * theta**4.)
 
@@ -98,9 +134,16 @@ def period_model(theta, T0):
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
+    mass = 0.330
+    pendulum_length = 1.111 # 110.9--111.3 cm
+    gate_distance = 1.151
+    flag_width = 0.0194
+
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
-    amplitude = pendulum_amplitude(transit_time, 1.120, 1.151, 0.0194)
+    energy = 0.5 * mass * transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)**2.
+    amplitude = pendulum_amplitude(transit_time, pendulum_length, gate_distance, flag_width)
+    energy_loss = np.diff(energy) / (0.5 * (energy[:-1] + energy[1:]))
 
     plt.figure('Period')
     plt.plot(time_, period, 'o')
@@ -115,6 +158,13 @@ def test_pendulum_plot():
     plt.plot(amplitude, period_model(amplitude, 2.115))
     setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
 
+    plt.figure('Energy')
+    plt.plot(time_, energy, 'o')
+    setup_gca(xlabel='Period [s]', ylabel='Energy [J]', grids=True)
+
+    plt.figure('Energy loss')
+    plt.plot(time_[1:], energy_loss, 'o')
+    setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss', grids=True)
 
 
 if __name__ == '__main__':
