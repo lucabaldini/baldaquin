@@ -108,6 +108,51 @@ def period_model(theta, T0):
     return T0 * (1. + 1. / 16. * theta**2 + 11. / 3072. * theta**4. + 173. / 737280. * theta**6.)
 
 
+@pytest.mark.skip
+def test_pendulum_custom_postprocess():
+    """
+    """
+    sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
+    sys.dont_write_bytecode = True
+    pendulum = importlib.import_module('plasduino_pendulum')
+    sys.dont_write_bytecode = False
+    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
+    with PacketFile(DigitalTransition).open(file_path) as input_file:
+            data = input_file.read_all()
+    for i in range(5, len(data) - 3, 2):
+        t1 = pendulum.Pendulum._secs_avg(data, i - 4, i - 5)
+        t2 = pendulum.Pendulum._secs_avg(data, i - 2, i - 3)
+        t3 = pendulum.Pendulum._secs_avg(data, i, i - 1)
+        t4 = pendulum.Pendulum._secs_avg(data, i + 2, i + 1)
+        dt2 = pendulum.Pendulum._secs_diff(data, i - 2, i - 3)
+        dt3 = pendulum.Pendulum._secs_diff(data, i, i - 1)
+        average_time = 0.5 * (t2 + t3)
+        transit_time = 0.5 * (dt2 + dt3)
+        period = 0.5 * (t3 - t1 + t4 - t2)
+        #print(period, t3 - t1, t4 - t2)
+
+
+def test_pendulum_sequence():
+    """Draw the signal sequence.
+    """
+    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
+    with PacketFile(DigitalTransition).open(file_path) as input_file:
+            data = input_file.read_all()
+    sequence = data[-11:-1]
+    t0 = sequence[0].microseconds
+    x = []
+    y = []
+    for transition in sequence:
+        t = (transition.microseconds - t0) / 1000.
+        x += [t, t]
+        if transition.edge == 1:
+            y += [1, 0]
+        else:
+            y += [0, 1]
+    plt.figure('Initial sequence')
+    plt.plot(x, y)
+    setup_gca(ymax=1.1, xlabel='Time [ms]', ylabel='Status (high = occulted)')
+
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
@@ -116,7 +161,7 @@ def test_pendulum_plot():
     pendulum_length = 1.111 # 110.9--111.3 cm
     gate_distance = 1.151
     flag_width = 0.0194
-    optical_gate_width = 0.002
+    optical_gate_width = 0.001
 
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
@@ -154,4 +199,5 @@ def test_pendulum_plot():
 
 if __name__ == '__main__':
     test_pendulum_plot()
+    test_pendulum_sequence()
     plt.show()
