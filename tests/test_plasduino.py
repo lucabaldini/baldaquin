@@ -163,8 +163,8 @@ def test_pendulum_plot():
     setup_gca(xlabel='Period [s]', ylabel='Energy [J]', grids=True)
 
     plt.figure('Energy loss')
-    plt.plot(time_[1:], energy_loss, 'o')
-    setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss', grids=True)
+    plt.plot(time_[1:], energy_loss * 100., 'o')
+    setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss [%]', grids=True)
 
 
 if __name__ == '__main__':
