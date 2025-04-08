@@ -158,9 +158,9 @@ def test_pendulum_plot():
     """
     g = 9.81
     mass = 0.330
-    pendulum_length = 1.106 # 110.9--111.3 cm
+    pendulum_length = 1.1064 # 110.9--111.3 cm
     gate_distance = 1.144
-    flag_width = 0.01905
+    flag_width = 0.01901
     T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
     #optical_gate_width = 0.001
 
@@ -187,6 +187,10 @@ def test_pendulum_plot():
     plt.plot(amplitude, period, 'o')
     plt.plot(amplitude, period_model(amplitude, T0))
     setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
+
+    plt.figure('Amplitude residuals')
+    plt.plot(amplitude, period - period_model(amplitude, T0), 'o')
+    setup_gca(xlabel='Amplitude [rad]', ylabel='Period residuals [s]', grids=True)
 
     #plt.figure('Energy')
     #plt.plot(time_, energy, 'o')
