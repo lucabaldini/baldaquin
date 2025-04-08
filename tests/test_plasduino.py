@@ -158,9 +158,10 @@ def test_pendulum_plot():
     """
     g = 9.81
     mass = 0.330
-    pendulum_length = 1.111 # 110.9--111.3 cm
+    pendulum_length = 1.106 # 110.9--111.3 cm
     gate_distance = 1.144
-    flag_width = 0.0195
+    flag_width = 0.01905
+    T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
     #optical_gate_width = 0.001
 
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
@@ -174,31 +175,30 @@ def test_pendulum_plot():
     energy = 0.5 * mass * velocity**2.
     energy_loss = np.diff(energy) / (0.5 * (energy[:-1] + energy[1:]))
 
-
     plt.figure('Period')
     plt.plot(time_, period, 'o')
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
 
-    plt.figure('Transit time')
-    plt.plot(time_, transit_time, 'o')
-    setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
+    #plt.figure('Transit time')
+    #plt.plot(time_, transit_time, 'o')
+    #setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
 
     plt.figure('Amplitude')
     plt.plot(amplitude, period, 'o')
-    plt.plot(amplitude, period_model(amplitude, 2.108))
+    plt.plot(amplitude, period_model(amplitude, T0))
     setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
 
-    plt.figure('Energy')
-    plt.plot(time_, energy, 'o')
-    setup_gca(xlabel='Period [s]', ylabel='Energy [J]', grids=True)
+    #plt.figure('Energy')
+    #plt.plot(time_, energy, 'o')
+    #setup_gca(xlabel='Period [s]', ylabel='Energy [J]', grids=True)
 
-    plt.figure('Energy loss')
-    plt.plot(time_[1:], energy_loss * 100., 'o')
-    setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss [%]', grids=True)
+    #plt.figure('Energy loss')
+    #plt.plot(time_[1:], energy_loss * 100., 'o')
+    #setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss [%]', grids=True)
 
 
 if __name__ == '__main__':
     test_pendulum_plot()
-    test_pendulum_sequence()
+    #test_pendulum_sequence()
     #test_pendulum_custom_postprocess()
     plt.show()
