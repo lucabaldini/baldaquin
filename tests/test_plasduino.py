@@ -28,7 +28,7 @@ from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
 
-PENDULUM_RUN = 396
+PENDULUM_RUN = '399'
 PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / f'0101_000{PENDULUM_RUN}'
 
 
@@ -129,7 +129,7 @@ def test_pendulum_custom_postprocess():
         average_time = 0.5 * (t2 + t3)
         transit_time = 0.5 * (dt2 + dt3)
         period = 0.5 * (t3 - t1 + t4 - t2)
-        #print(period, t3 - t1, t4 - t2)
+        print(period, transit_time, t3 - t1, t4 - t2)
 
 
 def test_pendulum_sequence():
@@ -159,16 +159,16 @@ def test_pendulum_plot():
     g = 9.81
     mass = 0.330
     pendulum_length = 1.111 # 110.9--111.3 cm
-    gate_distance = 1.151
-    flag_width = 0.0194
-    optical_gate_width = 0.001
+    gate_distance = 1.144
+    flag_width = 0.0195
+    #optical_gate_width = 0.001
 
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
     velocity = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
 
     # Correct the period for the width of the optical gate!
-    period -= optical_gate_width / velocity
+    #period -= optical_gate_width / velocity
 
     amplitude = np.arccos(1. - velocity**2. / 2. / g / pendulum_length)
     energy = 0.5 * mass * velocity**2.
@@ -185,7 +185,7 @@ def test_pendulum_plot():
 
     plt.figure('Amplitude')
     plt.plot(amplitude, period, 'o')
-    plt.plot(amplitude, period_model(amplitude, 2.115))
+    plt.plot(amplitude, period_model(amplitude, 2.108))
     setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
 
     plt.figure('Energy')
@@ -200,4 +200,5 @@ def test_pendulum_plot():
 if __name__ == '__main__':
     test_pendulum_plot()
     test_pendulum_sequence()
+    #test_pendulum_custom_postprocess()
     plt.show()
