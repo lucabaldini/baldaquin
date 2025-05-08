@@ -28,7 +28,7 @@ from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
 
-PENDULUM_RUN = '399'
+PENDULUM_RUN = '396'
 PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / f'0101_000{PENDULUM_RUN}'
 
 
@@ -158,9 +158,9 @@ def test_pendulum_plot():
     """
     g = 9.81
     mass = 0.330
-    pendulum_length = 1.1064 # 110.9--111.3 cm
-    gate_distance = 1.144
-    flag_width = 0.01901
+    pendulum_length = 1.110
+    gate_distance = 1.151
+    flag_width = 0.0194
     T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
     #optical_gate_width = 0.001
 
