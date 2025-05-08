@@ -134,7 +134,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
             t2 = Pendulum._secs_avg(data, i - 2, i - 3)
             t3 = Pendulum._secs_avg(data, i, i - 1)
             t4 = Pendulum._secs_avg(data, i + 2, i + 1)
-            dt2 = Pendulum._secs_diff(data, i - 2, 1 - 3)
+            dt2 = Pendulum._secs_diff(data, i - 2, i - 3)
             dt3 = Pendulum._secs_diff(data, i, i - 1)
             average_time = 0.5 * (t2 + t3)
             transit_time = 0.5 * (dt2 + dt3)

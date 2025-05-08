@@ -1,0 +1,14 @@
+{
+    "strip_chart_max_length": {
+        "name": "strip_chart_max_length",
+        "type_name": "int",
+        "value": 1000,
+        "intent": "Strip chart maximum length",
+        "units": null,
+        "fmt": null,
+        "constraints": {
+            "min": 10,
+            "max": 1000000
+        }
+    }
+}
