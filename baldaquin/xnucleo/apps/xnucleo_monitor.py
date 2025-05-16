@@ -133,12 +133,12 @@ class Monitor(XnucleoUserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        kwargs = dict(xlabel='Time [s]', ylabel='Temperature [deg C]')
+        kwargs = dict(datetime=True, ylabel='Temperature [deg C]')
         self.temperature1_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
         self.temperature2_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
-        kwargs = dict(xlabel='Time [s]', ylabel='Humidity [%]')
+        kwargs = dict(datetime=True, ylabel='Humidity [%]')
         self.humidity_strip_chart = SlidingStripChart(label='Humidity', **kwargs)
-        kwargs = dict(xlabel='Time [s]', ylabel='Pressure [mbar]')
+        kwargs = dict(datetime=True, ylabel='Pressure [mbar]')
         self.pressure_strip_chart = SlidingStripChart(label='Pressure', **kwargs)
 
     def configure(self) -> None:
@@ -173,4 +173,3 @@ def main() -> None:
 
 if __name__ == '__main__':
     main()
-

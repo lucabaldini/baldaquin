@@ -497,6 +497,8 @@ def setup():
 
     # Miscellanea
     _set_rc_param('timezone', 'UTC')
+    _set_rc_param('date.converter', 'concise')
+
 
 
 setup()
