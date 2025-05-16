@@ -97,7 +97,7 @@ class MainArgumentParser(argparse.ArgumentParser):
             formatter_class=self._FORMATTER_CLASS)  # noqa: E128
         arduino_upload.add_argument('file_path',
             help='the path to the compiled sketch file')  # noqa: E128
-        arduino_upload.add_argument('--board-designator', default=arduino_.UNO)
+        arduino_upload.add_argument('--board-designator', default='uno')
         arduino_upload.set_defaults(func=arduino_.upload_sketch)
 
     @staticmethod
