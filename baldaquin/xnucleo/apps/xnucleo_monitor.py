@@ -28,6 +28,7 @@ from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
+from baldaquin.strip import SlidingStripChart
 from baldaquin.xnucleo.common import XnucleoRunControl, XnucleoUserApplicationBase,\
     XnucleoEventHandler
 
@@ -44,13 +45,18 @@ class AppMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
-        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts')
+        self.temperature_tab = self.add_plot_canvas_tab('Temperature')
+        self.humidity_tab = self.add_plot_canvas_tab('Humidity')
+        self.pressure_tab = self.add_plot_canvas_tab('Pressure')
 
     def setup_user_application(self, user_application):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
+        self.temperature_tab.register(user_application.temperature1_strip_chart,
+                                      user_application.temperature2_strip_chart)
+        self.humidity_tab.register(user_application.humidity_strip_chart)
+        self.pressure_tab.register(user_application.pressure_strip_chart)
 
 
 class XnucleoConfiguration(ConfigurationBase):
@@ -127,7 +133,13 @@ class Monitor(XnucleoUserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = {}
+        kwargs = dict(xlabel='Time [s]', ylabel='Temperature [deg C]')
+        self.temperature1_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
+        self.temperature2_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
+        kwargs = dict(xlabel='Time [s]', ylabel='Humidity [%]')
+        self.humidity_strip_chart = SlidingStripChart(label='Humidity', **kwargs)
+        kwargs = dict(xlabel='Time [s]', ylabel='Pressure [mbar]')
+        self.pressure_strip_chart = SlidingStripChart(label='Pressure', **kwargs)
 
     def configure(self) -> None:
         """Overloaded method.
@@ -146,8 +158,10 @@ class Monitor(XnucleoUserApplicationBase):
         """Overloaded method.
         """
         readout = MonitorReadout.unpack(packet_data)
-        print(readout)
-        #self.strip_chart_dict[readout.pin_number].add_point(x, y)
+        self.temperature1_strip_chart.add_point(readout.seconds, readout.temperature1)
+        self.temperature2_strip_chart.add_point(readout.seconds, readout.temperature2)
+        self.humidity_strip_chart.add_point(readout.seconds, readout.humidity)
+        self.pressure_strip_chart.add_point(readout.seconds, readout.pressure)
         return readout
 
 
