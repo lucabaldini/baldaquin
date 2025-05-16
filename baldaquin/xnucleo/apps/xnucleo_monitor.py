@@ -17,6 +17,7 @@
 """
 
 
+from dataclasses import dataclass
 from pathlib import Path
 import struct
 
@@ -61,18 +62,18 @@ class XnucleoConfiguration(ConfigurationBase):
 
 
 
+@dataclass
 class MonitorReadout(AbstractPacket):
 
     """
     """
 
-    def __init__(self, data: str) -> None:
-        """Constructor.
-        """
-        self._data = data
-        self.seconds = struct.unpack('d', self._data[0:8])[0]
-        self.umidity, self.temperature1, self.pressure, self.temperature2 = \
-            data[8:].decode().strip('#').split(';')
+    seconds: float
+    humidity: float
+    temperature1: float
+    pressure: float
+    temperature2: float
+    _data: bytes = None
 
     @property
     def data(self) -> bytes:
@@ -84,6 +85,7 @@ class MonitorReadout(AbstractPacket):
     def fields(self) -> tuple:
         """Return the packet fields.
         """
+        raise NotImplementedError
 
     def __len__(self) -> int:
         """Return the length of the binary data in bytes.
@@ -93,15 +95,20 @@ class MonitorReadout(AbstractPacket):
     def __iter__(self):
         """Iterate over the field values.
         """
+        raise NotImplementedError
 
     def pack(self) -> bytes:
         """Pack the field values into the corresponding binary data.
         """
+        raise NotImplementedError
 
     @classmethod
     def unpack(cls, data: bytes):
         """Unpack the binary data into the corresponding field values.
         """
+        seconds = struct.unpack('d', data[0:8])[0]
+        values = [float(item) for item in data[8:].decode().strip('#').split(';')]
+        return cls(seconds, *values, data)
 
 
 
@@ -138,12 +145,8 @@ class Monitor(XnucleoUserApplicationBase):
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
         """
-        print(packet_data)
-        readout = MonitorReadout(packet_data)
-        print(readout.seconds, readout.umidity, readout.temperature1, readout.pressure, readout.temperature2)
+        readout = MonitorReadout.unpack(packet_data)
         print(readout)
-        #readout = TemperatureReadout.unpack(packet_data)
-        #x, y = readout.seconds, readout.temperature
         #self.strip_chart_dict[readout.pin_number].add_point(x, y)
         return readout
 
