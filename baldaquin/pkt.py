@@ -178,7 +178,7 @@ class AbstractPacket(ABC):
         return f'{self.__class__.__name__}({info})'
 
     @staticmethod
-    def text_header(prefix: str, creator: str = None) -> str:
+    def text_header(prefix: str = '#', creator: str = None) -> str:
         """Hook that subclasses can overload to provide a sensible header for an
         output text file.
 
@@ -197,7 +197,7 @@ class AbstractPacket(ABC):
             header = f'{header}{prefix}Creator: {creator}\n'
         return header
 
-    def to_text(self, separator: str) -> str:
+    def to_text(self, separator: str = ',') -> str:
         """Hook that subclasses can overload to provide a text representation of
         the buffer to be written in an output text file.
         """

@@ -81,6 +81,11 @@ class MonitorReadout(AbstractPacket):
     temperature2: float
     _data: bytes = None
 
+    OUTPUT_HEADERS = ('Time [s]', 'Temperature 1 [deg C]', 'Temperature 2 [deg C]',
+                      'Relative humidity [%]', 'Pressure [mbar]')
+    OUTPUT_ATTRIBUTES = ('seconds', 'temperature1', 'temperature2', 'humidity', 'pressure')
+    OUTPUT_FMTS = ('%.3f', '%.2f', '%.2f', '%.2f', '%.2f')
+
     @property
     def data(self) -> bytes:
         """Return the packet binary data.
@@ -91,7 +96,7 @@ class MonitorReadout(AbstractPacket):
     def fields(self) -> tuple:
         """Return the packet fields.
         """
-        raise NotImplementedError
+        return
 
     def __len__(self) -> int:
         """Return the length of the binary data in bytes.
@@ -116,6 +121,17 @@ class MonitorReadout(AbstractPacket):
         values = [float(item) for item in data[8:].decode().strip('#').split(';')]
         return cls(seconds, *values, data)
 
+    @classmethod
+    def text_header(cls, prefix: str = '#', creator: str = None) -> str:
+        """
+        """
+        headers = ', '.join(map(str, cls.OUTPUT_HEADERS))
+        return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{headers}\n'
+
+    def to_text(self, separator: str = ',') -> str:
+        """Overloaded method.
+        """
+        return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
 
 
 class Monitor(XnucleoUserApplicationBase):
@@ -150,9 +166,10 @@ class Monitor(XnucleoUserApplicationBase):
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
-        #file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        #self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
-        #                                   TemperatureReadout.text_header(creator=self.NAME))
+        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        print(file_path)
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, MonitorReadout.to_text,
+                                           MonitorReadout.text_header(creator=self.NAME))
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
