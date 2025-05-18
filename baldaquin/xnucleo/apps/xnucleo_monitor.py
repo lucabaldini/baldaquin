@@ -48,6 +48,7 @@ class AppMainWindow(MainWindow):
         self.temperature_tab = self.add_plot_canvas_tab('Temperature')
         self.humidity_tab = self.add_plot_canvas_tab('Humidity')
         self.pressure_tab = self.add_plot_canvas_tab('Pressure')
+        self.analog_tab = self.add_plot_canvas_tab('Analog inputs')
 
     def setup_user_application(self, user_application):
         """Overloaded method.
@@ -57,6 +58,8 @@ class AppMainWindow(MainWindow):
                                       user_application.temperature2_strip_chart)
         self.humidity_tab.register(user_application.humidity_strip_chart)
         self.pressure_tab.register(user_application.pressure_strip_chart)
+        self.analog_tab.register(user_application.adc1_strip_chart,
+                                 user_application.adc2_strip_chart)
 
 
 class XnucleoConfiguration(ConfigurationBase):
@@ -79,12 +82,16 @@ class MonitorReadout(AbstractPacket):
     temperature1: float
     pressure: float
     temperature2: float
+    adc1: int
+    adc2: int
     _data: bytes = None
 
     OUTPUT_HEADERS = ('Time [s]', 'Temperature 1 [deg C]', 'Temperature 2 [deg C]',
-                      'Relative humidity [%]', 'Pressure [mbar]')
-    OUTPUT_ATTRIBUTES = ('seconds', 'temperature1', 'temperature2', 'humidity', 'pressure')
-    OUTPUT_FMTS = ('%.3f', '%.2f', '%.2f', '%.2f', '%.2f')
+                      'Relative humidity [%]', 'Pressure [mbar]',
+                      'Channel 1 [ADC counts]', 'Channel 2 [ADC counts]')
+    OUTPUT_ATTRIBUTES = ('seconds', 'temperature1', 'temperature2', 'humidity',
+                         'pressure', 'adc1', 'adc2')
+    OUTPUT_FMTS = ('%.3f', '%.2f', '%.2f', '%.2f', '%.2f', '%d', '%d')
 
     @property
     def data(self) -> bytes:
@@ -153,9 +160,12 @@ class Monitor(XnucleoUserApplicationBase):
         self.temperature1_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
         self.temperature2_strip_chart = SlidingStripChart(label='Temperature 1', **kwargs)
         kwargs = dict(datetime=True, ylabel='Humidity [%]')
-        self.humidity_strip_chart = SlidingStripChart(label='Humidity', **kwargs)
+        self.humidity_strip_chart = SlidingStripChart(**kwargs)
         kwargs = dict(datetime=True, ylabel='Pressure [mbar]')
-        self.pressure_strip_chart = SlidingStripChart(label='Pressure', **kwargs)
+        self.pressure_strip_chart = SlidingStripChart(**kwargs)
+        kwargs = dict(datetime=True, ylabel='Value [ADC counts]')
+        self.adc1_strip_chart = SlidingStripChart(label='Channel 1', **kwargs)
+        self.adc2_strip_chart = SlidingStripChart(label='Channel 2', **kwargs)
 
     def configure(self) -> None:
         """Overloaded method.
@@ -175,10 +185,13 @@ class Monitor(XnucleoUserApplicationBase):
         """Overloaded method.
         """
         readout = MonitorReadout.unpack(packet_data)
-        self.temperature1_strip_chart.add_point(readout.seconds, readout.temperature1)
-        self.temperature2_strip_chart.add_point(readout.seconds, readout.temperature2)
-        self.humidity_strip_chart.add_point(readout.seconds, readout.humidity)
-        self.pressure_strip_chart.add_point(readout.seconds, readout.pressure)
+        seconds = readout.seconds
+        self.temperature1_strip_chart.add_point(seconds, readout.temperature1)
+        self.temperature2_strip_chart.add_point(seconds, readout.temperature2)
+        self.humidity_strip_chart.add_point(seconds, readout.humidity)
+        self.pressure_strip_chart.add_point(seconds, readout.pressure)
+        self.adc1_strip_chart.add_point(seconds, readout.adc1)
+        self.adc2_strip_chart.add_point(seconds, readout.adc2)
         return readout
 
 
