@@ -18,6 +18,8 @@
 
 import collections
 
+import numpy as np
+
 from baldaquin.plt_ import plt, setup_axes
 
 
@@ -36,13 +38,16 @@ class SlidingStripChart:
     # pylint: disable=invalid-name
 
     def __init__(self, max_length: int = None, label: str = '', xoffset: float = 0.,
-                 xlabel: str = None, ylabel: str = None) -> None:
+                 xlabel: str = None, ylabel: str = None, datetime: bool = False) -> None:
         """Constructor.
         """
         self.label = label
         self.xoffset = xoffset
         self.xlabel = xlabel
+        if self.xlabel is None and datetime:
+            self.xlabel = 'UTC'
         self.ylabel = ylabel
+        self.datetime = datetime
         self.x = collections.deque(maxlen=max_length)
         self.y = collections.deque(maxlen=max_length)
 
@@ -63,5 +68,9 @@ class SlidingStripChart:
         """
         if axes is None:
             axes = plt.gca()
-        axes.plot(self.x, self.y, label=self.label, **kwargs)
+        if self.datetime:
+            x = np.array(self.x).astype('datetime64[s]')
+        else:
+            x = self.x
+        axes.plot(x, self.y, label=self.label, **kwargs)
         setup_axes(axes, xlabel=self.xlabel, ylabel=self.ylabel, grids=True)
