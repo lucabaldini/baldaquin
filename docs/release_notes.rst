@@ -4,8 +4,10 @@ Release notes
 =============
 
 * Some bugs and rough edges in the plasduino extension have been fixed.
+* New genric monitoring application based on arduino + x-nucleon board.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/53
+      * https://github.com/lucabaldini/baldaquin/pull/59
 * Issue(s) closed
       * https://github.com/lucabaldini/baldaquin/issues/50
       * https://github.com/lucabaldini/baldaquin/issues/51
