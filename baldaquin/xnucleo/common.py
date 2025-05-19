@@ -20,6 +20,7 @@ import datetime
 import struct
 import time
 
+from baldaquin import logger
 from baldaquin import arduino_
 from baldaquin import xnucleo
 from baldaquin.app import UserApplicationBase
@@ -42,7 +43,7 @@ class XnucleoSerialInterface(SerialInterface):
     """
 
     def write_readout_command(self) -> None:
-        """
+        """Write the readout command to the serial port.
         """
         self.pack_and_write(1, 'B')
 
@@ -60,6 +61,8 @@ class XnucleoEventHandler(EventHandlerBase):
     """Base class for all the xnucleo event handlers.
     """
 
+    _DEFAULT_SAMPLING_INTERVAL = 1.0
+
     def __init__(self) -> None:
         """Constructor.
 
@@ -69,10 +72,20 @@ class XnucleoEventHandler(EventHandlerBase):
         super().__init__()
         self.serial_interface = XnucleoSerialInterface()
         self.timeline = Timeline()
-        self.readout_interval = 1.0
+        self._sampling_interval = self._DEFAULT_SAMPLING_INTERVAL
+
+    def set_sampling_interval(self, interval: float) -> None:
+        """Set the sampling interval.
+        """
+        logger.info(f'Setting {self.__class__.__name__} sampling interval to {interval} s...')
+        self._sampling_interval = interval
 
     def open_serial_interface(self, timeout: float = None) -> None:
         """Open the serial interface.
+
+        ..warning::
+            Note pylint is signaling a code duplication with baldaquin.plasduino.common:[241:246]
+            which means that we probably need some refactoring here.
         """
         port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port is None:
@@ -106,7 +119,7 @@ class XnucleoEventHandler(EventHandlerBase):
         # Pack the timestamp in a double format (8 bytes).
         data = struct.pack('d', utc.timestamp())
         # Wait...
-        time.sleep(self.readout_interval)
+        time.sleep(self._sampling_interval)
         # Append to the timestamp the actual readout data, which are basically
         # a string of bytes delimited by a "#" character on both sides, containing
         # all the relevant fields separated by semicolons, e.g., "#35.50;27.40;1011.87;28.20#"
@@ -119,6 +132,10 @@ class XnucleoUserApplicationBase(UserApplicationBase):
 
     """Base class for all the xnucleo applications.
     """
+
+    def configure(self) -> None:
+        """Overloaded method.
+        """
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).

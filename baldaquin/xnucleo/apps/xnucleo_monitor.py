@@ -29,7 +29,7 @@ from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
 from baldaquin.strip import SlidingStripChart
-from baldaquin.xnucleo.common import XnucleoRunControl, XnucleoUserApplicationBase,\
+from baldaquin.xnucleo.common import XnucleoRunControl, XnucleoUserApplicationBase, \
     XnucleoEventHandler
 
 
@@ -60,15 +60,6 @@ class AppMainWindow(MainWindow):
         self.pressure_tab.register(user_application.pressure_strip_chart)
         self.analog_tab.register(user_application.adc1_strip_chart,
                                  user_application.adc2_strip_chart)
-
-
-class XnucleoConfiguration(ConfigurationBase):
-
-    """User application configuration.
-    """
-
-    PARAMETER_SPECS = ()
-
 
 
 @dataclass
@@ -141,16 +132,28 @@ class MonitorReadout(AbstractPacket):
         return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
 
 
+class MonitorConfiguration(ConfigurationBase):
+
+    """User application configuration for the xnucleo monitor.
+    """
+
+    PARAMETER_SPECS = (
+        ('sampling_interval', 'float', 2., 'Sampling interval [s]',
+            dict(min=1., max=1000.0)),
+        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
+            dict(min=10, max=1000000)),
+    )
+
+
 class Monitor(XnucleoUserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
 
     NAME = 'Generic Monitor'
-    CONFIGURATION_CLASS = XnucleoConfiguration
+    CONFIGURATION_CLASS = MonitorConfiguration
     CONFIGURATION_FILE_PATH = xnucleo.XNUCLEO_APP_CONFIG / 'xnucleo_monitor.cfg'
     EVENT_HANDLER_CLASS = XnucleoEventHandler
-    _SAMPLING_INTERVAL = 500
 
     def __init__(self) -> None:
         """Overloaded Constructor.
@@ -166,18 +169,21 @@ class Monitor(XnucleoUserApplicationBase):
         kwargs = dict(datetime=True, ylabel='Value [ADC counts]')
         self.adc1_strip_chart = SlidingStripChart(label='Channel 1', **kwargs)
         self.adc2_strip_chart = SlidingStripChart(label='Channel 2', **kwargs)
+        self._strip_charts = (self.temperature1_strip_chart, self.temperature2_strip_chart,
+                              self.humidity_strip_chart, self.pressure_strip_chart,
+                              self.adc1_strip_chart, self.adc2_strip_chart)
 
     def configure(self) -> None:
         """Overloaded method.
         """
-        #for chart in self.strip_chart_dict.values():
-        #    chart.reset(self.configuration.value('strip_chart_max_length'))
+        self.event_handler.set_sampling_interval(self.configuration.value('sampling_interval'))
+        for chart in self._strip_charts:
+            chart.reset(self.configuration.value('strip_chart_max_length'))
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
         file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
-        print(file_path)
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, MonitorReadout.to_text,
                                            MonitorReadout.text_header(creator=self.NAME))
 
