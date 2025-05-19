@@ -93,13 +93,14 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
     CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_tempmonitor.cfg'
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
+    _PINS = Lab1.TEMPMON_PINS
     _SAMPLING_INTERVAL = 500
 
     def __init__(self) -> None:
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = self.create_strip_charts(ylabel='Temperature [deg C]')
+        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel='Temperature [deg C]')
 
     def configure(self) -> None:
         """Overloaded method.
