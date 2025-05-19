@@ -1,0 +1,23 @@
+{
+    "report_version": 1,
+    "baldaquin_version": "0.4.0",
+    "test_stand_id": 101,
+    "run_id": 399,
+    "start_timestamp": {
+        "utc_datetime": "2025-04-08T07:54:00.013356+00:00",
+        "local_datetime": "2025-04-08T09:54:00.013356+02:00",
+        "seconds": 1744098840.013356
+    },
+    "stop_timestamp": {
+        "utc_datetime": "2025-04-08T08:27:35.970906+00:00",
+        "local_datetime": "2025-04-08T10:27:35.970906+02:00",
+        "seconds": 1744100855.970906
+    },
+    "project_name": "plasduino",
+    "application_name": "Pendulum",
+    "statistics": {
+        "packets_processed": 3814,
+        "packets_written": 3814,
+        "bytes_written": 89448
+    }
+}

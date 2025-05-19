@@ -3,12 +3,19 @@
 Release notes
 =============
 
+* Some bugs and rough edges in the plasduino extension have been fixed.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/53
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/50
+      * https://github.com/lucabaldini/baldaquin/issues/51
+
 
 *baldaquin 0.4.0 (Fri, 31 Jan 2025 15:53:59 +0100)*
 
 * Development notes added to the documentation.
 * Setup files for Windows added.
-* Link to the otuput folder added in the main GUI.
+* Link to the output folder added in the main GUI.
 * Serialization/deserialization methods implemented for Timestamp and PacketStatistics
   objects.
 * RunReport class added.
