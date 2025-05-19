@@ -3,6 +3,9 @@
 Release notes
 =============
 
+
+*baldaquin 0.5.0 (Mon, 19 May 2025 09:29:50 +0200)*
+
 * Some bugs and rough edges in the plasduino extension have been fixed.
 * New genric monitoring application based on arduino + x-nucleon board.
 * Merging pull requests
