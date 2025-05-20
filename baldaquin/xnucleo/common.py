@@ -92,6 +92,9 @@ class XnucleoEventHandler(EventHandlerBase):
             raise RuntimeError('Could not find a suitable arduino board connected.')
         self.serial_interface.connect(port.name, timeout=timeout)
         self.serial_interface.pulse_dtr()
+        # time.sleep(5)
+        # message = self.serial_interface.read_text_message()
+        # print(message)
 
     def close_serial_interface(self) -> None:
         """Close the serial interface.

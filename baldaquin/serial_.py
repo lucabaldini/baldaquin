@@ -221,6 +221,11 @@ class TextMessage:
             raise RuntimeError(f'Need exaclty 0 or {len(fields)} converters to unpack "{self._text}"')
         return tuple(fields)
 
+    def __str__(self):
+        """String formatting.
+        """
+        return self._text
+
 
 class SerialInterface(serial.Serial):
 
@@ -320,6 +325,12 @@ class SerialInterface(serial.Serial):
         """Read all the available data on the serial interface.
         """
         return self.read(self.in_waiting)
+
+    def read_text_message(self) -> TextMessage:
+        """Read the available string data from the serial interface and return a
+        :class:`TextMessage` object.
+        """
+        return TextMessage(self.read_available_data())
 
     def read_and_unpack(self, fmt: str) -> Any:
         """Read a given number of bytes from the serial port and unpack them.

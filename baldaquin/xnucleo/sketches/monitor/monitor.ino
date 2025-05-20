@@ -8,6 +8,10 @@
 HTS221Sensor HumTemp(&DEV_I2C);
 LPS22HBSensor PressTemp(&DEV_I2C);
 
+// Sketch identification.
+char* sketch_name = "xnucleo_monitor";
+uint8_t sketch_version = 2;
+
 // Global variables.
 char delimiter = '#';
 char separator = ';';
@@ -23,6 +27,13 @@ void setup() {
   // Initialize serial for output---note the baud rate is hard-coded and we should
   // make sure we do the same thing on the client side.
   SerialPort.begin(115200);
+
+  // Handshake.
+  //Serial.print(delimiter);
+  //Serial.print(sketch_name);
+  //Serial.print(separator);
+  //Serial.print(sketch_version);
+  //Serial.print(delimiter);
 
   // Initialize I2C bus.
   DEV_I2C.begin();
