@@ -162,6 +162,61 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
     return ports
 
 
+class TextMessage:
+
+    """Small class defining a simple protocol for passing messages in string form
+    over the serial port.
+
+    A message is basically a small piece of text, in the form of a binary stream
+    encoded in UTF-8, delimited by a '#' character on both sides, and that can
+    contain an arbitrary number of fields separated by a ';', e.g.,
+    ``"#Hello world;1#"``. Note the delimiters are properly checked at creation
+    time. The ``unpack()`` class method returns a tuple with the field values,
+    converted in the proper types.
+
+    Users should by no means feel compelled to use this, but we provide it in order
+    to facilitate passing strings over the serial port, saving boilerplate code
+    for runtime checking.
+    """
+
+    _ENCODING = 'utf-8'
+    _DELIMITER = '#'
+    _SEPARATOR = ';'
+
+    def __init__(self, data: bytes) -> None:
+        """Constructor.
+        """
+        self._text = data.decode(self._ENCODING)
+        if not (self._text.startswith(self._DELIMITER) and self._text.endswith(self._DELIMITER)):
+            raise RuntimeError(f'Serial text message "{self._text}" is not properly delimited')
+
+    @classmethod
+    def from_text(cls, text: str) -> bytes:
+        """Create a message from a text string (mainly for debug purposes).
+        """
+        return cls(bytes(text, cls._ENCODING))
+
+    def unpack(self, *converters) -> tuple:
+        """Unpack the message in its (properly formatted) fields.
+
+        Arguments
+        ---------
+        arguments : callable
+            The converter functions to be used to unpack the fields. Note the number
+            of converters passed to the function must be either zero (in which case
+            all the fields are treated as strings) or equal to the number of fields
+            in the message. A RuntimeError is raised if that is not the case.
+        """
+        fields = self._text.strip(self._DELIMITER).split(self._SEPARATOR)
+        if len(converters) == 0:
+            pass
+        elif len(converters) == len(fields):
+            fields = [converter(field) for converter, field in zip(converters, fields)]
+        else:
+            raise RuntimeError(f'Need exaclty 0 or {len(fields)} converters to unpack "{self._text}"')
+        return tuple(fields)
+
+
 class SerialInterface(serial.Serial):
 
     """Small wrapper around the serial.Serial class.
@@ -255,6 +310,11 @@ class SerialInterface(serial.Serial):
         self.dtr = 1
         time.sleep(pulse_length)
         self.dtr = 0
+
+    def read_available_data(self) -> bytes:
+        """Read all the available data on the serial interface.
+        """
+        return self.read(self.in_waiting)
 
     def read_and_unpack(self, fmt: str) -> Any:
         """Read a given number of bytes from the serial port and unpack them.

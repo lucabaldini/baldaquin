@@ -16,6 +16,9 @@
 """Test suite for serial_.py
 """
 
+import pytest
+
+from baldaquin import logger
 from baldaquin import serial_
 
 
@@ -44,3 +47,27 @@ def test_list_com_ports() -> None:
     ports = serial_.list_com_ports((0x2341, 0x0043))
     for port in ports:
         print(port)
+
+
+def test_message() -> None:
+    """Test the simple text protocol for the serial port.
+    """
+    with pytest.raises(RuntimeError) as info:
+        message = serial_.TextMessage.from_text('Hello world;1')
+    logger.info(info.value)
+    with pytest.raises(RuntimeError) as info:
+        message = serial_.TextMessage.from_text('#Hello world;1')
+    logger.info(info.value)
+    with pytest.raises(RuntimeError) as info:
+        message = serial_.TextMessage.from_text('Hello world;1#')
+    logger.info(info.value)
+    message = serial_.TextMessage.from_text('#Hello world;1#')
+    name, version = message.unpack(str, int)
+    assert name == 'Hello world'
+    assert version == 1
+    name, version = message.unpack()
+    assert name == 'Hello world'
+    assert version == '1'
+    with pytest.raises(RuntimeError) as info:
+        name, version = message.unpack(str)
+    logger.info(info.value)

@@ -24,7 +24,7 @@ import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import DeviceId, Port, list_com_ports
+from baldaquin.serial_ import SerialInterface, DeviceId, Port, list_com_ports
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -593,3 +593,13 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
     board = ArduinoBoard.by_designator(board_designator)
     logger.info(f'Compiling sketch {file_path} for {board}...')
     return ArduinoCli.compile(file_path, output_dir, board, verbose)
+
+
+class ArduinoSerialInterface(SerialInterface):
+
+    """Specialized serial interface to interact with arduino boards.
+    """
+
+    def handshake(self, sketch_id: str, sketch_version: int, timeout: float = 2.):
+        """
+        """
