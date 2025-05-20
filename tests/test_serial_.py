@@ -71,3 +71,4 @@ def test_message() -> None:
     with pytest.raises(RuntimeError) as info:
         name, version = message.unpack(str)
     logger.info(info.value)
+    logger.info(message.encode())

@@ -196,6 +196,11 @@ class TextMessage:
         """
         return cls(bytes(text, cls._ENCODING))
 
+    def encode(self) -> bytes:
+        """Encode the underlying string message into a byte object.
+        """
+        return self._text.encode(self._ENCODING)
+
     def unpack(self, *converters) -> tuple:
         """Unpack the message in its (properly formatted) fields.
 
