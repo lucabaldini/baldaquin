@@ -4,6 +4,11 @@ Release notes
 =============
 
 
+* Minor plasduino cleanup.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/61
+
+
 *baldaquin 0.5.0 (Mon, 19 May 2025 09:29:50 +0200)*
 
 * Some bugs and rough edges in the plasduino extension have been fixed.
