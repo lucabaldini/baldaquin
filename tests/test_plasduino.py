@@ -57,7 +57,7 @@ def test_pendulum_process():
     sys.dont_write_bytecode = False
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
     with PacketFile(DigitalTransition).open(file_path) as input_file:
-            data = input_file.read_all()
+        data = input_file.read_all()
 
     # Post-process with the simple method.
     oscillations = pendulum.Pendulum._postprocess_data_simple(data)
@@ -118,7 +118,7 @@ def test_pendulum_custom_postprocess():
     sys.dont_write_bytecode = False
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
     with PacketFile(DigitalTransition).open(file_path) as input_file:
-            data = input_file.read_all()
+        data = input_file.read_all()
     for i in range(5, len(data) - 3, 2):
         t1 = pendulum.Pendulum._secs_avg(data, i - 4, i - 5)
         t2 = pendulum.Pendulum._secs_avg(data, i - 2, i - 3)
@@ -126,7 +126,7 @@ def test_pendulum_custom_postprocess():
         t4 = pendulum.Pendulum._secs_avg(data, i + 2, i + 1)
         dt2 = pendulum.Pendulum._secs_diff(data, i - 2, i - 3)
         dt3 = pendulum.Pendulum._secs_diff(data, i, i - 1)
-        average_time = 0.5 * (t2 + t3)
+        # average_time = 0.5 * (t2 + t3)
         transit_time = 0.5 * (dt2 + dt3)
         period = 0.5 * (t3 - t1 + t4 - t2)
         print(period, transit_time, t3 - t1, t4 - t2)
@@ -137,7 +137,7 @@ def test_pendulum_sequence():
     """
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
     with PacketFile(DigitalTransition).open(file_path) as input_file:
-            data = input_file.read_all()
+        data = input_file.read_all()
     sequence = data[-11:-1]
     t0 = sequence[0].microseconds
     x = []
@@ -153,6 +153,7 @@ def test_pendulum_sequence():
     plt.plot(x, y)
     setup_gca(ymax=1.1, xlabel='Time [ms]', ylabel='Status (high = occulted)')
 
+
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
@@ -162,14 +163,14 @@ def test_pendulum_plot():
     gate_distance = 1.151
     flag_width = 0.0194
     T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
-    #optical_gate_width = 0.001
+    # optical_gate_width = 0.001
 
     file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
     velocity = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
 
     # Correct the period for the width of the optical gate!
-    #period -= optical_gate_width / velocity
+    # period -= optical_gate_width / velocity
 
     amplitude = np.arccos(1. - velocity**2. / 2. / g / pendulum_length)
     energy = 0.5 * mass * velocity**2.
@@ -179,9 +180,9 @@ def test_pendulum_plot():
     plt.plot(time_, period, 'o')
     setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
 
-    #plt.figure('Transit time')
-    #plt.plot(time_, transit_time, 'o')
-    #setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
+    # plt.figure('Transit time')
+    # plt.plot(time_, transit_time, 'o')
+    # setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
 
     plt.figure('Amplitude')
     plt.plot(amplitude, period, 'o')
@@ -203,6 +204,6 @@ def test_pendulum_plot():
 
 if __name__ == '__main__':
     test_pendulum_plot()
-    #test_pendulum_sequence()
-    #test_pendulum_custom_postprocess()
+    # test_pendulum_sequence()
+    # test_pendulum_custom_postprocess()
     plt.show()

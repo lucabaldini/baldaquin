@@ -32,7 +32,6 @@ from baldaquin.event import EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
      InterruptMode
 from baldaquin.plasduino.sketches import sketch_file_path
-from baldaquin.plasduino.shields import Lab1
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import SerialInterface
 from baldaquin.strip import SlidingStripChart
@@ -408,7 +407,8 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
-        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PINS, self._SAMPLING_INTERVAL)
+        self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PINS,
+                                                                         self._SAMPLING_INTERVAL)
 
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).
