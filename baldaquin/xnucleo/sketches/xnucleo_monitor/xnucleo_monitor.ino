@@ -13,11 +13,22 @@ char* sketch_name = "xnucleo_monitor";
 uint8_t sketch_version = 2;
 
 // Global variables.
-char delimiter = '#';
+char header = '#';
 char separator = ';';
+char line_feed = '\n';
 uint8_t readout_code;
 uint16_t adc1, adc2;
 float humidity, temperature1, pressure, temperature2;
+
+
+void handshake() {
+  // Handshake with the host.
+  Serial.print(header);
+  Serial.print(sketch_name);
+  Serial.print(separator);
+  Serial.print(sketch_version);
+  Serial.print(line_feed);
+}
 
 
 void setup() {
@@ -28,13 +39,6 @@ void setup() {
   // make sure we do the same thing on the client side.
   SerialPort.begin(115200);
 
-  // Handshake.
-  //Serial.print(delimiter);
-  //Serial.print(sketch_name);
-  //Serial.print(separator);
-  //Serial.print(sketch_version);
-  //Serial.print(delimiter);
-
   // Initialize I2C bus.
   DEV_I2C.begin();
 
@@ -43,6 +47,8 @@ void setup() {
   HumTemp.Enable();
   PressTemp.begin();
   PressTemp.Enable();
+
+  handshake();
 }
 
 
@@ -53,7 +59,7 @@ void loop() {
   if (Serial.available() > 0) {
 
     // Note at this time we are not doing anything with the command byte, and assume
-    // that, wathever value is received, we just trigger a full readout cycle.
+    // that, whatever value is received, we just trigger a full readout cycle.
     // At some point we might be fancier and do different things depending on the
     // input value, e.g., read or not specific pieced.
     readout_code = Serial.read();
@@ -72,7 +78,7 @@ void loop() {
     adc2 = analogRead(1);
 
     // Write the stuff to the serial port.
-    Serial.print(delimiter);
+    Serial.print(header);
     Serial.print(humidity, 3);
     Serial.print(separator);
     Serial.print(temperature1, 3);
@@ -84,7 +90,7 @@ void loop() {
     Serial.print(adc1);
     Serial.print(separator);
     Serial.print(adc2);
-    Serial.print(delimiter);
+    Serial.print(header);
 
     // Led off.
     digitalWrite(LED_BUILTIN, LOW);

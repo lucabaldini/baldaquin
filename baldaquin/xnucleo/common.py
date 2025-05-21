@@ -24,9 +24,9 @@ from baldaquin import logger
 from baldaquin import arduino_
 from baldaquin import xnucleo
 from baldaquin.app import UserApplicationBase
+from baldaquin.arduino_ import ArduinoSerialInterface
 from baldaquin.event import EventHandlerBase
 from baldaquin.runctrl import RunControlBase
-from baldaquin.serial_ import SerialInterface
 from baldaquin.timeline import Timeline
 
 
@@ -34,7 +34,7 @@ from baldaquin.timeline import Timeline
 _SUPPORTED_BOARDS = (arduino_.UNO, )
 
 
-class XnucleoSerialInterface(SerialInterface):
+class XnucleoSerialInterface(ArduinoSerialInterface):
 
     """Specialized xnucleo serial interface.
 
@@ -92,9 +92,6 @@ class XnucleoEventHandler(EventHandlerBase):
             raise RuntimeError('Could not find a suitable arduino board connected.')
         self.serial_interface.connect(port.name, timeout=timeout)
         self.serial_interface.pulse_dtr()
-        # time.sleep(5)
-        # message = self.serial_interface.read_text_message()
-        # print(message)
 
     def close_serial_interface(self) -> None:
         """Close the serial interface.
@@ -144,6 +141,8 @@ class XnucleoUserApplicationBase(UserApplicationBase):
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
+        file_path = 'File path'
+        self.event_handler.serial_interface.handshake('xnucleo_monitor', 2, file_path)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).

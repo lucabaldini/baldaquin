@@ -88,7 +88,7 @@ class DeviceId:
 @dataclass
 class Port:
 
-    """Small data class holding the informatio about a COM port.
+    """Small data class holding the information about a COM port.
 
     This is a simple wrapper around the serial.tools.list_ports_common.ListPortInfo
     isolating the basic useful functionalities, for the sake of simplicity.
@@ -160,6 +160,32 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
     for port in ports:
         logger.debug(port)
     return ports
+
+
+def com_port(port_name: str) -> Port:
+    """Get the port information for a given port name.
+
+    Note that, in order to get the port object, we have to scan all the com ports.
+    It is unfortunate that, once we have a ``Serial`` object, we have lost the
+    information about the device connected to the port, and the only sensible way to
+    retrieve it is to scan the list of ports again and find the one that matches
+    the name.
+
+    Arguments
+    ---------
+    port_name : str
+        The name of the port (e.g., ``/dev/ttyACM0``).
+
+    Returns
+    -------
+    Port object
+        The port object.
+    """
+    ports = list_com_ports()
+    for port in ports:
+        if port.name == port_name:
+            return port
+    raise RuntimeError(f'Port {name} not found.')
 
 
 class TextLine(bytes):
@@ -311,6 +337,17 @@ class SerialInterface(serial.Serial):
         self.setup(port, baudrate, timeout)
         logger.info(f'Opening serial connection to port {self.port}...')
         self.open()
+
+    def set_timeout(self, timeout: float) -> None:
+        """Set the timeout for the serial port.
+
+        Arguments
+        ---------
+        timeout : float
+            The timeout in seconds.
+        """
+        logger.info(f'Setting serial connection timeout to {timeout} s...')
+        self.timeout = timeout
 
     def disconnect(self):
         """Disconnect from the serial port.
