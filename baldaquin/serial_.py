@@ -185,7 +185,7 @@ def com_port(port_name: str) -> Port:
     for port in ports:
         if port.name == port_name:
             return port
-    raise RuntimeError(f'Port {name} not found.')
+    raise RuntimeError(f'Port {port_name} not found.')
 
 
 class TextLine(bytes):

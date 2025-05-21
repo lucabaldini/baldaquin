@@ -100,5 +100,3 @@ def test_project_name():
     for sketch_path in ('sketches/test/test.ino', 'sketches/test/', 'sketches/test'):
         assert interface.project_base_name(sketch_path) == 'test'
         assert interface.project_name('sketches/test/test', 'uno') == 'test_uno'
-
-

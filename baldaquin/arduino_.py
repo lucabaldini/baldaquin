@@ -740,7 +740,8 @@ class ArduinoSerialInterface(SerialInterface):
         board = ArduinoBoard.by_device_id(com_port(self.port).device_id)
         print(board)
 
-        file_path = os.path.join(sketch_folder_path, sketch_name, f'{sketch_name}_{board.designator}.hex')
+        file_name = f'{sketch_name}_{board.designator}.hex'
+        file_path = os.path.join(sketch_folder_path, sketch_name, file_name)
         upload_sketch(file_path, board.designator, self.port)
         name, version = self.read_text_line().unpack(str, int)
         if (name, version) != (sketch_name, sketch_version):
