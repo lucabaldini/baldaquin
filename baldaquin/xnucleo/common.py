@@ -90,7 +90,7 @@ class XnucleoEventHandler(EventHandlerBase):
         port_info = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port_info is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port_info.name, timeout=timeout, port_info=port_info)
+        self.serial_interface.connect(port_info, timeout=timeout)
         self.serial_interface.pulse_dtr()
 
     def close_serial_interface(self) -> None:

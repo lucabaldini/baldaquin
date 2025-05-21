@@ -251,14 +251,14 @@ class SerialInterface(serial.Serial):
 
     # pylint: disable=too-many-ancestors
 
-    def connect(self, port: str, baudrate: int = DEFAULT_BAUD_RATE,
-                timeout: float = None, port_info: PortInfo = None) -> None:
+    def connect(self, port_info: PortInfo, baudrate: int = DEFAULT_BAUD_RATE,
+                timeout: float = None) -> None:
         """Setup the serial connection.
 
         Arguments
         ---------
-        port : str
-            The name of the port to connect to (e.g., ``/dev/ttyACM0``).
+        port_info : PortInfo
+            The PortInfo object describing the port.
 
         baudrate : int
             The baud rate.
@@ -292,16 +292,13 @@ class SerialInterface(serial.Serial):
               immediately when the requested number of bytes are available,
               otherwise wait until the timeout expires and return all bytes that
               were received until then.
-
-        port_info : PortInfo, optional
-            The port information object, when available.
         """
-        logger.debug(f'Configuring serial connection (port = {port}, '
+        logger.debug(f'Configuring serial connection (port = {port_info.name}, '
                      f'baudarate = {baudrate}, timeout = {timeout})...')
-        self.port = port
+        self.port_info = port_info
+        self.port = port_info.name
         self.baudrate = baudrate
         self.timeout = timeout
-        self.port_info = port_info
         logger.info(f'Opening serial connection to port {self.port}...')
         self.open()
 
