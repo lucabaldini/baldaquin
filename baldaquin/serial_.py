@@ -86,12 +86,14 @@ class DeviceId:
 
 
 @dataclass
-class Port:
+class PortInfo:
 
     """Small data class holding the information about a COM port.
 
     This is a simple wrapper around the serial.tools.list_ports_common.ListPortInfo
-    isolating the basic useful functionalities, for the sake of simplicity.
+    isolating the basic useful functionalities, for the sake of simplicity. (And,
+    in addition, this convenience class is meant to integrate the functionality
+    embedded in the :class:`DeviceId` class, which is handy.)
 
     See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
     for more information.
@@ -113,14 +115,14 @@ class Port:
     manufacturer: str = None
 
     @classmethod
-    def from_port_info(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'Port':
+    def from_serial(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'PortInfo':
         """Create a Port object from a ListPortInfo object.
         """
         device_id = DeviceId(port_info.vid, port_info.pid)
         return cls(port_info.device, device_id, port_info.manufacturer)
 
 
-def list_com_ports(*device_ids: DeviceId) -> list[Port]:
+def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
     """List all the com ports with devices attached, possibly with a filter on
     the device ids we are interested into.
 
@@ -133,12 +135,12 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
 
     Returns
     -------
-    list of Port objects
+    list of PortInfo objects
         The list of COM ports.
     """
     logger.info('Scanning serial devices...')
     # Populate the initial list of ports.
-    ports = [Port.from_port_info(port_info) for port_info in serial.tools.list_ports.comports()]
+    ports = [PortInfo.from_serial(port_info) for port_info in serial.tools.list_ports.comports()]
     for port in ports:
         logger.debug(port)
     logger.info(f'Done, {len(ports)} device(s) found.')
@@ -160,32 +162,6 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
     for port in ports:
         logger.debug(port)
     return ports
-
-
-def com_port(port_name: str) -> Port:
-    """Get the port information for a given port name.
-
-    Note that, in order to get the port object, we have to scan all the com ports.
-    It is unfortunate that, once we have a ``Serial`` object, we have lost the
-    information about the device connected to the port, and the only sensible way to
-    retrieve it is to scan the list of ports again and find the one that matches
-    the name.
-
-    Arguments
-    ---------
-    port_name : str
-        The name of the port (e.g., ``/dev/ttyACM0``).
-
-    Returns
-    -------
-    Port object
-        The port object.
-    """
-    ports = list_com_ports()
-    for port in ports:
-        if port.name == port_name:
-            return port
-    raise RuntimeError(f'Port {port_name} not found.')
 
 
 class TextLine(bytes):
@@ -275,7 +251,8 @@ class SerialInterface(serial.Serial):
 
     # pylint: disable=too-many-ancestors
 
-    def setup(self, port: str, baudrate: int = DEFAULT_BAUD_RATE, timeout: float = None) -> None:
+    def connect(self, port: str, baudrate: int = DEFAULT_BAUD_RATE,
+                timeout: float = None, port_info: PortInfo = None) -> None:
         """Setup the serial connection.
 
         Arguments
@@ -315,28 +292,16 @@ class SerialInterface(serial.Serial):
               immediately when the requested number of bytes are available,
               otherwise wait until the timeout expires and return all bytes that
               were received until then.
+
+        port_info : PortInfo, optional
+            The port information object, when available.
         """
         logger.debug(f'Configuring serial connection (port = {port}, '
                      f'baudarate = {baudrate}, timeout = {timeout})...')
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
-
-    def connect(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
-        """Connect to the serial port.
-
-        Arguments
-        ---------
-        port : str
-            The name of the serial port (e.g., ``/dev/ttyACM0``).
-
-        baudrate : int
-            The baud rate.
-
-        timeout : float, optional
-            The timeout in seconds.
-        """
-        self.setup(port, baudrate, timeout)
+        self.port_info = port_info
         logger.info(f'Opening serial connection to port {self.port}...')
         self.open()
 

@@ -25,7 +25,7 @@ import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import SerialInterface, DeviceId, Port, list_com_ports, com_port
+from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -223,7 +223,7 @@ for _board in _SUPPORTED_BOARDS:
         _DEVICE_ID_DICT[_id] = _board
 
 
-def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
+def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[PortInfo]:
     """Autodetect all supported arduino boards of one or more specific types
     attached to the COM ports.
 
@@ -234,8 +234,8 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
 
     Returns
     -------
-    list of Port objects
-        The list of Port object with relevant boards attached to them.
+    list of PortInfo objects
+        The list of PortInfo object with relevant boards attached to them.
     """
     # If we are passing no boards, we are interested in all the supported ones.
     if len(boards) == 0:
@@ -249,7 +249,7 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     return ports
 
 
-def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
+def autodetect_arduino_board(*boards: ArduinoBoard) -> PortInfo:
     """Autodetect the first supported arduino board within a list of board types.
 
     Note this returns None if no supported arduino board is found, and the
@@ -262,8 +262,8 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
 
     Returns
     -------
-    Port
-        The Port object our target board is attached to.
+    PortInfo
+        The PortInfo object our target board is attached to.
     """
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
@@ -735,10 +735,7 @@ class ArduinoSerialInterface(SerialInterface):
         if (name, version) == (sketch_name, sketch_version):
             return
 
-        # WARNING: we should probably attach the port info to the serial interface
-        # at creation time, when available.
-        board = ArduinoBoard.by_device_id(com_port(self.port).device_id)
-        print(board)
+        board = ArduinoBoard.by_device_id(self.port_info.device_id)
 
         file_name = f'{sketch_name}_{board.designator}.hex'
         file_path = os.path.join(sketch_folder_path, sketch_name, file_name)

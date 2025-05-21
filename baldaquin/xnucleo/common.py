@@ -87,10 +87,10 @@ class XnucleoEventHandler(EventHandlerBase):
             Note pylint is signaling a code duplication with baldaquin.plasduino.common:[241:246]
             which means that we probably need some refactoring here.
         """
-        port = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
-        if port is None:
+        port_info = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
+        if port_info is None:
             raise RuntimeError('Could not find a suitable arduino board connected.')
-        self.serial_interface.connect(port.name, timeout=timeout)
+        self.serial_interface.connect(port_info.name, timeout=timeout, port_info=port_info)
         self.serial_interface.pulse_dtr()
 
     def close_serial_interface(self) -> None:
