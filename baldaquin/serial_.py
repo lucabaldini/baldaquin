@@ -229,6 +229,8 @@ class TextLine(bytes):
     def __init__(self, data: bytes) -> None:
         """Constructor.
         """
+        if len(data) == 0:
+            raise RuntimeError(f'Empty buffer passed to the {self.__class__.__name__} constructor')
         if not self[0] == self._HEADER_ORD:
             raise RuntimeError(f'Serial text line {self} does not start with {self._HEADER}')
         if not self[-1] == self._LINE_FEED_ORD:
