@@ -235,7 +235,7 @@ class TextLine(bytes):
         elif len(converters) == len(fields):
             fields = [converter(field) for converter, field in zip(converters, fields)]
         else:
-            raise RuntimeError(f'Need exaclty 0 or {len(fields)} converters to unpack "{self}"')
+            raise RuntimeError(f'Need exactly 0 or {len(fields)} converters to unpack "{self}"')
         # Return the fields as a tuple.
         return tuple(fields)
 
