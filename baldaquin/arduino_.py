@@ -691,7 +691,7 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
     board_designator : str
         The board designator (e.g., "uno").
 
-    otuput_dir : str
+    output_dir : str
         Path to the folder where the compilation artifacts should be placed.
 
     verbose : bool
@@ -709,7 +709,7 @@ class ArduinoSerialInterface(SerialInterface):
     """Specialized serial interface to interact with arduino boards.
     """
 
-    def handshake(self, sketch_name: str, sketch_version: int, sketch_file_path: str,
+    def handshake(self, sketch_name: str, sketch_version: int, sketch_folder_path: str,
                   timeout: float = 5., force_reload: bool = False) -> None:
         """Simple handshake routine to check that the proper sketch is uploaded
         on the arduino board attached to the serial port, and upload the sketch
@@ -735,14 +735,13 @@ class ArduinoSerialInterface(SerialInterface):
         if (name, version) == (sketch_name, sketch_version):
             return
 
+        # WARNING: we should probably attach the port info to the serial interface
+        # at creation time, when available.
         board = ArduinoBoard.by_device_id(com_port(self.port).device_id)
         print(board)
 
-        # Otherwise we have to upload the proper sketch.
-        #file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
-        #board = arduino_.ArduinoBoard.by_device_id(port.device_id)
-        #arduino_.upload_sketch(file_path, board.designator, port.name)
-        #sketch_id, sketch_version = self.serial_interface.read_sketch_info()
-        #if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
-        #    raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
-        #                       f'version {self.SKETCH_VERSION}')
+        file_path = os.path.join(sketch_folder_path, sketch_name, f'{sketch_name}_{board.designator}.hex')
+        upload_sketch(file_path, board.designator, self.port)
+        name, version = self.read_text_line().unpack(str, int)
+        if (name, version) != (sketch_name, sketch_version):
+            raise RuntimeError(f'Could not upload sketch {name} version {version}')

@@ -141,8 +141,8 @@ class XnucleoUserApplicationBase(UserApplicationBase):
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
-        file_path = 'File path'
-        self.event_handler.serial_interface.handshake('xnucleo_monitor', 2, file_path)
+        # FIXME
+        self.event_handler.serial_interface.handshake('xnucleo_monitor', 2, xnucleo.XNUCLEO_SKETCHES)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).
