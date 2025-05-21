@@ -734,11 +734,15 @@ class ArduinoSerialInterface(SerialInterface):
         # If the sketch uploaded onboard is the one we expect, we're good to go.
         if (name, version) == (sketch_name, sketch_version):
             return
-
+        # Otherwise, we need to upload the proper sketch and, before that,
+        # retrieve the specific board we are talking to---this information is
+        # available in the PortInfo object attached to the serial interface
+        # at connection time.
         board = ArduinoBoard.by_device_id(self.port_info.device_id)
-
+        # FIXME: need a function for the artifact name.
         file_name = f'{sketch_name}_{board.designator}.hex'
         file_path = os.path.join(sketch_folder_path, sketch_name, file_name)
+        # Upload the proper sketch and make sure we are in business.
         upload_sketch(file_path, board.designator, self.port)
         name, version = self.read_text_line().unpack(str, int)
         if (name, version) != (sketch_name, sketch_version):
