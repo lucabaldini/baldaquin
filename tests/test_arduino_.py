@@ -73,7 +73,7 @@ def test_upload():
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino.hex'
+    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink_uno.hex'
     try:
         arduino_.upload_sketch(file_path, 'uno')
     except RuntimeError as info:
@@ -91,3 +91,14 @@ def test_compile():
         arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
     except RuntimeError as info:
         logger.info(info)
+
+
+def test_project_name():
+    """Test the project name machinery.
+    """
+    interface = arduino_.ArduinoProgrammingInterfaceBase
+    for sketch_path in ('sketches/test/test.ino', 'sketches/test/', 'sketches/test'):
+        assert interface.project_base_name(sketch_path) == 'test'
+        assert interface.project_name('sketches/test/test', 'uno') == 'test_uno'
+
+

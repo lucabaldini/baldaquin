@@ -20,11 +20,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import shutil
 import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import SerialInterface, DeviceId, Port, list_com_ports
+from baldaquin.serial_ import SerialInterface, DeviceId, Port, list_com_ports, com_port
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -282,6 +283,7 @@ class ArduinoProgrammingInterfaceBase:
 
     PROGRAM_NAME = None
     PROGRAM_URL = None
+    SKETCH_EXTENSION = '.ino'
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -317,6 +319,69 @@ class ArduinoProgrammingInterfaceBase:
                 logger.error(f'See {cls.PROGRAM_URL} for more details.')
             raise RuntimeError(f'{cls.PROGRAM_NAME} not found')
         return status
+
+    @staticmethod
+    def folder_path(sketch_path: str) -> str:
+        """Return the folder path (without the trailing directory separator) for
+        a given file path pointing to a sketch source file or to the folder containing it.
+
+        The basic arduino convention is that the sketch source file should be named
+        after the sketch name, with the .ino extension, and the sketch should be
+        in a directory with the same name (without extension). For example,
+        ``sketches/test/test.ino``, ``sketches/test/`` and ``sketches/test``
+        should all be resolved to ``sketches/test``.
+
+        Note that this function operates purely on strings, and no check is performed
+        that the path passed as an argument actually exists.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it
+            (either with or without the trailing folder separator).
+
+        Returns
+        -------
+        str
+            The path to the folder containing the sketch.
+        """
+        sketch_path = str(sketch_path)
+        if sketch_path.endswith(ArduinoProgrammingInterfaceBase.SKETCH_EXTENSION):
+            folder_path = os.path.dirname(sketch_path)
+        else:
+            # Note we need to trim out the trailing directory separator, otherwise
+            # the basename will be empty.
+            folder_path = sketch_path.rstrip(os.path.sep)
+        return folder_path
+
+    @staticmethod
+    def project_base_name(sketch_path: str) -> str:
+        """Return the base project name for a given file path pointing to a sketch
+        source file or to the folder containing it.
+
+        Note that this function operates purely on strings, and no check is performed
+        that the path passed as an argument actually exists.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it
+            (either with or without the trailing folder separator).
+
+        Returns
+        -------
+        str
+            The base name of the sketch project.
+        """
+        return os.path.basename(ArduinoProgrammingInterfaceBase.folder_path(sketch_path))
+
+    @staticmethod
+    def project_name(sketch_path: str, board_designator: str) -> str:
+        """Return the actual project name for a compiled sketch, given the path
+        to the sketch source and the target board designator.
+        """
+        base_name = ArduinoProgrammingInterfaceBase.project_base_name(sketch_path)
+        return f'{base_name}_{board_designator}'
 
 
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
@@ -400,9 +465,37 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         return ArduinoCli._execute(args)
 
     @staticmethod
-    def compile(file_path: str, output_dir: str, board: ArduinoBoard,
-                verbose: bool = False) -> subprocess.CompletedProcess:
+    def compile(sketch_path: str, output_dir: str, board: ArduinoBoard,
+                verbose: bool = False, copy_artifacts: bool = True) -> subprocess.CompletedProcess:
         """Compile a sketch.
+
+        Note the board designator is appended to the name of the output artifacts,
+        so that we can keep track of the different versions of the same sketch compiled
+        for different boards.
+
+        By default the compilation artifacts are copied to the original sketch folder.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it.
+
+        output_dir : str
+            Path to the folder where the compilation artifacts should be placed.
+
+        board : ArduinoBoard
+            The board to compile the sketch for.
+
+        verbose : bool
+            If True, the program will run in verbose mode.
+
+        copy_artifacts : bool
+            If True, the compilation artifacts will be copied to the original sketch folder.
+
+        Returns
+        -------
+        subprocess.CompletedProcess
+            The CompletedProcess object.
 
         .. code-block:: shell
 
@@ -459,15 +552,31 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
                   --no-color                  Disable colored output.
 
         """ # noqa F811
+        # Cache the project name for the sketch.
+        project_name = ArduinoCli.project_name(sketch_path, board.designator)
+        # Path to the output (compiled) file.
+        file_name = f'{project_name}.hex'
+
+        # Assemble the arguments and execute the compilation command.
         args = [
             ArduinoCli.PROGRAM_NAME, 'compile',
             '--output-dir', str(output_dir),
             '--fqbn', board.fqbn(),
-            str(file_path)
+            '--build-property', f'build.project_name={project_name}',
+            str(sketch_path)
             ]
         if verbose:
             args.append('--verbose')
-        return ArduinoCli._execute(args)
+        status = ArduinoCli._execute(args)
+
+        # If necessary, copy the compilation artifacts to the source sketch folder.
+        if copy_artifacts:
+            src = os.path.join(output_dir, file_name)
+            dest = os.path.join(ArduinoCli.folder_path(sketch_path), file_name)
+            logger.info(f'Copying {src} to {dest}...')
+            shutil.copyfile(src, dest)
+
+        return status
 
 
 class AvrDude(ArduinoProgrammingInterfaceBase):
@@ -600,6 +709,40 @@ class ArduinoSerialInterface(SerialInterface):
     """Specialized serial interface to interact with arduino boards.
     """
 
-    def handshake(self, sketch_id: str, sketch_version: int, timeout: float = 2.):
+    def handshake(self, sketch_name: str, sketch_version: int, sketch_file_path: str,
+                  timeout: float = 5., force_reload: bool = False) -> None:
+        """Simple handshake routine to check that the proper sketch is uploaded
+        on the arduino board attached to the serial port, and upload the sketch
+        if that is not the case.
         """
-        """
+        logger.info('Performing handshake with the Arduino board...')
+        # Temporarily set a finite timeout to handle the case where there is not
+        # sensible sketch pre-loaded on the board, and we have to start from scratch.
+        # (And we need to cache the previous timeout value in order to restore it later).
+        previous_timeout = self.timeout
+        self.set_timeout(timeout)
+        # Read the sketch name and version from the board.
+        try:
+            name, version = self.read_text_line().unpack(str, int)
+            logger.info(f'Sketch {name} version {version} loaded onboard...')
+        except RuntimeError as exception:
+            logger.warning('Could not determine the sketch loaded onboard.')
+            logger.debug(exception)
+            name, version = None, None
+        # Now put back the actual target timeout.
+        self.set_timeout(previous_timeout)
+        # If the sketch uploaded onboard is the one we expect, we're good to go.
+        if (name, version) == (sketch_name, sketch_version):
+            return
+
+        board = ArduinoBoard.by_device_id(com_port(self.port).device_id)
+        print(board)
+
+        # Otherwise we have to upload the proper sketch.
+        #file_path = sketch_file_path(self.SKETCH_ID, self.SKETCH_VERSION)
+        #board = arduino_.ArduinoBoard.by_device_id(port.device_id)
+        #arduino_.upload_sketch(file_path, board.designator, port.name)
+        #sketch_id, sketch_version = self.serial_interface.read_sketch_info()
+        #if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
+        #    raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
+        #                       f'version {self.SKETCH_VERSION}')
