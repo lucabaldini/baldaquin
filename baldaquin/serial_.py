@@ -140,9 +140,9 @@ def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
     """
     logger.info('Scanning serial devices...')
     # Populate the initial list of ports.
-    ports = [PortInfo.from_serial(port_info) for port_info in serial.tools.list_ports.comports()]
-    for port in ports:
-        logger.debug(port)
+    ports = [PortInfo.from_serial(item) for item in serial.tools.list_ports.comports()]
+    for port_info in ports:
+        logger.debug(port_info)
     logger.info(f'Done, {len(ports)} device(s) found.')
     # If we're not filtering over device ids, we're done.
     if len(device_ids) == 0:
@@ -157,7 +157,7 @@ def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
                 device_ids[i] = DeviceId(*entry)
         logger.info(f'Filtering port list for specific devices: {device_ids}...')
         # Do the actual filtering.
-        ports = [port for port in ports if port.device_id in device_ids]
+        ports = [port_info for port_info in ports if port_info.device_id in device_ids]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
         logger.debug(port)
@@ -247,6 +247,10 @@ class TextLine(bytes):
 class SerialInterface(serial.Serial):
 
     """Small wrapper around the serial.Serial class.
+
+    Note the class is designed to be instantiated without arguments, and all the
+    setup is done through the :meth:`connect()` method, where the port is configured
+    and the actual connection is opened.
     """
 
     # pylint: disable=too-many-ancestors
@@ -254,6 +258,12 @@ class SerialInterface(serial.Serial):
     def connect(self, port_info: PortInfo, baudrate: int = DEFAULT_BAUD_RATE,
                 timeout: float = None) -> None:
         """Setup the serial connection.
+
+        Note that the first argument is a fully-fledged PortInfo object, which
+        allows to keep track of the basic information about the device connected
+        to the port, in addition to configuration of the port itself. This is
+        handy, e.g., for the auto-upload of arduino sketched, where we need to
+        know the designation of the board we are uploading to.
 
         Arguments
         ---------
