@@ -53,15 +53,15 @@ def test_message() -> None:
     """Test the simple text protocol for the serial port.
     """
     with pytest.raises(RuntimeError) as info:
-        message = serial_.TextMessage.from_text('Hello world;1')
+        message = serial_.TextLine.from_text('Hello world;1')
     logger.info(info.value)
     with pytest.raises(RuntimeError) as info:
-        message = serial_.TextMessage.from_text('#Hello world;1')
+        message = serial_.TextLine.from_text('#Hello world;1')
     logger.info(info.value)
     with pytest.raises(RuntimeError) as info:
-        message = serial_.TextMessage.from_text('Hello world;1#')
+        message = serial_.TextLine.from_text('Hello world;1\n')
     logger.info(info.value)
-    message = serial_.TextMessage.from_text('#Hello world;1#')
+    message = serial_.TextLine.from_text('#Hello world;1\n')
     name, version = message.unpack(str, int)
     assert name == 'Hello world'
     assert version == 1
@@ -71,4 +71,3 @@ def test_message() -> None:
     with pytest.raises(RuntimeError) as info:
         name, version = message.unpack(str)
     logger.info(info.value)
-    logger.info(message.encode())

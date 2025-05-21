@@ -162,17 +162,22 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
     return ports
 
 
-class TextMessage:
+class TextLine(bytes):
 
     """Small class defining a simple protocol for passing messages in string form
     over the serial port.
 
     A message is basically a small piece of text, in the form of a binary stream
-    encoded in UTF-8, delimited by a '#' character on both sides, and that can
-    contain an arbitrary number of fields separated by a ';', e.g.,
-    ``"#Hello world;1#"``. Note the delimiters are properly checked at creation
-    time. The ``unpack()`` class method returns a tuple with the field values,
+    encoded in UTF-8, starting with a '#' header character and terminated by a line
+    feed, and that can contain an arbitrary number of fields separated by a ';'.
+    Note the delimiters are properly checked at creation time.
+    The :meth:`unpack()` class method returns a tuple with the field values,
     converted in the proper types.
+
+    The choice of the header character and the line feed is largely arbitrary, but
+    the requirement that the line is terminated by a line feed provides the most
+    straightforward way to read variable-length messages from the serial port in
+    a reliable way, leveraging the serial ``readline()`` method.
 
     Users should by no means feel compelled to use this, but we provide it in order
     to facilitate passing strings over the serial port, saving boilerplate code
@@ -180,26 +185,25 @@ class TextMessage:
     """
 
     _ENCODING = 'utf-8'
-    _DELIMITER = '#'
+    _HEADER = '#'
+    _HEADER_ORD = ord(_HEADER)
+    _LINE_FEED = '\n'
+    _LINE_FEED_ORD = ord(_LINE_FEED)
     _SEPARATOR = ';'
 
     def __init__(self, data: bytes) -> None:
         """Constructor.
         """
-        self._text = data.decode(self._ENCODING)
-        if not (self._text.startswith(self._DELIMITER) and self._text.endswith(self._DELIMITER)):
-            raise RuntimeError(f'Serial text message "{self._text}" is not properly delimited')
+        if not self[0] == self._HEADER_ORD:
+            raise RuntimeError(f'Serial text line {self} does not start with {self._HEADER}')
+        if not self[-1] == self._LINE_FEED_ORD:
+            raise RuntimeError(f'Serial text line {self} does not end with a line feed')
 
     @classmethod
     def from_text(cls, text: str) -> bytes:
         """Create a message from a text string (mainly for debug purposes).
         """
         return cls(bytes(text, cls._ENCODING))
-
-    def encode(self) -> bytes:
-        """Encode the underlying string message into a byte object.
-        """
-        return self._text.encode(self._ENCODING)
 
     def unpack(self, *converters) -> tuple:
         """Unpack the message in its (properly formatted) fields.
@@ -212,19 +216,19 @@ class TextMessage:
             all the fields are treated as strings) or equal to the number of fields
             in the message. A RuntimeError is raised if that is not the case.
         """
-        fields = self._text.strip(self._DELIMITER).split(self._SEPARATOR)
+        # Decode the relevant part of the underlying bytes object (i.e., everything
+        # but the header character and the line feed) and split the resulting string
+        # by the separator character.
+        fields = self[1:-1].decode(self._ENCODING).split(self._SEPARATOR)
+        # Convert the fields to the proper types, if any.
         if len(converters) == 0:
             pass
         elif len(converters) == len(fields):
             fields = [converter(field) for converter, field in zip(converters, fields)]
         else:
-            raise RuntimeError(f'Need exaclty 0 or {len(fields)} converters to unpack "{self._text}"')
+            raise RuntimeError(f'Need exaclty 0 or {len(fields)} converters to unpack "{self}"')
+        # Return the fields as a tuple.
         return tuple(fields)
-
-    def __str__(self):
-        """String formatting.
-        """
-        return self._text
 
 
 class SerialInterface(serial.Serial):
@@ -309,7 +313,7 @@ class SerialInterface(serial.Serial):
         """Pulse the DTR line for a given amount of time.
 
         This asserts the DTR line, waits for a specific amount of time, and then
-        deasserts the line.
+        de-asserts the line.
 
         Arguments
         ---------
@@ -323,14 +327,21 @@ class SerialInterface(serial.Serial):
 
     def read_available_data(self) -> bytes:
         """Read all the available data on the serial interface.
+
+        .. warning::
+            Be cautious when using this method, as the amount of data available
+            on the serial port at any given time may depend on the exact timing of
+            the function call relative to what the device attached to the port is
+            doing, and in the long run it might be difficult to read a stream
+            of variable-length data reliably.
         """
         return self.read(self.in_waiting)
 
-    def read_text_message(self) -> TextMessage:
-        """Read the available string data from the serial interface and return a
-        :class:`TextMessage` object.
+    def read_text_line(self) -> TextLine:
+        """Read a line-feed terminated string data from the serial interface and return a
+        :class:`TextLine` object.
         """
-        return TextMessage(self.read_available_data())
+        return TextLine(self.readline())
 
     def read_and_unpack(self, fmt: str) -> Any:
         """Read a given number of bytes from the serial port and unpack them.
