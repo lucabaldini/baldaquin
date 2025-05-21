@@ -168,8 +168,8 @@ class TextLine(bytes):
     over the serial port.
 
     A message is basically a small piece of text, in the form of a binary stream
-    encoded in UTF-8, starting with a '#' header character and terminated by a line
-    feed, and that can contain an arbitrary number of fields separated by a ';'.
+    encoded in UTF-8, starting with a ``#`` header character and terminated by a line
+    feed, and that can contain an arbitrary number of fields separated by a ``;``.
     Note the delimiters are properly checked at creation time.
     The :meth:`unpack()` class method returns a tuple with the field values,
     converted in the proper types.
@@ -182,6 +182,15 @@ class TextLine(bytes):
     Users should by no means feel compelled to use this, but we provide it in order
     to facilitate passing strings over the serial port, saving boilerplate code
     for runtime checking.
+
+    Example
+    -------
+    >>> message = TextLine.from_text('#Hello world;1\\n')
+    >>> name, version = message.unpack(str, int)
+    >>> print(name, type(name))
+    Hello world, <class 'str'>
+    >>> print(version, type(version))
+    1 <class 'int'>
     """
 
     _ENCODING = 'utf-8'
