@@ -741,6 +741,7 @@ class ArduinoSerialInterface(SerialInterface):
         self.set_timeout(previous_timeout)
         # If the sketch uploaded onboard is the one we expect, we're good to go.
         if (name, version) == (sketch_name, sketch_version):
+            logger.info('Sketch is up to date, nothing to do!')
             return
         # Otherwise, we need to upload the proper sketch and, before that,
         # retrieve the specific board we are talking to---this information is

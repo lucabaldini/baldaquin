@@ -127,6 +127,9 @@ class XnucleoUserApplicationBase(UserApplicationBase):
     """Base class for all the xnucleo applications.
     """
 
+    SKETCH_NAME = None
+    SKETCH_VERSION = None
+
     def configure(self) -> None:
         """Overloaded method.
         """
@@ -135,9 +138,8 @@ class XnucleoUserApplicationBase(UserApplicationBase):
         """Overloaded method (RESET -> STOPPED).
         """
         self.event_handler.open_serial_interface()
-        # FIXME
-        self.event_handler.serial_interface.handshake('xnucleo_monitor', 3,
-                                                      xnucleo.XNUCLEO_SKETCHES)
+        args = self.SKETCH_NAME, self.SKETCH_VERSION, xnucleo.XNUCLEO_SKETCHES
+        self.event_handler.serial_interface.handshake(*args)
 
     def teardown(self) -> None:
         """Overloaded method (STOPPED -> RESET).

@@ -152,6 +152,8 @@ class Monitor(XnucleoUserApplicationBase):
     CONFIGURATION_CLASS = MonitorConfiguration
     CONFIGURATION_FILE_PATH = xnucleo.XNUCLEO_APP_CONFIG / 'xnucleo_monitor.cfg'
     EVENT_HANDLER_CLASS = XnucleoEventHandler
+    SKETCH_NAME = 'xnucleo_monitor'
+    SKETCH_VERSION = 3
 
     def __init__(self) -> None:
         """Overloaded Constructor.
