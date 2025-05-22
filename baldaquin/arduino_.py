@@ -26,6 +26,7 @@ import subprocess
 from baldaquin import logger
 from baldaquin import execute_shell_command
 from baldaquin.event import EventHandlerBase
+from baldaquin.pkt import AbstractPacket
 from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
 
 
@@ -759,18 +760,23 @@ class ArduinoSerialInterface(SerialInterface):
             raise RuntimeError(f'Could not upload sketch {name} version {version}')
 
 
-class ArduinoEventHandlerBase(EventHandlerBase):
+class ArduinoEventHandler(EventHandlerBase):
 
     """Base class for all the Arduino event handlers.
     """
 
-    # pylint: disable=too-few-public-methods
+    SERIAL_INTERFACE_CLASS = ArduinoSerialInterface
 
     def __init__(self) -> None:
         """Constructor.
         """
         super().__init__()
-        self.serial_interface = ArduinoSerialInterface()
+        self.serial_interface = self.SERIAL_INTERFACE_CLASS()
+
+    def read_packet(self) -> AbstractPacket:
+        """Overloaded (still abstract) method.
+        """
+        raise NotImplementedError
 
     def open_serial_interface(self, timeout: float = None) -> None:
         """Open the serial interface.

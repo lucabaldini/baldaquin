@@ -281,6 +281,12 @@ class SerialInterface(serial.Serial):
 
     # pylint: disable=too-many-ancestors
 
+    def __init__(self) -> None:
+        """Do-nothing constructor.
+        """
+        super().__init__()
+        self.port_info = None
+
     def connect(self, port_info: PortInfo, baudrate: int = DEFAULT_BAUD_RATE,
                 timeout: float = None) -> None:
         """Setup the serial connection.

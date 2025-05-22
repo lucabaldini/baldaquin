@@ -18,47 +18,21 @@
 
 
 from dataclasses import dataclass
+import datetime
 from pathlib import Path
+import time
 
+from baldaquin import logger
 from baldaquin import xnucleo
 from baldaquin.__qt__ import QtWidgets
+from baldaquin.arduino_ import ArduinoEventHandler
+from baldaquin.app import UserApplicationBase
 from baldaquin.buf import WriteMode
 from baldaquin.config import ConfigurationBase
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
 from baldaquin.strip import SlidingStripChart
-from baldaquin.xnucleo.common import XnucleoRunControl, XnucleoUserApplicationBase, \
-    XnucleoEventHandler
-
-
-class AppMainWindow(MainWindow):
-
-    """Application graphical user interface.
-    """
-
-    _PROJECT_NAME = xnucleo.PROJECT_NAME
-    _CONTROL_BAR_CLASS = SimpleControlBar
-
-    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.temperature_tab = self.add_plot_canvas_tab('Temperature')
-        self.humidity_tab = self.add_plot_canvas_tab('Humidity')
-        self.pressure_tab = self.add_plot_canvas_tab('Pressure')
-        self.analog_tab = self.add_plot_canvas_tab('Analog inputs')
-
-    def setup_user_application(self, user_application):
-        """Overloaded method.
-        """
-        super().setup_user_application(user_application)
-        self.temperature_tab.register(user_application.temperature1_strip_chart,
-                                      user_application.temperature2_strip_chart)
-        self.humidity_tab.register(user_application.humidity_strip_chart)
-        self.pressure_tab.register(user_application.pressure_strip_chart)
-        self.analog_tab.register(user_application.adc1_strip_chart,
-                                 user_application.adc2_strip_chart)
 
 
 @dataclass
@@ -130,6 +104,35 @@ class MonitorReadout(AbstractPacket):
         return self._text(self.OUTPUT_ATTRIBUTES, self.OUTPUT_FMTS, separator)
 
 
+class MonitorWindow(MainWindow):
+
+    """Application graphical user interface.
+    """
+
+    _PROJECT_NAME = xnucleo.PROJECT_NAME
+    _CONTROL_BAR_CLASS = SimpleControlBar
+
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.temperature_tab = self.add_plot_canvas_tab('Temperature')
+        self.humidity_tab = self.add_plot_canvas_tab('Humidity')
+        self.pressure_tab = self.add_plot_canvas_tab('Pressure')
+        self.analog_tab = self.add_plot_canvas_tab('Analog inputs')
+
+    def setup_user_application(self, user_application):
+        """Overloaded method.
+        """
+        super().setup_user_application(user_application)
+        self.temperature_tab.register(user_application.temperature1_strip_chart,
+                                      user_application.temperature2_strip_chart)
+        self.humidity_tab.register(user_application.humidity_strip_chart)
+        self.pressure_tab.register(user_application.pressure_strip_chart)
+        self.analog_tab.register(user_application.adc1_strip_chart,
+                                 user_application.adc2_strip_chart)
+
+
 class MonitorConfiguration(ConfigurationBase):
 
     """User application configuration for the xnucleo monitor.
@@ -143,7 +146,59 @@ class MonitorConfiguration(ConfigurationBase):
     )
 
 
-class Monitor(XnucleoUserApplicationBase):
+class MonitorEventHandler(ArduinoEventHandler):
+
+    """Base class for all the xnucleo event handlers.
+    """
+
+    _DEFAULT_SAMPLING_INTERVAL = 1.0
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self._sampling_interval = self._DEFAULT_SAMPLING_INTERVAL
+
+    def set_sampling_interval(self, interval: float) -> None:
+        """Set the sampling interval.
+        """
+        logger.info(f'Setting {self.__class__.__name__} sampling interval to {interval} s...')
+        self._sampling_interval = interval
+
+    def read_packet(self) -> bytes:
+        """Basic function fetching a single readout from the xnucleo board attached
+        to the arduino.
+
+        This looks somewhat more convoluted than it might be for the simple reason
+        that we are trying to stick to the basic baldaquin protocol, where data
+        are fetched from the board interfaced to the host PC, and the latter is just
+        waiting. Here, instead, we are sending arduino a byte on the serial port
+        to trigger a readout, we are latching the timestamp on the host PC, we are
+        reading the data from the serial port, and we are assembling everything
+        together in a single bytes object that is then written to disk in binary format.
+        """
+        # Trigger a readout on the arduino board.
+        self.serial_interface.pack_and_write(1, 'B')
+        # Latch the timestamp (seconds since the epoch, UTC) on the host PC.
+        timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
+        # Wait...
+        time.sleep(self._sampling_interval)
+        # Read the data from the serial port...
+        data = self.serial_interface.read_text_line()
+        # ... and prepend the timestamp.
+        data.prepend(f'{timestamp:.3f}')
+        return data
+
+
+class MonitorRunControl(RunControlBase):
+
+    """Specialized xnucleo run control.
+    """
+
+    _PROJECT_NAME = xnucleo.PROJECT_NAME
+
+
+class Monitor(UserApplicationBase):
 
     """Simplest possible user application for testing purposes.
     """
@@ -151,7 +206,7 @@ class Monitor(XnucleoUserApplicationBase):
     NAME = 'Generic Monitor'
     CONFIGURATION_CLASS = MonitorConfiguration
     CONFIGURATION_FILE_PATH = xnucleo.XNUCLEO_APP_CONFIG / 'xnucleo_monitor.cfg'
-    EVENT_HANDLER_CLASS = XnucleoEventHandler
+    EVENT_HANDLER_CLASS = MonitorEventHandler
     SKETCH_NAME = 'xnucleo_monitor'
     SKETCH_VERSION = 3
 
@@ -180,6 +235,18 @@ class Monitor(XnucleoUserApplicationBase):
         for chart in self._strip_charts:
             chart.reset(self.configuration.value('strip_chart_max_length'))
 
+    def setup(self) -> None:
+        """Overloaded method (RESET -> STOPPED).
+        """
+        self.event_handler.open_serial_interface()
+        args = self.SKETCH_NAME, self.SKETCH_VERSION, xnucleo.XNUCLEO_SKETCHES
+        self.event_handler.serial_interface.handshake(*args)
+
+    def teardown(self) -> None:
+        """Overloaded method (STOPPED -> RESET).
+        """
+        self.event_handler.close_serial_interface()
+
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
@@ -204,7 +271,7 @@ class Monitor(XnucleoUserApplicationBase):
 def main() -> None:
     """Main entry point.
     """
-    bootstrap_window(AppMainWindow, XnucleoRunControl(), Monitor())
+    bootstrap_window(MonitorWindow, MonitorRunControl(), Monitor())
 
 
 if __name__ == '__main__':
