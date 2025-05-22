@@ -8,24 +8,20 @@
 HTS221Sensor HumTemp(&DEV_I2C);
 LPS22HBSensor PressTemp(&DEV_I2C);
 
-// Sketch identification.
-char* sketch_name = "xnucleo_monitor";
-uint8_t sketch_version = 2;
-
 // Global variables.
-char header = '#';
-char separator = ';';
+char line_header = '#';
+char line_separator = ';';
 char line_feed = '\n';
 uint8_t readout_code;
 uint16_t adc1, adc2;
 float humidity, temperature1, pressure, temperature2;
 
 
-void handshake() {
+void handshake(char* sketch_name, int sketch_version) {
   // Handshake with the host.
-  Serial.print(header);
+  Serial.print(line_header);
   Serial.print(sketch_name);
-  Serial.print(separator);
+  Serial.print(line_separator);
   Serial.print(sketch_version);
   Serial.print(line_feed);
 }
@@ -48,7 +44,7 @@ void setup() {
   PressTemp.begin();
   PressTemp.Enable();
 
-  handshake();
+  handshake("xnucleo_monitor", 3);
 }
 
 
@@ -78,19 +74,19 @@ void loop() {
     adc2 = analogRead(1);
 
     // Write the stuff to the serial port.
-    Serial.print(header);
+    Serial.print(line_header);
     Serial.print(humidity, 3);
-    Serial.print(separator);
+    Serial.print(line_separator);
     Serial.print(temperature1, 3);
-    Serial.print(separator);
+    Serial.print(line_separator);
     Serial.print(pressure, 3);
-    Serial.print(separator);
+    Serial.print(line_separator);
     Serial.print(temperature2, 3);
-    Serial.print(separator);
+    Serial.print(line_separator);
     Serial.print(adc1);
-    Serial.print(separator);
+    Serial.print(line_separator);
     Serial.print(adc2);
-    Serial.print(header);
+    Serial.print(line_header);
 
     // Led off.
     digitalWrite(LED_BUILTIN, LOW);

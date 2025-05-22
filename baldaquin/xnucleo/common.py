@@ -142,7 +142,7 @@ class XnucleoUserApplicationBase(UserApplicationBase):
         """
         self.event_handler.open_serial_interface()
         # FIXME
-        self.event_handler.serial_interface.handshake('xnucleo_monitor', 2,
+        self.event_handler.serial_interface.handshake('xnucleo_monitor', 3,
                                                       xnucleo.XNUCLEO_SKETCHES)
 
     def teardown(self) -> None:

@@ -284,6 +284,7 @@ class ArduinoProgrammingInterfaceBase:
     PROGRAM_NAME = None
     PROGRAM_URL = None
     SKETCH_EXTENSION = '.ino'
+    ARTIFACT_EXTENSION = '.hex'
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -382,6 +383,12 @@ class ArduinoProgrammingInterfaceBase:
         """
         base_name = ArduinoProgrammingInterfaceBase.project_base_name(sketch_path)
         return f'{base_name}_{board_designator}'
+
+    @staticmethod
+    def artifact_name(sketch_name: str, board_designator: str) -> str:
+        """Return the name of the artifact for a given sketch and board designator.
+        """
+        return f'{sketch_name}_{board_designator}{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}'
 
 
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
@@ -738,9 +745,9 @@ class ArduinoSerialInterface(SerialInterface):
         # retrieve the specific board we are talking to---this information is
         # available in the PortInfo object attached to the serial interface
         # at connection time.
+        logger.info(f'Triggering upload of sketch {sketch_name} version {sketch_version}...')
         board = ArduinoBoard.by_device_id(self.port_info.device_id)
-        # FIXME: need a function for the artifact name.
-        file_name = f'{sketch_name}_{board.designator}.hex'
+        file_name = ArduinoCli.artifact_name(sketch_name, board.designator)
         file_path = os.path.join(sketch_folder_path, sketch_name, file_name)
         # Upload the proper sketch and make sure we are in business.
         upload_sketch(file_path, board.designator, self.port)
