@@ -17,8 +17,28 @@ uint16_t adc1, adc2;
 float humidity, temperature1, pressure, temperature2;
 
 
+// Basic readout structure.
+struct readout_t {
+  float humidity;
+  float temperature1;
+  float pressure;
+  float temperature2;
+  uint16_t adc1;
+  uint16_t adc2;
+};
+
+
+/* Handshake function.
+ *
+ * This function is called at the beginning of the sketch to send a handshake
+ * message to the host PC. The message contains the sketch name and version.
+ * The format of the message is:
+ * #<sketch_name>;<sketch_version>\n
+ *
+ * This is a good candidate to be factored out in a library, if we settle on
+ * this type of protocol.
+ */
 void handshake(char* sketch_name, int sketch_version) {
-  // Handshake with the host.
   Serial.print(line_header);
   Serial.print(sketch_name);
   Serial.print(line_separator);
@@ -27,6 +47,25 @@ void handshake(char* sketch_name, int sketch_version) {
 }
 
 
+// Write a single readout to the serial port.
+void write_readout(readout_t readout){
+  Serial.print(line_header);
+  Serial.print(readout.humidity, 3);
+  Serial.print(line_separator);
+  Serial.print(readout.temperature1, 3);
+  Serial.print(line_separator);
+  Serial.print(readout.pressure, 3);
+  Serial.print(line_separator);
+  Serial.print(readout.temperature2, 3);
+  Serial.print(line_separator);
+  Serial.print(readout.adc1);
+  Serial.print(line_separator);
+  Serial.print(readout.adc2);
+  Serial.print(line_header);
+}
+
+
+// setup() function.
 void setup() {
   // Setting up the led---we want to have it blinking when we read data.
   pinMode(LED_BUILTIN, OUTPUT);
@@ -48,6 +87,7 @@ void setup() {
 }
 
 
+// loop() function.
 void loop() {
   // The event loop is entirely embedded into this if---since this application
   // is driven by the host PC, the arduino board is idle until it receives a byte
@@ -73,20 +113,9 @@ void loop() {
     adc1 = analogRead(0);
     adc2 = analogRead(1);
 
-    // Write the stuff to the serial port.
-    Serial.print(line_header);
-    Serial.print(humidity, 3);
-    Serial.print(line_separator);
-    Serial.print(temperature1, 3);
-    Serial.print(line_separator);
-    Serial.print(pressure, 3);
-    Serial.print(line_separator);
-    Serial.print(temperature2, 3);
-    Serial.print(line_separator);
-    Serial.print(adc1);
-    Serial.print(line_separator);
-    Serial.print(adc2);
-    Serial.print(line_header);
+    // Write the readout to the serial port.
+    readout_t readout = {humidity, temperature1, pressure, temperature2, adc1, adc2};
+    write_readout(readout);
 
     // Led off.
     digitalWrite(LED_BUILTIN, LOW);
