@@ -61,7 +61,7 @@ void write_readout(readout_t readout){
   Serial.print(readout.adc1);
   Serial.print(line_separator);
   Serial.print(readout.adc2);
-  Serial.print(line_header);
+  Serial.print(line_feed);
 }
 
 
