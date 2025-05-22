@@ -388,7 +388,8 @@ class ArduinoProgrammingInterfaceBase:
     def artifact_name(sketch_name: str, board_designator: str) -> str:
         """Return the name of the artifact for a given sketch and board designator.
         """
-        return f'{sketch_name}_{board_designator}{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}'
+        return f'{sketch_name}_{board_designator}'\
+               f'{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}'
 
 
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
