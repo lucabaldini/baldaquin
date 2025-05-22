@@ -120,10 +120,9 @@ class XnucleoEventHandler(EventHandlerBase):
         data = struct.pack('d', utc.timestamp())
         # Wait...
         time.sleep(self._sampling_interval)
-        # Append to the timestamp the actual readout data, which are basically
-        # a string of bytes delimited by a "#" character on both sides, containing
-        # all the relevant fields separated by semicolons, e.g., "#35.50;27.40;1011.87;28.20#"
-        data += self.serial_interface.read(self.serial_interface.in_waiting)[:]
+        # Append to the timestamp the actual readout data, which is the format
+        # of TextLine object.
+        data += self.serial_interface.read_text_line()
         # And pass the thing downstream so that it can be decoded and used.
         return data
 
