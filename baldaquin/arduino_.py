@@ -25,7 +25,9 @@ import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
+from baldaquin.event import EventHandlerBase
 from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
+from baldaquin.timeline import Timeline
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -756,3 +758,32 @@ class ArduinoSerialInterface(SerialInterface):
         name, version = self.read_text_line().unpack(str, int)
         if (name, version) != (sketch_name, sketch_version):
             raise RuntimeError(f'Could not upload sketch {name} version {version}')
+
+
+class ArduinoEventHandlerBase(EventHandlerBase):
+
+    """Base class for all the Arduino event handlers.
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.serial_interface = ArduinoSerialInterface()
+        self.timeline = Timeline()
+
+    def open_serial_interface(self, timeout: float = None) -> None:
+        """Open the serial interface.
+        """
+        port_info = autodetect_arduino_board(*_SUPPORTED_BOARDS)
+        if port_info is None:
+            raise RuntimeError('Could not find a suitable arduino board connected.')
+        self.serial_interface.connect(port_info, timeout=timeout)
+        self.serial_interface.pulse_dtr()
+
+    def close_serial_interface(self) -> None:
+        """Close the serial interface.
+        """
+        self.serial_interface.disconnect()
