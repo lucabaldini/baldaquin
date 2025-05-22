@@ -27,7 +27,6 @@ from baldaquin import logger
 from baldaquin import execute_shell_command
 from baldaquin.event import EventHandlerBase
 from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
-from baldaquin.timeline import Timeline
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -772,7 +771,6 @@ class ArduinoEventHandlerBase(EventHandlerBase):
         """
         super().__init__()
         self.serial_interface = ArduinoSerialInterface()
-        self.timeline = Timeline()
 
     def open_serial_interface(self, timeout: float = None) -> None:
         """Open the serial interface.
