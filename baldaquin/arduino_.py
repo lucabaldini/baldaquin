@@ -20,11 +20,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import shutil
 import subprocess
 
 from baldaquin import logger
 from baldaquin import execute_shell_command
-from baldaquin.serial_ import DeviceId, Port, list_com_ports
+from baldaquin.event import EventHandlerBase
+from baldaquin.pkt import AbstractPacket
+from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
 
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
@@ -222,7 +225,7 @@ for _board in _SUPPORTED_BOARDS:
         _DEVICE_ID_DICT[_id] = _board
 
 
-def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
+def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[PortInfo]:
     """Autodetect all supported arduino boards of one or more specific types
     attached to the COM ports.
 
@@ -233,8 +236,8 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
 
     Returns
     -------
-    list of Port objects
-        The list of Port object with relevant boards attached to them.
+    list of PortInfo objects
+        The list of PortInfo object with relevant boards attached to them.
     """
     # If we are passing no boards, we are interested in all the supported ones.
     if len(boards) == 0:
@@ -248,7 +251,7 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[Port]:
     return ports
 
 
-def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
+def autodetect_arduino_board(*boards: ArduinoBoard) -> PortInfo:
     """Autodetect the first supported arduino board within a list of board types.
 
     Note this returns None if no supported arduino board is found, and the
@@ -261,8 +264,8 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> Port:
 
     Returns
     -------
-    Port
-        The Port object our target board is attached to.
+    PortInfo
+        The PortInfo object our target board is attached to.
     """
     ports = autodetect_arduino_boards(*boards)
     if len(ports) == 0:
@@ -282,6 +285,8 @@ class ArduinoProgrammingInterfaceBase:
 
     PROGRAM_NAME = None
     PROGRAM_URL = None
+    SKETCH_EXTENSION = '.ino'
+    ARTIFACT_EXTENSION = '.hex'
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -317,6 +322,76 @@ class ArduinoProgrammingInterfaceBase:
                 logger.error(f'See {cls.PROGRAM_URL} for more details.')
             raise RuntimeError(f'{cls.PROGRAM_NAME} not found')
         return status
+
+    @staticmethod
+    def folder_path(sketch_path: str) -> str:
+        """Return the folder path (without the trailing directory separator) for
+        a given file path pointing to a sketch source file or to the folder containing it.
+
+        The basic arduino convention is that the sketch source file should be named
+        after the sketch name, with the .ino extension, and the sketch should be
+        in a directory with the same name (without extension). For example,
+        ``sketches/test/test.ino``, ``sketches/test/`` and ``sketches/test``
+        should all be resolved to ``sketches/test``.
+
+        Note that this function operates purely on strings, and no check is performed
+        that the path passed as an argument actually exists.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it
+            (either with or without the trailing folder separator).
+
+        Returns
+        -------
+        str
+            The path to the folder containing the sketch.
+        """
+        sketch_path = str(sketch_path)
+        if sketch_path.endswith(ArduinoProgrammingInterfaceBase.SKETCH_EXTENSION):
+            folder_path = os.path.dirname(sketch_path)
+        else:
+            # Note we need to trim out the trailing directory separator, otherwise
+            # the basename will be empty.
+            folder_path = sketch_path.rstrip(os.path.sep)
+        return folder_path
+
+    @staticmethod
+    def project_base_name(sketch_path: str) -> str:
+        """Return the base project name for a given file path pointing to a sketch
+        source file or to the folder containing it.
+
+        Note that this function operates purely on strings, and no check is performed
+        that the path passed as an argument actually exists.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it
+            (either with or without the trailing folder separator).
+
+        Returns
+        -------
+        str
+            The base name of the sketch project.
+        """
+        return os.path.basename(ArduinoProgrammingInterfaceBase.folder_path(sketch_path))
+
+    @staticmethod
+    def project_name(sketch_path: str, board_designator: str) -> str:
+        """Return the actual project name for a compiled sketch, given the path
+        to the sketch source and the target board designator.
+        """
+        base_name = ArduinoProgrammingInterfaceBase.project_base_name(sketch_path)
+        return f'{base_name}_{board_designator}'
+
+    @staticmethod
+    def artifact_name(sketch_name: str, board_designator: str) -> str:
+        """Return the name of the artifact for a given sketch and board designator.
+        """
+        return f'{sketch_name}_{board_designator}'\
+               f'{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}'
 
 
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
@@ -400,9 +475,37 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         return ArduinoCli._execute(args)
 
     @staticmethod
-    def compile(file_path: str, output_dir: str, board: ArduinoBoard,
-                verbose: bool = False) -> subprocess.CompletedProcess:
+    def compile(sketch_path: str, output_dir: str, board: ArduinoBoard,
+                verbose: bool = False, copy_artifacts: bool = True) -> subprocess.CompletedProcess:
         """Compile a sketch.
+
+        Note the board designator is appended to the name of the output artifacts,
+        so that we can keep track of the different versions of the same sketch compiled
+        for different boards.
+
+        By default the compilation artifacts are copied to the original sketch folder.
+
+        Arguments
+        ---------
+        sketch_path : str
+            The path to the sketch source file or to the folder containing it.
+
+        output_dir : str
+            Path to the folder where the compilation artifacts should be placed.
+
+        board : ArduinoBoard
+            The board to compile the sketch for.
+
+        verbose : bool
+            If True, the program will run in verbose mode.
+
+        copy_artifacts : bool
+            If True, the compilation artifacts will be copied to the original sketch folder.
+
+        Returns
+        -------
+        subprocess.CompletedProcess
+            The CompletedProcess object.
 
         .. code-block:: shell
 
@@ -459,15 +562,31 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
                   --no-color                  Disable colored output.
 
         """ # noqa F811
+        # Cache the project name for the sketch.
+        project_name = ArduinoCli.project_name(sketch_path, board.designator)
+        # Path to the output (compiled) file.
+        file_name = f'{project_name}.hex'
+
+        # Assemble the arguments and execute the compilation command.
         args = [
             ArduinoCli.PROGRAM_NAME, 'compile',
             '--output-dir', str(output_dir),
             '--fqbn', board.fqbn(),
-            str(file_path)
+            '--build-property', f'build.project_name={project_name}',
+            str(sketch_path)
             ]
         if verbose:
             args.append('--verbose')
-        return ArduinoCli._execute(args)
+        status = ArduinoCli._execute(args)
+
+        # If necessary, copy the compilation artifacts to the source sketch folder.
+        if copy_artifacts:
+            src = os.path.join(output_dir, file_name)
+            dest = os.path.join(ArduinoCli.folder_path(sketch_path), file_name)
+            logger.info(f'Copying {src} to {dest}...')
+            shutil.copyfile(src, dest)
+
+        return status
 
 
 class AvrDude(ArduinoProgrammingInterfaceBase):
@@ -582,7 +701,7 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
     board_designator : str
         The board designator (e.g., "uno").
 
-    otuput_dir : str
+    output_dir : str
         Path to the folder where the compilation artifacts should be placed.
 
     verbose : bool
@@ -593,3 +712,82 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
     board = ArduinoBoard.by_designator(board_designator)
     logger.info(f'Compiling sketch {file_path} for {board}...')
     return ArduinoCli.compile(file_path, output_dir, board, verbose)
+
+
+class ArduinoSerialInterface(SerialInterface):
+
+    """Specialized serial interface to interact with arduino boards.
+    """
+
+    def handshake(self, sketch_name: str, sketch_version: int, sketch_folder_path: str,
+                  timeout: float = 5.) -> None:
+        """Simple handshake routine to check that the proper sketch is uploaded
+        on the arduino board attached to the serial port, and upload the sketch
+        if that is not the case.
+        """
+        logger.info('Performing handshake with the Arduino board...')
+        # Temporarily set a finite timeout to handle the case where there is not
+        # sensible sketch pre-loaded on the board, and we have to start from scratch.
+        # (And we need to cache the previous timeout value in order to restore it later).
+        previous_timeout = self.timeout
+        self.set_timeout(timeout)
+        # Read the sketch name and version from the board.
+        try:
+            name, version = self.read_text_line().unpack(str, int)
+            logger.info(f'Sketch {name} version {version} loaded onboard...')
+        except RuntimeError as exception:
+            logger.warning('Could not determine the sketch loaded onboard.')
+            logger.debug(exception)
+            name, version = None, None
+        # Now put back the actual target timeout.
+        self.set_timeout(previous_timeout)
+        # If the sketch uploaded onboard is the one we expect, we're good to go.
+        if (name, version) == (sketch_name, sketch_version):
+            logger.info('Sketch is up to date, nothing to do!')
+            return
+        # Otherwise, we need to upload the proper sketch and, before that,
+        # retrieve the specific board we are talking to---this information is
+        # available in the PortInfo object attached to the serial interface
+        # at connection time.
+        logger.info(f'Triggering upload of sketch {sketch_name} version {sketch_version}...')
+        board = ArduinoBoard.by_device_id(self.port_info.device_id)
+        file_name = ArduinoCli.artifact_name(sketch_name, board.designator)
+        file_path = os.path.join(sketch_folder_path, sketch_name, file_name)
+        # Upload the proper sketch and make sure we are in business.
+        upload_sketch(file_path, board.designator, self.port)
+        name, version = self.read_text_line().unpack(str, int)
+        if (name, version) != (sketch_name, sketch_version):
+            raise RuntimeError(f'Could not upload sketch {name} version {version}')
+
+
+class ArduinoEventHandler(EventHandlerBase):
+
+    """Base class for all the Arduino event handlers.
+    """
+
+    SERIAL_INTERFACE_CLASS = ArduinoSerialInterface
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.serial_interface = self.SERIAL_INTERFACE_CLASS()
+
+    def read_packet(self) -> AbstractPacket:
+        """Overloaded (still abstract) method.
+        """
+        raise NotImplementedError
+
+    def open_serial_interface(self, timeout: float = None) -> None:
+        """Open the serial interface.
+        """
+        port_info = autodetect_arduino_board(*_SUPPORTED_BOARDS)
+        if port_info is None:
+            raise RuntimeError('Could not find a suitable arduino board connected.')
+        self.serial_interface.connect(port_info, timeout=timeout)
+        self.serial_interface.pulse_dtr()
+
+    def close_serial_interface(self) -> None:
+        """Close the serial interface.
+        """
+        self.serial_interface.disconnect()

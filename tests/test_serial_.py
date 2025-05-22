@@ -16,6 +16,9 @@
 """Test suite for serial_.py
 """
 
+import pytest
+
+from baldaquin import logger
 from baldaquin import serial_
 
 
@@ -40,7 +43,37 @@ def test_list_com_ports() -> None:
     for port in ports:
         print(port)
     assert isinstance(ports, list)
-    assert all(isinstance(port, serial_.Port) for port in ports)
+    assert all(isinstance(port, serial_.PortInfo) for port in ports)
     ports = serial_.list_com_ports((0x2341, 0x0043))
     for port in ports:
         print(port)
+
+
+def test_text_line() -> None:
+    """Test the simple text protocol for the serial port.
+    """
+    with pytest.raises(RuntimeError) as info:
+        line = serial_.TextLine.from_text('Hello world;1')
+    logger.info(info.value)
+    with pytest.raises(RuntimeError) as info:
+        line = serial_.TextLine.from_text('#Hello world;1')
+    logger.info(info.value)
+    with pytest.raises(RuntimeError) as info:
+        line = serial_.TextLine.from_text('Hello world;1\n')
+    logger.info(info.value)
+    line = serial_.TextLine.from_text('#Hello world;1\n')
+    name, version = line.unpack(str, int)
+    assert name == 'Hello world'
+    assert version == 1
+    name, version = line.unpack()
+    assert name == 'Hello world'
+    assert version == '1'
+    with pytest.raises(RuntimeError) as info:
+        name, version = line.unpack(str)
+    logger.info(info.value)
+    # Test text line insertion.
+    line = serial_.TextLine.from_text('#1;2;3\n')
+    line.prepend('ciao')
+    assert line.decode() == '#ciao;1;2;3\n'
+    line.append('howdy')
+    assert line.decode() == '#ciao;1;2;3;howdy\n'

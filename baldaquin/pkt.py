@@ -28,6 +28,10 @@ from baldaquin import logger, __version__
 from baldaquin.timeline import Timeline
 
 
+DEFAULT_TEXT_PREFIX = '#'
+DEFAULT_TEXT_SEPARATOR = ','
+
+
 class Format(Enum):
 
     """Enum class encapsulating the supporte format characters from
@@ -177,8 +181,8 @@ class AbstractPacket(ABC):
         info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
         return f'{self.__class__.__name__}({info})'
 
-    @staticmethod
-    def text_header(prefix: str = '#', creator: str = None) -> str:
+    @classmethod
+    def text_header(cls, prefix: str = DEFAULT_TEXT_PREFIX, creator: str = None) -> str:
         """Hook that subclasses can overload to provide a sensible header for an
         output text file.
 
@@ -197,7 +201,7 @@ class AbstractPacket(ABC):
             header = f'{header}{prefix}Creator: {creator}\n'
         return header
 
-    def to_text(self, separator: str = ',') -> str:
+    def to_text(self, separator: str = DEFAULT_TEXT_SEPARATOR) -> str:
         """Hook that subclasses can overload to provide a text representation of
         the buffer to be written in an output text file.
         """
@@ -359,13 +363,13 @@ class FixedSizePacketBase(AbstractPacket):
         return self._repr(self._fields)
 
     @classmethod
-    def text_header(cls, prefix: str, creator: str = None) -> str:
+    def text_header(cls, prefix: str = DEFAULT_TEXT_PREFIX, creator: str = None) -> str:
         """Overloaded method.
         """
         return f'{AbstractPacket.text_header(prefix, creator)}' \
                f'{prefix}{", ".join(cls._fields)}\n'
 
-    def to_text(self, separator: str) -> str:
+    def to_text(self, separator: str = DEFAULT_TEXT_SEPARATOR) -> str:
         """Overloaded method.
         """
         return f'{separator.join([str(item) for item in self])}\n'

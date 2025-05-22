@@ -86,12 +86,14 @@ class DeviceId:
 
 
 @dataclass
-class Port:
+class PortInfo:
 
-    """Small data class holding the informatio about a COM port.
+    """Small data class holding the information about a COM port.
 
     This is a simple wrapper around the serial.tools.list_ports_common.ListPortInfo
-    isolating the basic useful functionalities, for the sake of simplicity.
+    isolating the basic useful functionalities, for the sake of simplicity. (And,
+    in addition, this convenience class is meant to integrate the functionality
+    embedded in the :class:`DeviceId` class, which is handy.)
 
     See https://pyserial.readthedocs.io/en/latest/tools.html#serial.tools.list_ports.ListPortInfo
     for more information.
@@ -113,14 +115,14 @@ class Port:
     manufacturer: str = None
 
     @classmethod
-    def from_port_info(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'Port':
+    def from_serial(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'PortInfo':
         """Create a Port object from a ListPortInfo object.
         """
         device_id = DeviceId(port_info.vid, port_info.pid)
         return cls(port_info.device, device_id, port_info.manufacturer)
 
 
-def list_com_ports(*device_ids: DeviceId) -> list[Port]:
+def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
     """List all the com ports with devices attached, possibly with a filter on
     the device ids we are interested into.
 
@@ -133,14 +135,14 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
 
     Returns
     -------
-    list of Port objects
+    list of PortInfo objects
         The list of COM ports.
     """
     logger.info('Scanning serial devices...')
     # Populate the initial list of ports.
-    ports = [Port.from_port_info(port_info) for port_info in serial.tools.list_ports.comports()]
-    for port in ports:
-        logger.debug(port)
+    ports = [PortInfo.from_serial(item) for item in serial.tools.list_ports.comports()]
+    for port_info in ports:
+        logger.debug(port_info)
     logger.info(f'Done, {len(ports)} device(s) found.')
     # If we're not filtering over device ids, we're done.
     if len(device_ids) == 0:
@@ -155,27 +157,150 @@ def list_com_ports(*device_ids: DeviceId) -> list[Port]:
                 device_ids[i] = DeviceId(*entry)
         logger.info(f'Filtering port list for specific devices: {device_ids}...')
         # Do the actual filtering.
-        ports = [port for port in ports if port.device_id in device_ids]
+        ports = [port_info for port_info in ports if port_info.device_id in device_ids]
         logger.info(f'Done, {len(ports)} device(s) remaining.')
     for port in ports:
         logger.debug(port)
     return ports
 
 
+class TextLine(bytearray):
+
+    """Small class defining a simple protocol for passing messages in string form
+    over the serial port.
+
+    A message is basically a small piece of text, in the form of a binary stream
+    encoded in UTF-8, starting with a ``#`` header character and terminated by a line
+    feed, and that can contain an arbitrary number of fields separated by a ``;``.
+    Note the delimiters are properly checked at creation time.
+    The :meth:`unpack()` class method returns a tuple with the field values,
+    converted in the proper types.
+
+    Note this is a subclass of the bytearray class, as opposed to the bytes class,
+    because we provide a minimal support for prepending and appending fields to the
+    text line. (Insertion at a generic index does not make much sense, as the field
+    widths are variable.)
+
+    The choice of the header character and the line feed is largely arbitrary, but
+    the requirement that the line is terminated by a line feed provides the most
+    straightforward way to read variable-length messages from the serial port in
+    a reliable way, leveraging the serial ``readline()`` method.
+
+    Users should by no means feel compelled to use this, but we provide it in order
+    to facilitate passing strings over the serial port, saving boilerplate code
+    for runtime checking.
+
+    Example
+    -------
+    >>> message = TextLine.from_text('#Hello world;1\\n')
+    >>> name, version = message.unpack(str, int)
+    >>> print(name, type(name))
+    Hello world, <class 'str'>
+    >>> print(version, type(version))
+    1 <class 'int'>
+    """
+
+    _ENCODING = 'utf-8'
+    _HEADER = '#'
+    _HEADER_ORD = ord(_HEADER)
+    _LINE_FEED = '\n'
+    _LINE_FEED_ORD = ord(_LINE_FEED)
+    _SEPARATOR = ';'
+
+    def __init__(self, data: bytes) -> None:
+        """Constructor.
+        """
+        super().__init__(data)
+        if len(data) == 0:
+            raise RuntimeError(f'Empty buffer passed to the {self.__class__.__name__} constructor')
+        if not self[0] == self._HEADER_ORD:
+            raise RuntimeError(f'Serial text line {self} does not start with {self._HEADER}')
+        if not self[-1] == self._LINE_FEED_ORD:
+            raise RuntimeError(f'Serial text line {self} does not end with a line feed')
+
+    @classmethod
+    def from_text(cls, text: str) -> bytes:
+        """Create a message from a text string (mainly for debug purposes).
+        """
+        return cls(bytes(text, cls._ENCODING))
+
+    def prepend(self, value: str) -> None:
+        """Prepend a string field to the text line.
+
+        Arguments
+        ---------
+        value : str
+            The string to be prepended.
+        """
+        self[1:1] = bytes(f'{value}{self._SEPARATOR}', self._ENCODING)
+
+    def append(self, value: str) -> None:
+        """Append a string field to the text line.
+
+        Arguments
+        ---------
+        value : str
+            The string to be prepended.
+        """
+        self[-1:-1] = bytes(f'{self._SEPARATOR}{value}', self._ENCODING)
+
+    def unpack(self, *converters) -> tuple:
+        """Unpack the message in its (properly formatted) fields.
+
+        Arguments
+        ---------
+        arguments : callable
+            The converter functions to be used to unpack the fields. Note the number
+            of converters passed to the function must be either zero (in which case
+            all the fields are treated as strings) or equal to the number of fields
+            in the message. A RuntimeError is raised if that is not the case.
+        """
+        # Decode the relevant part of the underlying bytes object (i.e., everything
+        # but the header character and the line feed) and split the resulting string
+        # by the separator character.
+        fields = self[1:-1].decode(self._ENCODING).split(self._SEPARATOR)
+        # Convert the fields to the proper types, if any.
+        if len(converters) == 0:
+            pass
+        elif len(converters) == len(fields):
+            fields = [converter(field) for converter, field in zip(converters, fields)]
+        else:
+            raise RuntimeError(f'Need exactly 0 or {len(fields)} converters to unpack "{self}"')
+        # Return the fields as a tuple.
+        return tuple(fields)
+
+
 class SerialInterface(serial.Serial):
 
     """Small wrapper around the serial.Serial class.
+
+    Note the class is designed to be instantiated without arguments, and all the
+    setup is done through the :meth:`connect()` method, where the port is configured
+    and the actual connection is opened.
     """
 
     # pylint: disable=too-many-ancestors
 
-    def setup(self, port: str, baudrate: int = DEFAULT_BAUD_RATE, timeout: float = None) -> None:
+    def __init__(self) -> None:
+        """Do-nothing constructor.
+        """
+        super().__init__()
+        self.port_info = None
+
+    def connect(self, port_info: PortInfo, baudrate: int = DEFAULT_BAUD_RATE,
+                timeout: float = None) -> None:
         """Setup the serial connection.
+
+        Note that the first argument is a fully-fledged PortInfo object, which
+        allows to keep track of the basic information about the device connected
+        to the port, in addition to configuration of the port itself. This is
+        handy, e.g., for the auto-upload of arduino sketched, where we need to
+        know the designation of the board we are uploading to.
 
         Arguments
         ---------
-        port : str
-            The name of the port to connect to (e.g., ``/dev/ttyACM0``).
+        port_info : PortInfo
+            The PortInfo object describing the port.
 
         baudrate : int
             The baud rate.
@@ -210,29 +335,25 @@ class SerialInterface(serial.Serial):
               otherwise wait until the timeout expires and return all bytes that
               were received until then.
         """
-        logger.debug(f'Configuring serial connection (port = {port}, '
+        logger.debug(f'Configuring serial connection (port = {port_info.name}, '
                      f'baudarate = {baudrate}, timeout = {timeout})...')
-        self.port = port
+        self.port_info = port_info
+        self.port = port_info.name
         self.baudrate = baudrate
         self.timeout = timeout
+        logger.info(f'Opening serial connection to port {self.port}...')
+        self.open()
 
-    def connect(self, port: str, baudrate: int = 115200, timeout: float = None) -> None:
-        """Connect to the serial port.
+    def set_timeout(self, timeout: float) -> None:
+        """Set the timeout for the serial port.
 
         Arguments
         ---------
-        port : str
-            The name of the serial port (e.g., ``/dev/ttyACM0``).
-
-        baudrate : int
-            The baud rate.
-
-        timeout : float, optional
+        timeout : float
             The timeout in seconds.
         """
-        self.setup(port, baudrate, timeout)
-        logger.info(f'Opening serial connection to port {self.port}...')
-        self.open()
+        logger.info(f'Setting serial connection timeout to {timeout} s...')
+        self.timeout = timeout
 
     def disconnect(self):
         """Disconnect from the serial port.
@@ -244,7 +365,7 @@ class SerialInterface(serial.Serial):
         """Pulse the DTR line for a given amount of time.
 
         This asserts the DTR line, waits for a specific amount of time, and then
-        deasserts the line.
+        de-asserts the line.
 
         Arguments
         ---------
@@ -255,6 +376,24 @@ class SerialInterface(serial.Serial):
         self.dtr = 1
         time.sleep(pulse_length)
         self.dtr = 0
+
+    def read_available_data(self) -> bytes:
+        """Read all the available data on the serial interface.
+
+        .. warning::
+            Be cautious when using this method, as the amount of data available
+            on the serial port at any given time may depend on the exact timing of
+            the function call relative to what the device attached to the port is
+            doing, and in the long run it might be difficult to read a stream
+            of variable-length data reliably.
+        """
+        return self.read(self.in_waiting)
+
+    def read_text_line(self) -> TextLine:
+        """Read a line-feed terminated string data from the serial interface and return a
+        :class:`TextLine` object.
+        """
+        return TextLine(self.readline())
 
     def read_and_unpack(self, fmt: str) -> Any:
         """Read a given number of bytes from the serial port and unpack them.
