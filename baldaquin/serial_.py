@@ -164,7 +164,7 @@ def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
     return ports
 
 
-class TextLine(bytes):
+class TextLine(bytearray):
 
     """Small class defining a simple protocol for passing messages in string form
     over the serial port.
@@ -175,6 +175,11 @@ class TextLine(bytes):
     Note the delimiters are properly checked at creation time.
     The :meth:`unpack()` class method returns a tuple with the field values,
     converted in the proper types.
+
+    Note this is a subclass of the bytearray class, as opposed to the bytes class,
+    because we provide a minimal support for prepending and appending fields to the
+    text line. (Insertion at a generic index does not make much sense, as the field
+    widths are variable.)
 
     The choice of the header character and the line feed is largely arbitrary, but
     the requirement that the line is terminated by a line feed provides the most
@@ -205,6 +210,7 @@ class TextLine(bytes):
     def __init__(self, data: bytes) -> None:
         """Constructor.
         """
+        super().__init__(data)
         if len(data) == 0:
             raise RuntimeError(f'Empty buffer passed to the {self.__class__.__name__} constructor')
         if not self[0] == self._HEADER_ORD:
@@ -217,6 +223,26 @@ class TextLine(bytes):
         """Create a message from a text string (mainly for debug purposes).
         """
         return cls(bytes(text, cls._ENCODING))
+
+    def prepend(self, value: str) -> None:
+        """Prepend a string field to the text line.
+
+        Arguments
+        ---------
+        value : str
+            The string to be prepended.
+        """
+        self[1:1] = bytes(f'{value}{self._SEPARATOR}', self._ENCODING)
+
+    def append(self, value: str) -> None:
+        """Append a string field to the text line.
+
+        Arguments
+        ---------
+        value : str
+            The string to be prepended.
+        """
+        self[-1:-1] = bytes(f'{self._SEPARATOR}{value}', self._ENCODING)
 
     def unpack(self, *converters) -> tuple:
         """Unpack the message in its (properly formatted) fields.
