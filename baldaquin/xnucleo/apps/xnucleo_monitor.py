@@ -19,7 +19,6 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-import struct
 
 from baldaquin import xnucleo
 from baldaquin.__qt__ import QtWidgets

@@ -17,7 +17,6 @@
 """
 
 import datetime
-import struct
 import time
 
 from baldaquin import logger
