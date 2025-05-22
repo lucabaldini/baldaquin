@@ -5,14 +5,24 @@ Release notes
 
 
 * Minor plasduino cleanup.
+* New TextLine class and associated text serial communication protocol.
+* New compilation and upload scheme for the arduino sketeches and associated artifacts.
+* Major refactoring of the xnucleo monitoring, and auto-upload functionality implemented.
+* Port class renamed as PortInfo.
+* New ArduinoSerialInterface and ArduinoEventHandler classes.
+* Cleanup, docs and unit tests added.
+* Signature of SerialInterface.connect() changed to accept a PortInfo object.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/61
+      * https://github.com/lucabaldini/baldaquin/pull/62
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/54
 
 
 *baldaquin 0.5.0 (Mon, 19 May 2025 09:29:50 +0200)*
 
 * Some bugs and rough edges in the plasduino extension have been fixed.
-* New genric monitoring application based on arduino + x-nucleon board.
+* New generic monitoring application based on arduino + x-nucleo board.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/53
       * https://github.com/lucabaldini/baldaquin/pull/59
