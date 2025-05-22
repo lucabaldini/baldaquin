@@ -110,20 +110,16 @@ class XnucleoEventHandler(EventHandlerBase):
         reading the data from the serial port, and we are assembling everything
         together in a single bytes object that is then written to disk in binary format.
         """
-        # Send the proper byte to the serial port in order to trigger a readout
-        # on the arduino board.
+        # Trigger a readout on the arduino board.
         self.serial_interface.write_readout_command()
-        # Latch the timestamp on the host PC---this is the number o seconds since the
-        # epoch in UTC time.
-        utc = datetime.datetime.now(datetime.timezone.utc)
-        # Pack the timestamp in a double format (8 bytes).
-        data = struct.pack('d', utc.timestamp())
+        # Latch the timestamp (seconds since the epoch, UTC) on the host PC.
+        timestamp = datetime.datetime.now(datetime.timezone.utc).timestamp()
         # Wait...
         time.sleep(self._sampling_interval)
-        # Append to the timestamp the actual readout data, which is the format
-        # of TextLine object.
-        data += self.serial_interface.read_text_line()
-        # And pass the thing downstream so that it can be decoded and used.
+        # Read the data from the serial port...
+        data = self.serial_interface.read_text_line()
+        # ... and prepend the timestamp.
+        data.prepend(f'{timestamp:.3f}')
         return data
 
 

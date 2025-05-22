@@ -115,9 +115,8 @@ class MonitorReadout(AbstractPacket):
     def unpack(cls, data: bytes):
         """Unpack the binary data into the corresponding field values.
         """
-        seconds = struct.unpack('d', data[0:8])[0]
-        values = [float(item) for item in data[8:].decode().strip('#').split(';')]
-        return cls(seconds, *values, data)
+        fields = data.unpack(float, float, float, float, float, int, int)
+        return cls(*fields, data)
 
     @classmethod
     def text_header(cls, prefix: str = '#', creator: str = None) -> str:
