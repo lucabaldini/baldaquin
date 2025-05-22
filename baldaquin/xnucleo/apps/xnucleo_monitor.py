@@ -38,7 +38,7 @@ from baldaquin.strip import SlidingStripChart
 @dataclass
 class MonitorReadout(AbstractPacket):
 
-    """
+    """Class describing a full readout for the xnucleo monitor application.
     """
 
     seconds: float
