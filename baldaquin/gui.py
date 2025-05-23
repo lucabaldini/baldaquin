@@ -488,13 +488,13 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         args = param.name, param.intent, param.value, param.units, param.fmt
         kwargs = param.constraints
         type_ = param.type
-        if type_ == bool:
+        if type_ is bool:
             return ParameterCheckBox(*args, **kwargs)
-        if type_ == int:
+        if type_ is int:
             return ParameterSpinBox(*args, **kwargs)
-        if type_ == float:
+        if type_ is float:
             return ParameterDoubleSpinBox(*args, **kwargs)
-        if type_ == str:
+        if type_ is str:
             if 'choices' in kwargs:
                 return ParameterComboBox(*args, **kwargs)
             return ParameterLineEdit(*args, **kwargs)
@@ -528,20 +528,20 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         return configuration
 
 
-class ConfigurationDictWidget(QtWidgets.QWidget):
+# class ConfigurationDictWidget(QtWidgets.QWidget):
 
-    """
-    """
+#     """
+#     """
 
-    def __init__(self, configuration_dict: UserApplicationConfiguration) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        self.setLayout(QtWidgets.QVBoxLayout())
-        for title, configuration in configuration_dict.items():
-            widget = ConfigurationWidget(configuration)
-            widget.setTitle(title)
-            self.layout().addWidget(widget)
+#     def __init__(self, configuration_dict: UserApplicationConfiguration) -> None:
+#         """Constructor.
+#         """
+#         super().__init__()
+#         self.setLayout(QtWidgets.QVBoxLayout())
+#         for title, configuration in configuration_dict.items():
+#             widget = ConfigurationWidget(configuration)
+#             widget.setTitle(title)
+#             self.layout().addWidget(widget)
 
 
 class PlotCanvasWidget(FigureCanvas):
@@ -822,8 +822,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        #self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
-        #self.add_tab(self.daq_configuration_widget, 'Settings')
+        # self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
+        # self.add_tab(self.daq_configuration_widget, 'Settings')
         self.user_application_widget = ConfigurationWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None

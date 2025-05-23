@@ -326,6 +326,6 @@ class UserApplicationConfiguration(Configuration):
         self.add_section(_UserApplicationConfigurationSection())
 
     def application_section(self):
-        """
+        """Return the user application section of the configuration.
         """
         return self['User Application']
