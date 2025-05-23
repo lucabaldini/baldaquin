@@ -29,7 +29,7 @@ from matplotlib.figure import Figure
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -140,7 +140,7 @@ class DataWidgetBase(QtWidgets.QWidget):
     TITLE_WIDGET_NAME = 'data_widget_title'
     VALUE_WIDGET_NAME = 'data_widget_value'
     MISSING_VALUE_LABEL = '-'
-    VALUE_WIDGET_HEIGHT = 30
+    VALUE_WIDGET_HEIGHT = 28
 
     def __init__(self, name: str, title: str = None, value=None, units: str = None,
                  fmt: str = None, **kwargs) -> None:
@@ -448,29 +448,26 @@ class ParameterComboBox(DataWidgetBase):
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
 
 
-class ConfigurationWidget(QtWidgets.QWidget):
+class ConfigurationSectionWidget(QtWidgets.QGroupBox):
 
     """Basic widget to display and edit an instance of a
-    :class:`baldaquin.config.ConfigurationBase` subclass.
+    :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
-    def __init__(self, configuration: ConfigurationBase = None) -> None:
+    def __init__(self, configuration_section=None) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
-        if configuration is not None:
-            self.display(configuration)
+        if configuration_section:
+            self.display(configuration_section)
 
-    def display(self, configuration: ConfigurationBase) -> None:
+    def display(self, configuration_section) -> None:
         """Display a given configuration.
         """
-        # Keep a reference to the input configuration class so that we can return
-        # the current (possibly modified) configuration as an instance of the
-        # proper class.
-        self._config_class = configuration.__class__
+        self._section_class = configuration_section.__class__
         self._widget_dict = {}
-        for param in configuration.values():
+        for param in configuration_section.values():
             widget = self.__param_widget(param)
             self._widget_dict[widget.name] = widget
             self.layout().addWidget(widget)
@@ -487,14 +484,14 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         args = param.name, param.intent, param.value, param.units, param.fmt
         kwargs = param.constraints
-        type_ = param.type_name
-        if type_ == 'bool':
+        type_ = param.type
+        if type_ is bool:
             return ParameterCheckBox(*args, **kwargs)
-        if type_ == 'int':
+        if type_ is int:
             return ParameterSpinBox(*args, **kwargs)
-        if type_ == 'float':
+        if type_ is float:
             return ParameterDoubleSpinBox(*args, **kwargs)
-        if type_ == 'str':
+        if type_ is str:
             if 'choices' in kwargs:
                 return ParameterComboBox(*args, **kwargs)
             return ParameterLineEdit(*args, **kwargs)
@@ -519,13 +516,37 @@ class ConfigurationWidget(QtWidgets.QWidget):
         # pylint: disable=invalid-name
         return QtCore.QSize(400, 400)
 
-    def current_configuration(self) -> ConfigurationBase:
+    def current_configuration_section(self):
         """Return the current configuration displayed in the widget.
         """
-        configuration = self._config_class()
+        section = self._section_class()
         for key, widget in self._widget_dict.items():
-            configuration.update_value(key, widget.current_value())
-        return configuration
+            section.set_value(key, widget.current_value())
+        return section
+
+
+class DaqConfigurationWidget(QtWidgets.QWidget):
+
+    """
+    """
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QGridLayout())
+        self.layout().setColumnStretch(0, 1)
+        self.layout().setColumnStretch(1, 1)
+
+    def display(self, configuration) -> None:
+        """Display a given configuration.
+        """
+        self.logging_widget = ConfigurationSectionWidget(configuration.logging_section())
+        self.layout().addWidget(self.logging_widget, 0, 0)
+        self.buffering_widget = ConfigurationSectionWidget(configuration.buffering_section())
+        self.layout().addWidget(self.buffering_widget, 0, 1)
+        self.multicast_widget = ConfigurationSectionWidget(configuration.multicast_section())
+        self.layout().addWidget(self.multicast_widget, 1, 0)
 
 
 class PlotCanvasWidget(FigureCanvas):
@@ -755,7 +776,7 @@ class SimpleControlBar(ControlBar):
     pause the system---all we can do is to start and stop the data acquisition.
 
     .. warning::
-        This has not been throroughly tested, and this derived class is still
+        This has not been thoroughly tested, and this derived class is still
         inheriting all the complex logic of its base class, but I do think that
         just re-implementing these two methods will do the trick.
     """
@@ -806,7 +827,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        self.user_application_widget = ConfigurationWidget()
+        self.settings_widget = DaqConfigurationWidget()
+        self.add_tab(self.settings_widget, 'Settings')
+        self.user_application_widget = ConfigurationSectionWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
 
@@ -976,7 +999,12 @@ class MainWindow(QtWidgets.QMainWindow):
         buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
         self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
         # Display the application configuration.
-        self.user_application_widget.display(user_application.configuration)
+        # Keep a reference to the input configuration class so that we can return
+        # the current (possibly modified) configuration as an instance of the
+        # proper class.
+        self._config_class = user_application.configuration.__class__
+        self.settings_widget.display(user_application.configuration)
+        self.user_application_widget.display(user_application.configuration.application_section())
         # Connect the necessary signal for keeping the thing in synch.
         user_application.event_handler.output_file_set.connect(
             self.update_event_handler_output_file)
@@ -994,7 +1022,9 @@ class MainWindow(QtWidgets.QMainWindow):
         in the GUI.
         """
         if self.run_control.is_stopped():
-            configuration = self.user_application_widget.current_configuration()
+            application_section = self.user_application_widget.current_configuration_section()
+            configuration = self._config_class()
+            configuration[application_section.TITLE] = application_section
             self.run_control.configure_user_application(configuration)
         self.run_control.set_running()
 

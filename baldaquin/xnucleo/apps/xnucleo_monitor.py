@@ -28,7 +28,7 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.arduino_ import ArduinoEventHandler
 from baldaquin.app import UserApplicationBase
 from baldaquin.buf import WriteMode
-from baldaquin.config import ConfigurationBase
+from baldaquin.config import UserApplicationConfiguration
 from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
@@ -133,15 +133,12 @@ class MonitorWindow(MainWindow):
                                  user_application.adc2_strip_chart)
 
 
-class MonitorConfiguration(ConfigurationBase):
+class MonitorConfiguration(UserApplicationConfiguration):
 
-    """User application configuration for the xnucleo monitor.
-    """
-
-    PARAMETER_SPECS = (
-        ('sampling_interval', 'float', 2., 'Sampling interval [s]',
+    _PARAMETER_SPECS = (
+        ('sampling_interval', float, 2., 'Sampling interval [s]',
             dict(min=1., max=1000.0)),
-        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
+        ('strip_chart_max_length', int, 200, 'Strip chart maximum length',
             dict(min=10, max=1000000)),
     )
 
@@ -231,9 +228,10 @@ class Monitor(UserApplicationBase):
     def configure(self) -> None:
         """Overloaded method.
         """
-        self.event_handler.set_sampling_interval(self.configuration.value('sampling_interval'))
+        config = self.configuration.application_section()
+        self.event_handler.set_sampling_interval(config.value('sampling_interval'))
         for chart in self._strip_charts:
-            chart.reset(self.configuration.value('strip_chart_max_length'))
+            chart.reset(config.value('strip_chart_max_length'))
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).

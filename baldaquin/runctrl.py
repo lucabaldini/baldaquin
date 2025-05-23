@@ -28,7 +28,7 @@ from baldaquin import __version__, DEFAULT_CHARACTER_ENCODING
 from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationBase
+from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import PacketStatistics
 from baldaquin.timeline import Timeline, Timestamp
 
@@ -595,7 +595,7 @@ class RunControlBase(FiniteStateMachineBase):
         if self._user_application is None:
             raise AppNotLoadedError
 
-    def configure_user_application(self, configuration: ConfigurationBase) -> None:
+    def configure_user_application(self, configuration: UserApplicationConfiguration) -> None:
         """Apply a given configuration to the current user application.
         """
         self._check_user_application()

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 from loguru import logger
 
 from baldaquin.__qt__ import QtCore
-from baldaquin.config import ConfigurationBase
+from baldaquin.config import UserApplicationConfiguration
 if TYPE_CHECKING:
     # We only need RunControl for type annotations, hence the if clause.
     from baldaquin.runctrl import RunControlBase
@@ -50,11 +50,11 @@ class UserApplicationBase:
         self.configuration = self.CONFIGURATION_CLASS()
         if self.CONFIGURATION_FILE_PATH is not None:
             if self.CONFIGURATION_FILE_PATH.exists():
-                self.configuration.update(self.CONFIGURATION_FILE_PATH)
+                self.configuration.update_from_file(self.CONFIGURATION_FILE_PATH)
             else:
                 self.configuration.save(self.CONFIGURATION_FILE_PATH)
 
-    def apply_configuration(self, configuration: ConfigurationBase):
+    def apply_configuration(self, configuration: UserApplicationConfiguration):
         """Set the configuration for the user application.
         """
         self.configuration = configuration

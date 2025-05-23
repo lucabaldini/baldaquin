@@ -40,7 +40,7 @@ QLabel#data_widget_title {
 
 
 QLabel#data_widget_value {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 QTextEdit {
