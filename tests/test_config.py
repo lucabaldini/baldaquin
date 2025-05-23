@@ -20,31 +20,31 @@ import os
 
 from baldaquin import BALDAQUIN_DATA
 from baldaquin.__qt__ import exec_qapp
-from baldaquin.config import ConfigurationParameter, SampleConfiguration
-from baldaquin.gui import ConfigurationWidget, bootstrap_qapplication
+from baldaquin import config
+from baldaquin.gui import ConfigurationWidget, ConfigurationDictWidget, bootstrap_qapplication
 
 
 def _test_base_match(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
+    p = config.ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value == value
 
 
 def _test_base_mismatch(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    p = ConfigurationParameter('parameter', type_name, value, '', **constraints)
+    p = config.ConfigurationParameter('parameter', type_name, value, '', **constraints)
     assert p.value is None
 
 
 def test_print_parameters():
     """Print some parameters.
     """
-    print(ConfigurationParameter('timeout', 'float', 10., 'timeout'))
-    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's'))
-    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f'))
-    print(ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f', min=0.))
+    print(config.ConfigurationParameter('timeout', 'float', 10., 'timeout'))
+    print(config.ConfigurationParameter('timeout', 'float', 10., 'timeout', 's'))
+    print(config.ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f'))
+    print(config.ConfigurationParameter('timeout', 'float', 10., 'timeout', 's', '.6f', min=0.))
 
 
 def test_parameter_bool():
@@ -92,37 +92,69 @@ def test_parameter_str():
 def test_configuration():
     """Test an actual, fully-fledged configuration.
     """
-    config = SampleConfiguration()
-    print(config)
+    conf = config.SampleConfiguration()
+    print(conf)
     file_path = os.path.join(BALDAQUIN_DATA, 'test_config.json')
-    config.save(file_path)
-    config.update(file_path)
-    assert config.value('port') == 20004
-    config.update_value('port', 3)
-    assert config.value('port') == 20004
-    config.update_value('port', 20003)
-    config.save(file_path)
-    config = SampleConfiguration()
-    config.update(file_path)
-    assert config.value('port') == 20003
+    conf.save(file_path)
+    conf.update(file_path)
+    assert conf.value('port') == 20004
+    conf.update_value('port', 3)
+    assert conf.value('port') == 20004
+    conf.update_value('port', 20003)
+    conf.save(file_path)
+    conf = config.SampleConfiguration()
+    conf.update(file_path)
+    assert conf.value('port') == 20003
+
+
+def test_configurations():
+    """
+    """
+    conf = config.LoggingConfiguration()
+    print(conf)
+    conf = config.MulticastConfiguration()
+    print(conf)
+    conf = config.BufferingConfiguration()
+    print(conf)
+
+
+def test_configuration_dict():
+    """Test the configuration dictionary.
+    """
+    config_dict = config.ConfigurationDict(config.LoggingConfiguration,
+                                           config.BufferingConfiguration,
+                                           config.MulticastConfiguration)
+    print(config_dict)
+    print(config_dict.to_json())
 
 
 def _test_configuration_display(port=9999):
     """Test the widget displaying configuration objects.
     """
-    config = SampleConfiguration()
-    print(config)
-    assert config.value('port') != port
+    conf = config.SampleConfiguration()
+    print(conf)
+    assert conf.value('port') != port
     qapp = bootstrap_qapplication()
-    widget = ConfigurationWidget(config)
+    widget = ConfigurationWidget(conf)
     widget.set_value('port', port)
-    config = widget.current_configuration()
-    print(config)
-    assert config.value('port') == port
+    conf = widget.current_configuration()
+    print(conf)
+    assert conf.value('port') == port
+    return qapp, widget
+
+
+def _test_configuration_dict_widget():
+    """
+    """
+    config_dict = config.ConfigurationDict(config.LoggingConfiguration,
+                                           config.BufferingConfiguration,
+                                           config.MulticastConfiguration)
+    qapp = bootstrap_qapplication()
+    widget = ConfigurationDictWidget(config_dict)
     return qapp, widget
 
 
 if __name__ == '__main__':
-    qapp, widget = _test_configuration_display()
+    qapp, widget = _test_configuration_dict_widget()
     widget.show()
     exec_qapp(qapp)

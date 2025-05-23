@@ -163,7 +163,7 @@ class ConfigurationParameter:
         return self._check_choice(value)
 
     def set_value(self, value: Any) -> ParameterValidationError:
-        """Set the paramater value.
+        """Set the parameter value.
         """
         # Make sure that type(value) matches the expectations.
         if value.__class__.__name__ != self.type_name:
@@ -194,7 +194,7 @@ class ConfigurationBase(dict):
     """Base class for configuration data structures.
 
     The basic idea, here, is that specific configuration classes simply override
-    the ``TITLE`` and ``PARAMETER_SPECS`` class members. ``PARAMETER_SPECS``, particulalry,
+    the ``TITLE`` and ``PARAMETER_SPECS`` class members. ``PARAMETER_SPECS``, particularly,
     encodes the name, types and default values for all the configuration parameters,
     as well optional help strings and parameter constraints.
 
@@ -232,7 +232,7 @@ class ConfigurationBase(dict):
         """Update the value of a configuration parameter.
         """
         if key not in self:
-            logger.warning(f'Unknow configuration parameter "{key}", skipping...')
+            logger.warning(f'Unknown configuration parameter "{key}", skipping...')
             return
         return self[key].set_value(value)
 
@@ -286,6 +286,43 @@ class ConfigurationBase(dict):
         return f'{title}\n{data}{line}'
 
 
+class ConfigurationDict(dict):
+
+    """Class describing a configuration dictionary.
+    """
+
+    def __init__(self, *config_classes: type) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        for config_class in config_classes:
+            self[config_class.TITLE] = config_class()
+
+    def update(self, file_path: str) -> None:
+        """Update the configuration dictionary from a JSON file.
+        """
+        logger.info(f'Updating configuration dictionary from {file_path}...')
+        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+            data = json.load(input_file)
+        for _, config in data.items():
+            for key, param_dict in config.items():
+                config.update_value(key, param_dict['value'])
+
+    def to_json(self) -> str:
+        """Encode the configuration into JSON to be written to file.
+        """
+        data = {title: {key: value.__dict__ for key, value in config.items()} \
+                for title, config in self.items()}
+        return json.dumps(data, indent=4)
+
+    def save(self, file_path: str) -> None:
+        """Dump the configuration dictionary to a JSON file.
+        """
+        logger.info(f'Writing configuration dictionary to {file_path}...')
+        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+            output_file.write(self.to_json())
+
+
 class EmptyConfiguration(ConfigurationBase):
 
     """Empty configuration.
@@ -308,3 +345,58 @@ class SampleConfiguration(ConfigurationBase):
         ('port', 'int', 20004, 'Port', None, None, dict(min=1024, max=65535)),
         ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))
     )
+
+
+class LoggingConfiguration(ConfigurationBase):
+
+    """Logging configuration.
+    """
+
+    TITLE = 'Logging'
+    _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
+    PARAMETER_SPECS = (
+        ('terminal_level', 'str', 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
+        ('file_enabled', 'bool', True, 'Enable log file', {}),
+        ('file_level', 'str', 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
+    )
+
+
+class BufferingConfiguration(ConfigurationBase):
+
+    """Buffering configuration.
+    """
+
+    TITLE = 'Buffering'
+    PARAMETER_SPECS = (
+        # It'd be nice to have a way to default max_size to None.
+        ('max_size', 'int', 1000000, 'Maximum buffer size', dict(min=1)),
+        ('flush_size', 'int', 100, 'Flush size', dict(min=1)),
+        ('flush_timeout', 'float', 10., 'Flush timeout', 's', '.3f', dict(min=1.))
+    )
+
+
+class MulticastConfiguration(ConfigurationBase):
+
+    """Multicast configuration.
+    """
+
+    TITLE = 'Multicast'
+    PARAMETER_SPECS = (
+        ('enabled', 'bool', False, 'Enable multicast', {}),
+        ('ip_address', 'str', '127.0.0.1', 'IP address', {}),
+        ('port', 'int', 20004, 'Port', dict(min=1024, max=65535))
+    )
+
+
+class DaqConfigurationDict(ConfigurationDict):
+
+    """
+    """
+
+    _CONFIGS = (LoggingConfiguration, BufferingConfiguration, MulticastConfiguration)
+
+    def __init__(self) -> None:
+        """
+        """
+        super().__init__(*self._CONFIGS)
+

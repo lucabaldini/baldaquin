@@ -29,7 +29,7 @@ from matplotlib.figure import Figure
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.config import ConfigurationParameter, ConfigurationBase, ConfigurationDict, DaqConfigurationDict
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -140,7 +140,7 @@ class DataWidgetBase(QtWidgets.QWidget):
     TITLE_WIDGET_NAME = 'data_widget_title'
     VALUE_WIDGET_NAME = 'data_widget_value'
     MISSING_VALUE_LABEL = '-'
-    VALUE_WIDGET_HEIGHT = 30
+    VALUE_WIDGET_HEIGHT = 28
 
     def __init__(self, name: str, title: str = None, value=None, units: str = None,
                  fmt: str = None, **kwargs) -> None:
@@ -448,7 +448,7 @@ class ParameterComboBox(DataWidgetBase):
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
 
 
-class ConfigurationWidget(QtWidgets.QWidget):
+class ConfigurationWidget(QtWidgets.QGroupBox):
 
     """Basic widget to display and edit an instance of a
     :class:`baldaquin.config.ConfigurationBase` subclass.
@@ -526,6 +526,22 @@ class ConfigurationWidget(QtWidgets.QWidget):
         for key, widget in self._widget_dict.items():
             configuration.update_value(key, widget.current_value())
         return configuration
+
+
+class ConfigurationDictWidget(QtWidgets.QWidget):
+
+    """
+    """
+
+    def __init__(self, configuration_dict: ConfigurationDict) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QVBoxLayout())
+        for title, configuration in configuration_dict.items():
+            widget = ConfigurationWidget(configuration)
+            widget.setTitle(title)
+            self.layout().addWidget(widget)
 
 
 class PlotCanvasWidget(FigureCanvas):
@@ -755,7 +771,7 @@ class SimpleControlBar(ControlBar):
     pause the system---all we can do is to start and stop the data acquisition.
 
     .. warning::
-        This has not been throroughly tested, and this derived class is still
+        This has not been thoroughly tested, and this derived class is still
         inheriting all the complex logic of its base class, but I do think that
         just re-implementing these two methods will do the trick.
     """
@@ -806,6 +822,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
+        self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
+        self.add_tab(self.daq_configuration_widget, 'Settings')
         self.user_application_widget = ConfigurationWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
