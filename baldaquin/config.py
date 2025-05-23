@@ -308,6 +308,7 @@ class UserApplicationConfiguration(Configuration):
     """Base class for a generic user application configuration.
     """
 
+    _USER_APPLICATION_SECTION_TITLE = 'User Application'
     _PARAMETER_SPECS = None
 
     def __init__(self) -> None:
@@ -320,12 +321,27 @@ class UserApplicationConfiguration(Configuration):
 
         class _UserApplicationConfigurationSection(ConfigurationSectionBase):
 
-            TITLE = 'User Application'
+            TITLE = self._USER_APPLICATION_SECTION_TITLE
             _PARAMETER_SPECS = self._PARAMETER_SPECS
 
         self.add_section(_UserApplicationConfigurationSection())
 
+    def logging_section(self):
+        """
+        """
+        return self[LoggingConfigurationSection.TITLE]
+
+    def buffering_section(self):
+        """
+        """
+        return self[BufferingConfigurationSection.TITLE]
+
+    def multicast_section(self):
+        """
+        """
+        return self[MulticastConfigurationSection.TITLE]
+
     def application_section(self):
         """Return the user application section of the configuration.
         """
-        return self['User Application']
+        return self[self._USER_APPLICATION_SECTION_TITLE]
