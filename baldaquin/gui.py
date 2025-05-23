@@ -448,29 +448,26 @@ class ParameterComboBox(DataWidgetBase):
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
 
 
-class ConfigurationWidget(QtWidgets.QGroupBox):
+class ConfigurationSectionWidget(QtWidgets.QGroupBox):
 
     """Basic widget to display and edit an instance of a
     :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
-    def __init__(self, configuration: UserApplicationConfiguration = None) -> None:
+    def __init__(self, configuration_section=None) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
-        if configuration is not None:
-            self.display(configuration)
+        if configuration_section:
+            self.display(configuration_section)
 
-    def display(self, configuration: UserApplicationConfiguration) -> None:
+    def display(self, configuration_section) -> None:
         """Display a given configuration.
         """
-        # Keep a reference to the input configuration class so that we can return
-        # the current (possibly modified) configuration as an instance of the
-        # proper class.
-        self._config_class = configuration.__class__
+        self._section_class = configuration_section.__class__
         self._widget_dict = {}
-        for param in configuration.application_section().values():
+        for param in configuration_section.values():
             widget = self.__param_widget(param)
             self._widget_dict[widget.name] = widget
             self.layout().addWidget(widget)
@@ -519,29 +516,37 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         # pylint: disable=invalid-name
         return QtCore.QSize(400, 400)
 
-    def current_configuration(self) -> UserApplicationConfiguration:
+    def current_configuration_section(self):
         """Return the current configuration displayed in the widget.
         """
-        configuration = self._config_class()
+        section = self._section_class()
         for key, widget in self._widget_dict.items():
-            configuration.application_section().set_value(key, widget.current_value())
-        return configuration
+            section.set_value(key, widget.current_value())
+        return section
 
 
-# class ConfigurationDictWidget(QtWidgets.QWidget):
+class DaqConfigurationWidget(QtWidgets.QWidget):
 
-#     """
-#     """
+    """
+    """
 
-#     def __init__(self, configuration_dict: UserApplicationConfiguration) -> None:
-#         """Constructor.
-#         """
-#         super().__init__()
-#         self.setLayout(QtWidgets.QVBoxLayout())
-#         for title, configuration in configuration_dict.items():
-#             widget = ConfigurationWidget(configuration)
-#             widget.setTitle(title)
-#             self.layout().addWidget(widget)
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QGridLayout())
+        self.layout().setColumnStretch(0, 1)
+        self.layout().setColumnStretch(1, 1)
+
+    def display(self, configuration) -> None:
+        """Display a given configuration.
+        """
+        self.logging_widget = ConfigurationSectionWidget(configuration.logging_section())
+        self.layout().addWidget(self.logging_widget, 0, 0)
+        self.buffering_widget = ConfigurationSectionWidget(configuration.buffering_section())
+        self.layout().addWidget(self.buffering_widget, 0, 1)
+        self.multicast_widget = ConfigurationSectionWidget(configuration.multicast_section())
+        self.layout().addWidget(self.multicast_widget, 1, 0)
 
 
 class PlotCanvasWidget(FigureCanvas):
@@ -822,9 +827,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        # self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
-        # self.add_tab(self.daq_configuration_widget, 'Settings')
-        self.user_application_widget = ConfigurationWidget()
+        self.settings_widget = DaqConfigurationWidget()
+        self.add_tab(self.settings_widget, 'Settings')
+        self.user_application_widget = ConfigurationSectionWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
 
@@ -994,7 +999,12 @@ class MainWindow(QtWidgets.QMainWindow):
         buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
         self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
         # Display the application configuration.
-        self.user_application_widget.display(user_application.configuration)
+        # Keep a reference to the input configuration class so that we can return
+        # the current (possibly modified) configuration as an instance of the
+        # proper class.
+        self._config_class = user_application.configuration.__class__
+        self.settings_widget.display(user_application.configuration)
+        self.user_application_widget.display(user_application.configuration.application_section())
         # Connect the necessary signal for keeping the thing in synch.
         user_application.event_handler.output_file_set.connect(
             self.update_event_handler_output_file)
@@ -1012,7 +1022,9 @@ class MainWindow(QtWidgets.QMainWindow):
         in the GUI.
         """
         if self.run_control.is_stopped():
-            configuration = self.user_application_widget.current_configuration()
+            application_section = self.user_application_widget.current_configuration_section()
+            configuration = self._config_class()
+            configuration[application_section.TITLE] = application_section
             self.run_control.configure_user_application(configuration)
         self.run_control.set_running()
 
