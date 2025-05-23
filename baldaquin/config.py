@@ -16,27 +16,10 @@
 """Configuration facilities.
 """
 
-import enum
 import json
-import os
 from typing import Any
 
 from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
-
-
-class ParameterValidationError(enum.IntEnum):
-
-    """Enum class for the possible errors occurring while checking the input
-    parameter values.
-    """
-
-    PARAMETER_VALID = 0
-    INVALID_TYPE = enum.auto()
-    NUMBER_TOO_SMALL = enum.auto()
-    NUMBER_TOO_LARGE = enum.auto()
-    INVALID_CHOICE = enum.auto()
-    INVALID_STEP = enum.auto()
-    GENERIC_ERROR = enum.auto()
 
 
 class ConfigurationParameter:
@@ -56,8 +39,8 @@ class ConfigurationParameter:
     name : str
         The parameter name.
 
-    type_name : str
-        The name of the parameter type.
+    type_ : type
+        The parameter type.
 
     value : anything
         The parameter value.
@@ -76,127 +59,158 @@ class ConfigurationParameter:
         A dictionary containing optional specifications on the parameter value.
     """
 
-    VALID_CONSTRAINTS = {
-        'int': ('choices', 'step', 'min', 'max'),
-        'float': ('min', 'max'),
-        'str': ('choices',)
+    _VALID_CONSTRAINTS = {
+        int: ('choices', 'step', 'min', 'max'),
+        float: ('min', 'max'),
+        str: ('choices',)
     }
 
-    def __init__(self, name: str, type_name: str, value: Any, intent: str,
+    def __init__(self, name: str, type_: type, value: Any, intent: str,
                  units: str = None, fmt: None = None, **constraints) -> None:
         """Constructor.
         """
         self.name = name
-        self.type_name = type_name
+        self.type = type_
         self.value = None
         self.intent = intent
         self.units = units
         self.fmt = fmt
         for key in tuple(constraints):
-            if key not in self.VALID_CONSTRAINTS.get(self.type_name, ()):
-                logger.warning(f'Invalid spec ({key}) for {self.name} ({self.type_name})...')
-                constraints.pop(key)
+            if key not in self._VALID_CONSTRAINTS.get(self.type, ()):
+                raise RuntimeError(f'Invalid spec ({key}) for {self.name} ({self.type})')
         self.constraints = constraints
         self.set_value(value)
 
-    def not_set(self) -> bool:
-        """Return true if the parameter value is not set.
-        """
-        return self.value is None
-
-    def _validation_error(self, value: Any,
-                          error_code: ParameterValidationError) -> ParameterValidationError:
-        """Utility function to log a parameter error (and forward the error code).
-        """
-        logger.error(f'Value {value} invalid for {self.name} {self.constraints}: {error_code.name}')
-        logger.error('Parameter value will not be set')
-        return error_code
-
-    def _check_range(self, value: Any) -> ParameterValidationError:
+    def _check_range(self, value: Any) -> None:
         """Generic function to check that a given value is within a specified range.
-
-        This is used for validating int and float parameters.
         """
         if 'min' in self.constraints and value < self.constraints['min']:
-            return self._validation_error(value, ParameterValidationError.NUMBER_TOO_SMALL)
+            raise RuntimeError(f'Value {value} is too small for {self}')
         if 'max' in self.constraints and value > self.constraints['max']:
-            return self._validation_error(value, ParameterValidationError.NUMBER_TOO_LARGE)
-        return ParameterValidationError.PARAMETER_VALID
+            raise RuntimeError(f'Value {value} is too large for {self}')
 
-    def _check_choice(self, value: Any) -> ParameterValidationError:
+    def _check_choices(self, value: Any) -> None:
         """Generic function to check that a parameter value is within the
         allowed choices.
         """
         if 'choices' in self.constraints and value not in self.constraints['choices']:
-            return self._validation_error(value, ParameterValidationError.INVALID_CHOICE)
-        return ParameterValidationError.PARAMETER_VALID
+            raise RuntimeError(f'Unexpected choice {value} for {self}')
 
-    def _check_step(self, value: int) -> ParameterValidationError:
+    def _check_step(self, value: int) -> None:
         """Generic function to check the step size for an integer.
         """
         delta = value - self.constraints.get('min', 0)
         if 'step' in self.constraints and delta % self.constraints['step'] != 0:
-            return self._validation_error(value, ParameterValidationError.INVALID_STEP)
-        return ParameterValidationError.PARAMETER_VALID
+            raise RuntimeError(f'Invalid value {value} for {self}')
 
-    def _check_int(self, value: int) -> ParameterValidationError:
-        """Validate an integer parameter value.
-
-        Note we check the choice specification first, and all the others after that
-        (this is relevant as, if you provide inconsistent conditions the order
-        becomes relevant).
-        """
-        for check in (self._check_choice, self._check_range, self._check_step):
-            error_code = check(value)
-            if error_code != ParameterValidationError.PARAMETER_VALID:
-                return error_code
-        return ParameterValidationError.PARAMETER_VALID
-
-    def _check_float(self, value: float) -> ParameterValidationError:
-        """Validate a floating-point parameter value.
-        """
-        return self._check_range(value)
-
-    def _check_str(self, value: str) -> ParameterValidationError:
-        """Validate a string parameter value.
-        """
-        return self._check_choice(value)
-
-    def set_value(self, value: Any) -> ParameterValidationError:
+    def set_value(self, value: Any) -> None:
         """Set the parameter value.
+
+        Note that this is where all the runtime checking is performed.
         """
-        # Make sure that type(value) matches the expectations.
-        if value.__class__.__name__ != self.type_name:
-            return self._validation_error(value, ParameterValidationError.INVALID_TYPE)
-        # If a validator is defined for the specific parameter type, apply it.
-        func_name = f'_check_{self.type_name}'
-        if hasattr(self, func_name):
-            error_code = getattr(self, func_name)(value)
-            if error_code:
-                return error_code
+        # Make sure that the value we are passing is of the right type.
+        if not isinstance(value, self.type):
+            raise RuntimeError(f'Invalid type {value} ({type(value).__name__}) for {self}')
+        # Make all the necessary checks on the constraints, if necessary.
+        if self.constraints:
+            if self.type is int:
+                self._check_choices(value)
+                self._check_range(value)
+                self._check_step(value)
+            elif self.type is float:
+                self._check_range(value)
+            elif self.type is str:
+                self._check_choices(value)
         # And if we made it all the way to this point we're good to go :-)
         self.value = value
-        return ParameterValidationError.PARAMETER_VALID
+
+    def formatted_value(self) -> str:
+        """Return the formatted parameter value (as a string).
+        """
+        if self.fmt is None:
+            return f'{self.value}'
+        return f'{self.value:{self.fmt}}'
 
     def __str__(self):
         """String formatting.
         """
-        text = f'{self.name:.<20}: {self.value:{self.fmt if self.fmt else ""}}'
-        if self.units is not None:
-            text = f'{text} {self.units}'
-        if len(self.constraints):
-            text = f'{text} {self.constraints}'
-        return text
+        return f'{self.__class__.__name__} "{self.name}" ({self.type.__name__}, {self.constraints})'
 
 
-class ConfigurationBase(dict):
+class ConfigurationSectionBase(dict):
 
-    """Base class for configuration data structures.
+    """Base class for a single section of a configuration object. (Note this class
+    is not meant to be instantiated, but rather subclassed, overriding the proper
+    class variables as explained below.)
 
     The basic idea, here, is that specific configuration classes simply override
-    the ``TITLE`` and ``PARAMETER_SPECS`` class members. ``PARAMETER_SPECS``, particularly,
-    encodes the name, types and default values for all the configuration parameters,
-    as well optional help strings and parameter constraints.
+    the ``TITLE`` and ``_PARAMETER_SPECS`` class members, the latter encoding
+    the name, type and default values for all the configuration parameters, as well
+    as optional help strings and constraints.
+
+    The class interface is fairly minimal, with support to set, and retrieve
+    parameter values, and for string formatting.
+    """
+
+    TITLE = None
+    _PARAMETER_SPECS = ()
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        # Parse the parameters specs. The basic rule, here, is that if the last
+        # element in the spec tuple is a dictionary, we are interpreting it the
+        # map of constraints for the parameter, which is otherwise empty.
+        # Everything else represent the constructor arguments, in order.
+        for specs in self._PARAMETER_SPECS:
+            if isinstance(specs[-1], dict):
+                args, constraints = specs[:-1], specs[-1]
+            else:
+                args, constraints = specs, {}
+            parameter = ConfigurationParameter(*args, **constraints)
+            self[parameter.name] = parameter
+
+    def set_value(self, parameter_name, value) -> None:
+        """Update the value of a configuration parameter.
+        """
+        try:
+            # Note all the runtime checking happens in ConfigurationParameter.set_value()
+            self[parameter_name].set_value(value)
+        except KeyError as exc:
+            raise RuntimeError(f'Unknown parameter "{parameter_name}" for '
+                               f'{self.__class__.__name__} "{self.TITLE}"') from exc
+
+    def value(self, parameter_name) -> Any:
+        """Return the value for a given parameter.
+        """
+        return self[parameter_name].value
+
+    def formatted_value(self, parameter_name) -> str:
+        """Return the formatted value for a given parameter.
+        """
+        return self[parameter_name].formatted_value()
+
+    def as_dict(self):
+        """Return a view on the configuration in the form of a {name: value} dictionary
+        representing the underlying configuration parameters.
+
+        This is used downstream to serialize the configuration and writing it to
+        file.
+        """
+        return {parameter.name: parameter.value for parameter in self.values()}
+
+    def __str__(self) -> str:
+        """String formatting.
+        """
+        data = ''.join(f'{param.name:.<20}{param.formatted_value()}\n' for param in self.values())
+        return f'{self.TITLE}\n{data}'
+
+
+class Configuration(dict):
+
+    """Class describing a configuration object, that is, a dictionary of
+    instances of ConfigurationSectionBase subclasses.
 
     Configuration objects provide file I/O through the JSON protocol. One
     important notion, here, is that configuration objects are always created
@@ -206,113 +220,33 @@ class ConfigurationBase(dict):
     the configuration structure.
     """
 
-    TITLE = 'Configuration'
-    PARAMETER_SPECS = ()
-
-    def __init__(self) -> None:
+    def __init__(self, *sections: ConfigurationSectionBase) -> None:
         """Constructor.
         """
         super().__init__()
-        for *args, constraints in self.PARAMETER_SPECS:
-            self.add_parameter(*args, **constraints)
+        for section in sections:
+            self.add_section(section)
 
-    def add_parameter(self, *args, **kwargs) -> None:
-        """Add a new parameter to the configuration.
+    def add_section(self, section: ConfigurationSectionBase) -> None:
+        """Add a section to the configuration.
         """
-        parameter = ConfigurationParameter(*args, **kwargs)
-        self[parameter.name] = parameter
+        self[section.TITLE] = section
 
-    def value(self, key) -> Any:
-        """Return the value for a given parameter.
-        """
-        return self[key].value
-
-    # pylint: disable=inconsistent-return-statements
-    def update_value(self, key, value) -> ParameterValidationError:
-        """Update the value of a configuration parameter.
-        """
-        if key not in self:
-            logger.warning(f'Unknown configuration parameter "{key}", skipping...')
-            return
-        return self[key].set_value(value)
-
-    def update(self, file_path: str) -> None:
-        """Update the configuration parameters from a JSON file.
+    def update_from_file(self, file_path: str) -> None:
+        """Update the configuration dictionary from a JSON file.
         """
         logger.info(f'Updating configuration from {file_path}...')
         with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             data = json.load(input_file)
-        for key, param_dict in data.items():
-            self.update_value(key, param_dict['value'])
+        for title, section_data in data.items():
+            section = self[title]
+            for parameter_name, value in section_data.items():
+                section.set_value(parameter_name, value)
 
     def to_json(self) -> str:
         """Encode the configuration into JSON to be written to file.
         """
-        data = {key: value.__dict__ for key, value in self.items()}
-        return json.dumps(data, indent=4)
-
-    def save(self, file_path) -> None:
-        """Dump the configuration to a JSON file.
-        """
-        logger.info(f'Writing configuration to {file_path}...')
-        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
-            output_file.write(self.to_json())
-
-    @staticmethod
-    def terminal_line(character: str = '-', default_length: int = 50) -> str:
-        """Concatenate a series of characters as long as the terminal line.
-
-        Note that we need the try/except block to get this thing working into
-        pytest---see https://stackoverflow.com/questions/63345739
-        """
-        try:
-            return character * os.get_terminal_size().columns
-        except OSError:
-            return character * default_length
-
-    @staticmethod
-    def title(text: str) -> str:
-        """Pretty-print title.
-        """
-        line = ConfigurationBase.terminal_line()
-        return f'{line}\n{text}\n{line}'
-
-    def __str__(self) -> str:
-        """String formatting.
-        """
-        title = self.title(self.TITLE)
-        data = ''.join(f'{param}\n' for param in self.values())
-        line = self.terminal_line()
-        return f'{title}\n{data}{line}'
-
-
-class ConfigurationDict(dict):
-
-    """Class describing a configuration dictionary.
-    """
-
-    def __init__(self, *config_classes: type) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        for config_class in config_classes:
-            self[config_class.TITLE] = config_class()
-
-    def update(self, file_path: str) -> None:
-        """Update the configuration dictionary from a JSON file.
-        """
-        logger.info(f'Updating configuration dictionary from {file_path}...')
-        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
-            data = json.load(input_file)
-        for _, config in data.items():
-            for key, param_dict in config.items():
-                config.update_value(key, param_dict['value'])
-
-    def to_json(self) -> str:
-        """Encode the configuration into JSON to be written to file.
-        """
-        data = {title: {key: value.__dict__ for key, value in config.items()} \
-                for title, config in self.items()}
+        data = {title: section.as_dict() for title, section in self.items()}
         return json.dumps(data, indent=4)
 
     def save(self, file_path: str) -> None:
@@ -322,81 +256,76 @@ class ConfigurationDict(dict):
         with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
             output_file.write(self.to_json())
 
-
-class EmptyConfiguration(ConfigurationBase):
-
-    """Empty configuration.
-    """
-
-    TITLE = 'Empty configuration'
+    def __str__(self):
+        """String formatting.
+        """
+        return self.to_json()
 
 
-class SampleConfiguration(ConfigurationBase):
+class LoggingConfigurationSection(ConfigurationSectionBase):
 
-    """Sample configuration.
-    """
-
-    TITLE = 'A simple test configuration'
-    PARAMETER_SPECS = (
-        ('enabled', 'bool', True, 'Enable connection', None, None, {}),
-        ('protocol', 'str', 'UDP', 'Communication protocol', None, None,
-            dict(choices=('UDP', 'TCP/IP'))),
-        ('ip_address', 'str', '127.0.0.1', 'IP address', None, None, {}),
-        ('port', 'int', 20004, 'Port', None, None, dict(min=1024, max=65535)),
-        ('timeout', 'float', 10., 'Connection timeout', 's', '.3f', dict(min=0.))
-    )
-
-
-class LoggingConfiguration(ConfigurationBase):
-
-    """Logging configuration.
+    """Configuration section for the logging.
     """
 
     TITLE = 'Logging'
     _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
-    PARAMETER_SPECS = (
-        ('terminal_level', 'str', 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
-        ('file_enabled', 'bool', True, 'Enable log file', {}),
-        ('file_level', 'str', 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
+    _PARAMETER_SPECS = (
+        ('terminal_level', str, 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
+        ('file_enabled', bool, True, 'Enable log file'),
+        ('file_level', str, 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
     )
 
 
-class BufferingConfiguration(ConfigurationBase):
+class BufferingConfigurationSection(ConfigurationSectionBase):
 
-    """Buffering configuration.
+    """Configuration section for the packet buffering.
     """
 
     TITLE = 'Buffering'
-    PARAMETER_SPECS = (
+    _PARAMETER_SPECS = (
         # It'd be nice to have a way to default max_size to None.
-        ('max_size', 'int', 1000000, 'Maximum buffer size', dict(min=1)),
-        ('flush_size', 'int', 100, 'Flush size', dict(min=1)),
-        ('flush_timeout', 'float', 10., 'Flush timeout', 's', '.3f', dict(min=1.))
+        ('max_size', int, 1000000, 'Maximum buffer size', dict(min=1)),
+        ('flush_size', int, 100, 'Flush size', dict(min=1)),
+        ('flush_timeout', float, 10., 'Flush timeout', 's', '.3f', dict(min=1.))
     )
 
 
-class MulticastConfiguration(ConfigurationBase):
+class MulticastConfigurationSection(ConfigurationSectionBase):
 
-    """Multicast configuration.
+    """Configuration section for the packet multicasting.
     """
 
     TITLE = 'Multicast'
-    PARAMETER_SPECS = (
-        ('enabled', 'bool', False, 'Enable multicast', {}),
-        ('ip_address', 'str', '127.0.0.1', 'IP address', {}),
-        ('port', 'int', 20004, 'Port', dict(min=1024, max=65535))
+    _PARAMETER_SPECS = (
+        ('enabled', bool, False, 'Enable multicast'),
+        ('ip_address', str, '127.0.0.1', 'IP address'),
+        ('port', int, 20004, 'Port', dict(min=1024, max=65535))
     )
 
 
-class DaqConfigurationDict(ConfigurationDict):
+class UserApplicationConfiguration(Configuration):
 
-    """
+    """Base class for a generic user application configuration.
     """
 
-    _CONFIGS = (LoggingConfiguration, BufferingConfiguration, MulticastConfiguration)
+    _PARAMETER_SPECS = None
 
     def __init__(self) -> None:
+        """Constructor.
         """
-        """
-        super().__init__(*self._CONFIGS)
+        super().__init__()
+        self.add_section(LoggingConfigurationSection())
+        self.add_section(BufferingConfigurationSection())
+        self.add_section(MulticastConfigurationSection())
 
+        class _UserApplicationConfigurationSection(ConfigurationSectionBase):
+
+            TITLE = 'User Application'
+            _PARAMETER_SPECS = self._PARAMETER_SPECS
+
+        self.add_section(_UserApplicationConfigurationSection())
+
+    def application_section(self):
+        """
+        """
+        return self['User Application']

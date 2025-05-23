@@ -29,7 +29,7 @@ from matplotlib.figure import Figure
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, ConfigurationBase, ConfigurationDict, DaqConfigurationDict
+from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -451,10 +451,10 @@ class ParameterComboBox(DataWidgetBase):
 class ConfigurationWidget(QtWidgets.QGroupBox):
 
     """Basic widget to display and edit an instance of a
-    :class:`baldaquin.config.ConfigurationBase` subclass.
+    :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
-    def __init__(self, configuration: ConfigurationBase = None) -> None:
+    def __init__(self, configuration: UserApplicationConfiguration = None) -> None:
         """Constructor.
         """
         super().__init__()
@@ -462,7 +462,7 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         if configuration is not None:
             self.display(configuration)
 
-    def display(self, configuration: ConfigurationBase) -> None:
+    def display(self, configuration: UserApplicationConfiguration) -> None:
         """Display a given configuration.
         """
         # Keep a reference to the input configuration class so that we can return
@@ -470,7 +470,7 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         # proper class.
         self._config_class = configuration.__class__
         self._widget_dict = {}
-        for param in configuration.values():
+        for param in configuration.application_section().values():
             widget = self.__param_widget(param)
             self._widget_dict[widget.name] = widget
             self.layout().addWidget(widget)
@@ -487,14 +487,14 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         """
         args = param.name, param.intent, param.value, param.units, param.fmt
         kwargs = param.constraints
-        type_ = param.type_name
-        if type_ == 'bool':
+        type_ = param.type
+        if type_ == bool:
             return ParameterCheckBox(*args, **kwargs)
-        if type_ == 'int':
+        if type_ == int:
             return ParameterSpinBox(*args, **kwargs)
-        if type_ == 'float':
+        if type_ == float:
             return ParameterDoubleSpinBox(*args, **kwargs)
-        if type_ == 'str':
+        if type_ == str:
             if 'choices' in kwargs:
                 return ParameterComboBox(*args, **kwargs)
             return ParameterLineEdit(*args, **kwargs)
@@ -519,12 +519,12 @@ class ConfigurationWidget(QtWidgets.QGroupBox):
         # pylint: disable=invalid-name
         return QtCore.QSize(400, 400)
 
-    def current_configuration(self) -> ConfigurationBase:
+    def current_configuration(self) -> UserApplicationConfiguration:
         """Return the current configuration displayed in the widget.
         """
         configuration = self._config_class()
         for key, widget in self._widget_dict.items():
-            configuration.update_value(key, widget.current_value())
+            configuration.application_section().set_value(key, widget.current_value())
         return configuration
 
 
@@ -533,7 +533,7 @@ class ConfigurationDictWidget(QtWidgets.QWidget):
     """
     """
 
-    def __init__(self, configuration_dict: ConfigurationDict) -> None:
+    def __init__(self, configuration_dict: UserApplicationConfiguration) -> None:
         """Constructor.
         """
         super().__init__()
@@ -822,8 +822,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
         self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
-        self.add_tab(self.daq_configuration_widget, 'Settings')
+        #self.daq_configuration_widget = ConfigurationDictWidget(DaqConfigurationDict())
+        #self.add_tab(self.daq_configuration_widget, 'Settings')
         self.user_application_widget = ConfigurationWidget()
         self.add_tab(self.user_application_widget, 'User application', 'sensors')
         self.run_control = None
