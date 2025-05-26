@@ -27,7 +27,7 @@ from matplotlib.figure import Figure
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter
+from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -986,6 +986,16 @@ class MainWindow(QtWidgets.QMainWindow):
         # action on the run control side.
         self.control_bar.set_state(FsmState.STOPPED)
         self.control_bar.setup()
+
+    def current_configuration(self) -> UserApplicationConfiguration:
+        """Return the current user application configuration.
+        """
+        config = self._config_class()
+        config.overwrite_section(self.settings_widget.logging_widget.current_configuration_section())
+        config.overwrite_section(self.settings_widget.buffering_widget.current_configuration_section())
+        config.overwrite_section(self.settings_widget.multicast_widget.current_configuration_section())
+        config.overwrite_section(self.user_application_widget.current_configuration_section())
+        return config
 
     def set_run_control_running(self) -> None:
         """Custom slot to set the run control in the RUNNING state.
