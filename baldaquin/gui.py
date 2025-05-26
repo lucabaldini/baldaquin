@@ -534,6 +534,8 @@ class SettingsConfigurationWidget(QtWidgets.QWidget):
     """Composite widget to display the settings configuration.
     """
 
+    # pylint: disable=too-few-public-methods
+
     def __init__(self) -> None:
         """Constructor.
         """
@@ -991,10 +993,11 @@ class MainWindow(QtWidgets.QMainWindow):
         """Return the current user application configuration.
         """
         config = self._config_class()
-        config.overwrite_section(self.settings_widget.logging_widget.current_configuration_section())
-        config.overwrite_section(self.settings_widget.buffering_widget.current_configuration_section())
-        config.overwrite_section(self.settings_widget.multicast_widget.current_configuration_section())
-        config.overwrite_section(self.user_application_widget.current_configuration_section())
+        for section in (self.settings_widget.logging_widget.current_configuration_section(),
+                        self.settings_widget.buffering_widget.current_configuration_section(),
+                        self.settings_widget.multicast_widget.current_configuration_section(),
+                        self.user_application_widget.current_configuration_section()):
+            config.overwrite_section(section)
         return config
 
     def set_run_control_running(self) -> None:

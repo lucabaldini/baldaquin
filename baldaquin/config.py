@@ -329,7 +329,7 @@ class UserApplicationConfiguration(Configuration):
     def overwrite_section(self, section: ConfigurationSectionBase) -> None:
         """Overwrite a section in the configuration.
         """
-        if not section.TITLE in self:
+        if section.TITLE not in self:
             raise RuntimeError(f'Unknown section "{section.TITLE}" for '
                                f'{self.__class__.__name__}')
         self[section.TITLE] = section
