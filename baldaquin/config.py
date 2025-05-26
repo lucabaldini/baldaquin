@@ -309,7 +309,7 @@ class UserApplicationConfiguration(Configuration):
     """
 
     _USER_APPLICATION_SECTION_TITLE = 'User Application'
-    _PARAMETER_SPECS = None
+    _PARAMETER_SPECS = ()
 
     def __init__(self) -> None:
         """Constructor.
