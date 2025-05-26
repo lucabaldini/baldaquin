@@ -1008,9 +1008,7 @@ class MainWindow(QtWidgets.QMainWindow):
         in the GUI.
         """
         if self.run_control.is_stopped():
-            application_section = self.user_application_widget.current_configuration_section()
-            configuration = self._config_class()
-            configuration[application_section.TITLE] = application_section
+            configuration = self.current_configuration()
             self.run_control.configure_user_application(configuration)
         self.run_control.set_running()
 

@@ -27,7 +27,7 @@ from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.buf import CircularBuffer
-from baldaquin.config import ConfigurationBase
+from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
      InterruptMode
@@ -346,23 +346,23 @@ class PlasduinoDigitalEventHandler(PlasduinoEventHandlerBase):
         return self.serial_interface.read(DigitalTransition.size)
 
 
-class PlasduinoAnalogConfiguration(ConfigurationBase):
+class PlasduinoAnalogConfiguration(UserApplicationConfiguration):
 
     """User application configuration for plasduino analog applications.
     """
 
-    PARAMETER_SPECS = (
-        ('strip_chart_max_length', 'int', 200, 'Strip chart maximum length',
+    _PARAMETER_SPECS = (
+        ('strip_chart_max_length', int, 200, 'Strip chart maximum length',
             dict(min=10, max=1000000)),
     )
 
 
-class PlasduinoDigitalConfiguration(ConfigurationBase):
+class PlasduinoDigitalConfiguration(UserApplicationConfiguration):
 
     """User application configuration for plasduino digital applications.
     """
 
-    PARAMETER_SPECS = ()
+    _PARAMETER_SPECS = ()
 
 
 class PlasduinoUserApplicationBase(UserApplicationBase):
