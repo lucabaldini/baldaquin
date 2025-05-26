@@ -327,17 +327,17 @@ class UserApplicationConfiguration(Configuration):
         self.add_section(_UserApplicationConfigurationSection())
 
     def logging_section(self):
-        """
+        """Return the logging section of the configuration.
         """
         return self[LoggingConfigurationSection.TITLE]
 
     def buffering_section(self):
-        """
+        """Return the buffering section of the configuration.
         """
         return self[BufferingConfigurationSection.TITLE]
 
     def multicast_section(self):
-        """
+        """Return the multicast section of the configuration.
         """
         return self[MulticastConfigurationSection.TITLE]
 

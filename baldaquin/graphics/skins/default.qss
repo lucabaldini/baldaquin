@@ -7,37 +7,30 @@ QPushButton, QFrame {
   border: 1px solid lightgray;
 }
 
-
 QPushButton {
   border-radius: 20px;
 }
-
 
 QPushButton:hover {
   background-color: lightgray;
 }
 
-
 QPushButton:disabled {
 
 }
-
 
 QFrame {
   border-radius: 7px;
 }
 
-
 QLabel {
   border: none;
 }
-
 
 QLabel#data_widget_title {
   color: gray;
   font-size: 12px;
 }
-
 
 QLabel#data_widget_value {
   font-size: 18px;
@@ -54,4 +47,8 @@ QLineEdit#data_widget_value {
 
 QTabWidget {
   border: none;
+}
+
+QGroupBox#configuration_section_widget{
+  background-color: white;
 }

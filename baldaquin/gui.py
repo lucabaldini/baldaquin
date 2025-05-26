@@ -22,14 +22,12 @@ from pathlib import Path
 import sys
 from typing import Any
 
-import loguru
-from loguru import logger
 from matplotlib.figure import Figure
 
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
+from baldaquin.config import ConfigurationParameter
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -72,7 +70,7 @@ def stylesheet_file_path(name: str = 'default') -> Path:
 
 class Button(QtWidgets.QPushButton):
 
-    """Small wrapper aroung the QtWidgets.QPushButton class.
+    """Small wrapper around the QtWidgets.QPushButton class.
 
     Arguments
     ---------
@@ -454,11 +452,16 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
     :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
+    _WIDGET_NAME = 'configuration_section_widget'
+
     def __init__(self, configuration_section=None) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
+        self.setObjectName(self._WIDGET_NAME)
+        self._section_class = None
+        self._widget_dict = {}
         if configuration_section:
             self.display(configuration_section)
 
@@ -466,6 +469,7 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
         """Display a given configuration.
         """
         self._section_class = configuration_section.__class__
+        self.setTitle(configuration_section.TITLE)
         self._widget_dict = {}
         for param in configuration_section.values():
             widget = self.__param_widget(param)
@@ -525,9 +529,9 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
         return section
 
 
-class DaqConfigurationWidget(QtWidgets.QWidget):
+class SettingsConfigurationWidget(QtWidgets.QWidget):
 
-    """
+    """Composite widget to display the settings configuration.
     """
 
     def __init__(self) -> None:
@@ -537,6 +541,9 @@ class DaqConfigurationWidget(QtWidgets.QWidget):
         self.setLayout(QtWidgets.QGridLayout())
         self.layout().setColumnStretch(0, 1)
         self.layout().setColumnStretch(1, 1)
+        self.logging_widget = None
+        self.buffering_widget = None
+        self.multicast_widget = None
 
     def display(self, configuration) -> None:
         """Display a given configuration.
@@ -602,36 +609,6 @@ class PlotCanvasWidget(FigureCanvas):
         """
         self._update_timer.stop()
         self._update()
-
-
-class LoggerDisplay(QtWidgets.QTextEdit):
-
-    """Simple widget to display records from the application logger.
-
-    This is simply connecting a QTextEdit as a sink of the application-wide
-    logger, which is made possible by the aweseome loguru library.
-    """
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        logger.add(self.display)
-
-    def display(self, message: loguru._handler.Message) -> None:
-        """Display a single message.
-        """
-        record = message.record
-        # icon = record["level"].icon
-        text = f'[{record["time"]}] {record["message"]}\n'
-        self.insertPlainText(text)
-
-    @staticmethod
-    def sizeHint() -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        # pylint: disable=invalid-name
-        return QtCore.QSize(800, 400)
 
 
 class ControlBarIcon(Enum):
@@ -826,12 +803,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.setIconSize(self._TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
-        self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        self.settings_widget = DaqConfigurationWidget()
+        self.add_tab(self.event_handler_card, 'Event handler')
+        self.settings_widget = SettingsConfigurationWidget()
         self.add_tab(self.settings_widget, 'Settings')
         self.user_application_widget = ConfigurationSectionWidget()
-        self.add_tab(self.user_application_widget, 'User application', 'sensors')
+        self.add_tab(self.user_application_widget, 'User application')
         self.run_control = None
+        self._config_class = None
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Overloaded method to avoid closing the main GUI with the run control
@@ -924,11 +902,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_bar.set_running_triggered.connect(widget.start_updating)
         self.control_bar.set_stopped_triggered.connect(widget.stop_updating)
         return self.add_tab(widget, label, icon_name)
-
-    def add_logger_tab(self) -> LoggerDisplay:
-        """Add the default logger tab.
-        """
-        return self.add_tab(LoggerDisplay(), 'Logger', 'chat')
 
     def update_run_control_test_stand_id(self, test_stand_id: int) -> None:
         """Update the test stand ID in the run control card.
