@@ -97,7 +97,7 @@ class SillyEventHandler(EventHandlerBase):
     """
 
     BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=20, flush_size=10, flush_interval=2.)
+    BUFFER_KWARGS = dict(max_size=20, flush_size=10, flush_timeout=2.)
 
     def __init__(self):
         """Constructor.

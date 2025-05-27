@@ -210,7 +210,7 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
 
     # pylint: disable=abstract-method
     BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_interval=5.)
+    BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_timeout=5.)
     SKETCH_ID = None
     SKETCH_VERSION = None
 

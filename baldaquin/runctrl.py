@@ -633,6 +633,10 @@ class RunControlBase(FiniteStateMachineBase):
             self._log_file_handler_id = add_log_file(self.log_file_path(),
                                                      section.value('file_level'))
         logger.info('Configuring packet buffering...')
+        section = configuration.buffering_section()
+        flush_size = section.value('flush_size')
+        flush_timeout = section.value('flush_timeout')
+        self._user_application.event_handler.configure_buffer(flush_size, flush_timeout)
         configuration.save(self.config_file_path())
         # Configuration applied and written, we might move on.
         self.start_timestamp = self.timeline.latch()

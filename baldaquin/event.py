@@ -67,6 +67,11 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         self._statistics = PacketStatistics()
         self.__running = False
 
+    def configure_buffer(self, *args):
+        """Convenience method to configure the underlying buffer.
+        """
+        self._buffer.configure(*args)
+
     def statistics(self) -> PacketStatistics:
         """Return the underlying PacketStatistics object.
         """
