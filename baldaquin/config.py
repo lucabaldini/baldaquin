@@ -240,8 +240,6 @@ class BufferingConfigurationSection(ConfigurationSectionBase):
 
     TITLE = 'Buffering'
     _PARAMETER_SPECS = (
-        # It'd be nice to have a way to default max_size to None.
-        ('max_size', int, 1000000, 'Maximum buffer size', dict(min=1)),
         ('flush_size', int, 100, 'Flush size', dict(min=1)),
         ('flush_timeout', float, 10., 'Flush timeout', 's', '.3f', dict(min=1.))
     )

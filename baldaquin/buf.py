@@ -116,14 +116,10 @@ class AbstractBuffer(ABC):
 
     Arguments
     ---------
-    max_size : int
-        The maximum number of packets the buffer can physically contain.
-
     flush_size : int
         The maximum number of packets before a
         :meth:`flush_needed() <baldaquin.buf.AbstractBuffer.flush_needed()>`
-        call returns True (mind this should be smaller than ``max_size`` because
-        otherwise the buffer will generally drop packets).
+        call returns True.
 
     flush_interval : float
         The maximum time (in s) elapsed since the last
@@ -132,17 +128,20 @@ class AbstractBuffer(ABC):
         returns True.
     """
 
-    def __init__(self, max_size: int, flush_size: int, flush_interval: float) -> None:
+    def __init__(self, flush_size: int, flush_interval: float) -> None:
         """Constructor.
         """
-        if max_size is not None and flush_size is not None and max_size <= flush_size:
-            raise RuntimeError(f'Buffer physical size ({max_size}) <= flush size ({flush_size})')
-        self._max_size = max_size
         self._flush_size = flush_size
         self._flush_interval = flush_interval
         self._last_flush_time = time.time()
         self._primary_sink = None
         self._custom_sinks = []
+
+    def configure(self, flush_size: int = None, flush_interval: float = None) -> None:
+        """Configure the buffer parameters.
+        """
+        self._flush_size = flush_size
+        self._flush_interval = flush_interval
 
     def put(self, packet: AbstractPacket) -> None:
         """Put a packet into the buffer.
@@ -337,17 +336,14 @@ class FIFO(queue.Queue, AbstractBuffer):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, max_size: int = None, flush_size: int = None,
-                 flush_interval: float = 1.) -> None:
+    def __init__(self, flush_size: int = None, flush_interval: float = 1.) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
-        # upperbound limit on the number of items that can be placed in the queue.
+        # upper bound limit on the number of items that can be placed in the queue.
         # If maxsize is less than or equal to zero, the queue size is infinite.
-        if max_size is None:
-            max_size = -1
-        queue.Queue.__init__(self, max_size)
-        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
+        queue.Queue.__init__(self, -1)
+        AbstractBuffer.__init__(self, flush_size, flush_interval)
 
     def _do_put(self, packet: AbstractPacket, block: bool = True, timeout: float = None) -> None:
         """Overloaded method.
@@ -388,12 +384,11 @@ class CircularBuffer(collections.deque, AbstractBuffer):
     comes from https://stackoverflow.com/questions/4151320
     """
 
-    def __init__(self, max_size: int = None, flush_interval: float = 1.,
-                 flush_size: int = None) -> None:
+    def __init__(self, flush_size: int = None, flush_interval: float = 1.) -> None:
         """Constructor.
         """
-        collections.deque.__init__(self, [], max_size)
-        AbstractBuffer.__init__(self, max_size, flush_size, flush_interval)
+        collections.deque.__init__(self, [], None)
+        AbstractBuffer.__init__(self, flush_size, flush_interval)
 
     def _do_put(self, packet: AbstractPacket) -> None:
         """Overloaded method.
