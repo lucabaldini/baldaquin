@@ -536,24 +536,6 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
         return section
 
 
-class LoggingConfigurationSectionWidget(ConfigurationSectionWidget):
-
-    """Specialized widget to display the logging configuration section.
-    """
-
-    def display(self, configuration_section):
-        """Overloaded method.
-
-        Here we call the method of the base class and, in addition, we enable/disable
-        the combo box for the file logging level depending on whether file logging
-        is actually enable.
-        """
-        super().display(configuration_section)
-        check_box = self._widget_dict.get('file_enabled').value_widget
-        combo_box = self._widget_dict.get('file_level').value_widget
-        check_box.toggled.connect(combo_box.setEnabled)
-
-
 class SettingsConfigurationWidget(QtWidgets.QWidget):
 
     """Composite widget to display the settings configuration.
@@ -575,7 +557,7 @@ class SettingsConfigurationWidget(QtWidgets.QWidget):
     def display(self, configuration) -> None:
         """Display a given configuration.
         """
-        self.logging_widget = LoggingConfigurationSectionWidget(configuration.logging_section())
+        self.logging_widget = ConfigurationSectionWidget(configuration.logging_section())
         self.layout().addWidget(self.logging_widget, 0, 0)
         self.buffering_widget = ConfigurationSectionWidget(configuration.buffering_section())
         self.layout().addWidget(self.buffering_widget, 0, 1)

@@ -228,7 +228,6 @@ class LoggingConfigurationSection(ConfigurationSectionBase):
     _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
     _PARAMETER_SPECS = (
         ('terminal_level', str, 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
-        ('file_enabled', bool, True, 'Enable log file'),
         ('file_level', str, 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
     )
 

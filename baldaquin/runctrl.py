@@ -629,9 +629,7 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info('Configuring logging...')
         section = configuration.logging_section()
         reset_logger(section.value('terminal_level'))
-        if section.value('file_enabled'):
-            self._log_file_handler_id = add_log_file(self.log_file_path(),
-                                                     section.value('file_level'))
+        self._log_file_handler_id = add_log_file(self.log_file_path(), section.value('file_level'))
         logger.info('Configuring packet buffering...')
         section = configuration.buffering_section()
         flush_size = section.value('flush_size')
