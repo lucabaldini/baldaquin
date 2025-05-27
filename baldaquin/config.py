@@ -138,7 +138,7 @@ class ConfigurationParameter:
     def pretty_print(self) -> str:
         """Return a pretty-printed string representation of the parameter.
         """
-        text = f'{self.name:.<20} {self.formatted_value()}'
+        text = f'{self.name:.<30} {self.formatted_value()}'
         if self.units:
             text += f' {self.units}'
         return text
@@ -216,7 +216,7 @@ class ConfigurationSectionBase(dict):
         """String formatting.
         """
         data = ''.join(f'{param.pretty_print()}\n' for param in self.values())
-        return f'----------{self.TITLE:-<20}\n{data}'
+        return f'---------------{self.TITLE:-<25}\n{data}'
 
 
 class LoggingConfigurationSection(ConfigurationSectionBase):
