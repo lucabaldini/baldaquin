@@ -24,7 +24,6 @@ import time
 
 from baldaquin import silly
 from baldaquin.app import UserApplicationBase
-from baldaquin.buf import CircularBuffer
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.gui import MainWindow
 from baldaquin.event import EventHandlerBase
@@ -95,9 +94,6 @@ class SillyEventHandler(EventHandlerBase):
 
     """Silly event handler for testing purpose.
     """
-
-    BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=20, flush_size=10, flush_timeout=2.)
 
     def __init__(self):
         """Constructor.

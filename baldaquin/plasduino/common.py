@@ -26,7 +26,6 @@ from baldaquin import arduino_
 from baldaquin import logger
 from baldaquin import plasduino
 from baldaquin.app import UserApplicationBase
-from baldaquin.buf import CircularBuffer
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
 from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
@@ -209,8 +208,6 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
     """
 
     # pylint: disable=abstract-method
-    BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = dict(max_size=1000, flush_size=100, flush_timeout=5.)
     SKETCH_ID = None
     SKETCH_VERSION = None
 

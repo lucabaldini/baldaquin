@@ -39,7 +39,6 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
     """
 
     BUFFER_CLASS = CircularBuffer
-    BUFFER_KWARGS = {}
 
     output_file_set = QtCore.Signal(Path)
 
@@ -63,7 +62,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         # handler multiple times.
         self.setAutoDelete(False)
         # Create the event buffer.
-        self._buffer = self.BUFFER_CLASS(**self.BUFFER_KWARGS)
+        self._buffer = self.BUFFER_CLASS()
         self._statistics = PacketStatistics()
         self.__running = False
 
