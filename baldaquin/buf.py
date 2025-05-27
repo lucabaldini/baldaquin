@@ -338,7 +338,7 @@ class FIFO(queue.Queue, AbstractBuffer):
     difference would be, in a multi-threaded context.
     """
 
-    def __init__(self, flush_size: int = None, flush_timeout: float = 1.) -> None:
+    def __init__(self, flush_size: int = None, flush_timeout: float = 10.) -> None:
         """Constructor.
         """
         # From the stdlib documentation: maxsize is an integer that sets the
@@ -386,7 +386,7 @@ class CircularBuffer(collections.deque, AbstractBuffer):
     comes from https://stackoverflow.com/questions/4151320
     """
 
-    def __init__(self, flush_size: int = None, flush_timeout: float = 1.) -> None:
+    def __init__(self, flush_size: int = None, flush_timeout: float = 10.) -> None:
         """Constructor.
         """
         collections.deque.__init__(self, [], None)
