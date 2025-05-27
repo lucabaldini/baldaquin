@@ -125,9 +125,9 @@ def test_configuration():
     print(conf)
     file_path = BALDAQUIN_DATA / 'baldaquin.cfg'
     conf.save(file_path)
-    conf['Logging'].set_value('file_enabled', False)
+    conf['Logging'].set_value('terminal_level', 'CRITICAL')
     print(conf)
-    assert conf['Logging'].value('file_enabled') is False
+    assert conf['Logging'].value('terminal_level') == 'CRITICAL'
     conf.update_from_file(file_path)
     print(conf)
-    assert conf['Logging'].value('file_enabled') is True
+    assert conf['Logging'].value('terminal_level') == 'DEBUG'
