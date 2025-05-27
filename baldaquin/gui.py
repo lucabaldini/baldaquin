@@ -362,22 +362,26 @@ class ParameterCheckBox(DataWidgetBase):
 class ParameterSpinBox(DataWidgetBase):
 
     """Spin box data widget, mapping ``int`` input parameters.
+
+    There's a few interesting tweaks, here, that we have to take into account.
+    The minimum and maximum values that the widget can hold are defined by the
+    signature of the underlying C++ class, which is limited to a 32-bit unsigned
+    integers, that is [-2,147,483,648, 2,147,483,647], inclusive. Trying to set
+    a minimum/maximum value outside of this range will result in an OverflowError.
     """
 
     VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
+    _RANGE_MINIMUM = -2147483648
+    _RANGE_MAXIMUM = 2147483647
 
     def setup(self, **kwargs) -> None:
         """Overloaded method.
         """
+        self.value_widget.setMinimum(kwargs.get('min', self._RANGE_MINIMUM))
+        self.value_widget.setMaximum(kwargs.get('max', self._RANGE_MAXIMUM))
+        self.value_widget.setSingleStep(kwargs.get('step', 1))
         if self._units is not None:
             self.value_widget.setSuffix(f' {self._units}')
-        for key, value in kwargs.items():
-            if key == 'min':
-                self.value_widget.setMinimum(value)
-            elif key == 'max':
-                self.value_widget.setMaximum(value)
-            elif key == 'step':
-                self.value_widget.setSingleStep(value)
 
     def current_value(self) -> int:
         """Overloaded method.
@@ -387,6 +391,9 @@ class ParameterSpinBox(DataWidgetBase):
     def set_value(self, value) -> None:
         """Overloaded method.
         """
+        if value < self._RANGE_MINIMUM or value > self._RANGE_MAXIMUM:
+            raise OverflowError(f'Value {value} is outside of allowed range for '
+                                f'{self.__class__.__name__} ')
         self.value_widget.setValue(value)
 
 
