@@ -59,11 +59,15 @@ class ConfigurationParameter:
         A dictionary containing optional specifications on the parameter value.
     """
 
+    # Do not remove the following comments, they are used by sphinx to generate the
+    # documentation, see https://stackoverflow.com/questions/31561895
+    # Start definition of valid constraints.
     _VALID_CONSTRAINTS = {
         int: ('choices', 'step', 'min', 'max'),
         float: ('min', 'max'),
         str: ('choices',)
     }
+    # End definition of valid constraints.
 
     def __init__(self, name: str, type_: type, value: Any, intent: str,
                  units: str = None, fmt: None = None, **constraints) -> None:
@@ -130,6 +134,14 @@ class ConfigurationParameter:
         if self.fmt is None:
             return f'{self.value}'
         return f'{self.value:{self.fmt}}'
+
+    def pretty_print(self) -> str:
+        """Return a pretty-printed string representation of the parameter.
+        """
+        text = f'{self.name:.<20} {self.formatted_value()}'
+        if self.units:
+            text += f' {self.units}'
+        return text
 
     def __str__(self):
         """String formatting.
@@ -203,8 +215,49 @@ class ConfigurationSectionBase(dict):
     def __str__(self) -> str:
         """String formatting.
         """
-        data = ''.join(f'{param.name:.<20}{param.formatted_value()}\n' for param in self.values())
-        return f'{self.TITLE}\n{data}'
+        data = ''.join(f'{param.pretty_print()}\n' for param in self.values())
+        return f'----------{self.TITLE:-<20}\n{data}'
+
+
+class LoggingConfigurationSection(ConfigurationSectionBase):
+
+    """Configuration section for the logging.
+    """
+
+    TITLE = 'Logging'
+    _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
+    _PARAMETER_SPECS = (
+        ('terminal_level', str, 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
+        ('file_enabled', bool, True, 'Enable log file'),
+        ('file_level', str, 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
+    )
+
+
+class BufferingConfigurationSection(ConfigurationSectionBase):
+
+    """Configuration section for the packet buffering.
+    """
+
+    TITLE = 'Buffering'
+    _PARAMETER_SPECS = (
+        # It'd be nice to have a way to default max_size to None.
+        ('max_size', int, 1000000, 'Maximum buffer size', dict(min=1)),
+        ('flush_size', int, 100, 'Flush size', dict(min=1)),
+        ('flush_timeout', float, 10., 'Flush timeout', 's', '.3f', dict(min=1.))
+    )
+
+
+class MulticastConfigurationSection(ConfigurationSectionBase):
+
+    """Configuration section for the packet multicasting.
+    """
+
+    TITLE = 'Multicast'
+    _PARAMETER_SPECS = (
+        ('enabled', bool, False, 'Enable multicast'),
+        ('ip_address', str, '127.0.0.1', 'IP address'),
+        ('port', int, 20004, 'Port', dict(min=1024, max=65535))
+    )
 
 
 class Configuration(dict):
@@ -259,48 +312,8 @@ class Configuration(dict):
     def __str__(self):
         """String formatting.
         """
-        return self.to_json()
-
-
-class LoggingConfigurationSection(ConfigurationSectionBase):
-
-    """Configuration section for the logging.
-    """
-
-    TITLE = 'Logging'
-    _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
-    _PARAMETER_SPECS = (
-        ('terminal_level', str, 'INFO', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
-        ('file_enabled', bool, True, 'Enable log file'),
-        ('file_level', str, 'INFO', 'File logging level', dict(choices=_LOGGING_LEVELS))
-    )
-
-
-class BufferingConfigurationSection(ConfigurationSectionBase):
-
-    """Configuration section for the packet buffering.
-    """
-
-    TITLE = 'Buffering'
-    _PARAMETER_SPECS = (
-        # It'd be nice to have a way to default max_size to None.
-        ('max_size', int, 1000000, 'Maximum buffer size', dict(min=1)),
-        ('flush_size', int, 100, 'Flush size', dict(min=1)),
-        ('flush_timeout', float, 10., 'Flush timeout', 's', '.3f', dict(min=1.))
-    )
-
-
-class MulticastConfigurationSection(ConfigurationSectionBase):
-
-    """Configuration section for the packet multicasting.
-    """
-
-    TITLE = 'Multicast'
-    _PARAMETER_SPECS = (
-        ('enabled', bool, False, 'Enable multicast'),
-        ('ip_address', str, '127.0.0.1', 'IP address'),
-        ('port', int, 20004, 'Port', dict(min=1024, max=65535))
-    )
+        text = ''.join(f'{section}' for section in self.values())
+        return text
 
 
 class UserApplicationConfiguration(Configuration):
