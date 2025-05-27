@@ -19,8 +19,7 @@
 from loguru import logger
 
 from baldaquin.__qt__ import exec_qapp
-from baldaquin.gui import ConfigurationSectionWidget, RunControlCardField, \
-     MainWindow, bootstrap_window
+from baldaquin.gui import RunControlCardField, MainWindow, bootstrap_window
 
 
 def _test_main_window():
