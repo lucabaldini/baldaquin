@@ -313,7 +313,7 @@ class Configuration(dict):
         """String formatting.
         """
         text = ''.join(f'{section}' for section in self.values())
-        return text
+        return text.strip('\n')
 
 
 class UserApplicationConfiguration(Configuration):
