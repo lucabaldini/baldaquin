@@ -4,6 +4,8 @@ Release notes
 =============
 
 
+*baldaquin 0.6.0 (Wed, 28 May 2025 11:03:01 +0200)*
+
 * Major restructuring of the configuration facilities, which are now multi-section.
 * Logging and buffering configuration controlled from the main window.
 * Configuration update from file now resilient to format changes.
