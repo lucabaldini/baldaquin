@@ -6,6 +6,7 @@ Release notes
 
 * Major restructuring of the configuration facilities, which are now multi-section.
 * Logging and buffering configuration controlled from the main window.
+* Configuration update from file now resilient to format changes.
 * Fix for some funky behavior of the ParameterSpinBox class.
 * Minor refactoring of the buffer classes, which are now always unbounded.
 * Minor plasduino cleanup.
@@ -24,6 +25,7 @@ Release notes
       * https://github.com/lucabaldini/baldaquin/issues/54
       * https://github.com/lucabaldini/baldaquin/issues/56
       * https://github.com/lucabaldini/baldaquin/issues/57
+      * https://github.com/lucabaldini/baldaquin/issues/64
       * https://github.com/lucabaldini/baldaquin/issues/64
 
 

@@ -16,10 +16,12 @@
 """Configuration facilities.
 """
 
+import datetime
 import json
+from pathlib import Path
 from typing import Any
 
-from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
+from baldaquin import logger, DEFAULT_CHARACTER_ENCODING, BALDAQUIN_DATA
 
 
 class ConfigurationParameter:
@@ -284,20 +286,46 @@ class Configuration(dict):
 
     def update_from_file(self, file_path: str) -> None:
         """Update the configuration dictionary from a JSON file.
+
+        Note we try and catch here all the possible exceptions while updating a
+        file, and if anything happens during the update we create a timestamped
+        copy of the original file so that the thing can be debugged at later time.
+        The contract is that the update always proceeds to the end, and all the
+        fields that can be legitimately updated get indeed updated.
         """
         logger.info(f'Updating configuration from {file_path}...')
         with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             data = json.load(input_file)
+        errors = False
         for title, section_data in data.items():
-            section = self[title]
+            try:
+                section = self[title]
+            except KeyError:
+                logger.warning(f'Unknown configuration section "{title}"')
+                errors = True
+                continue
             for parameter_name, value in section_data.items():
-                section.set_value(parameter_name, value)
+                try:
+                    section.set_value(parameter_name, value)
+                except RuntimeError as exc:
+                    logger.warning(exc)
+                    errors = True
+        if errors:
+            timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')
+            file_name = f'{Path(file_path).name}.backup.{timestamp}'
+            dest = BALDAQUIN_DATA / file_name
+            logger.warning(f'Error(s) during update, copying original file to {dest}...')
 
-    def to_json(self) -> str:
+    def as_dict(self) -> dict:
+        """Return a view on the configuration in the form of a dictionary that
+        can be used for serialization.
+        """
+        return {title: section.as_dict() for title, section in self.items()}
+
+    def to_json(self, indent: int = 4) -> str:
         """Encode the configuration into JSON to be written to file.
         """
-        data = {title: section.as_dict() for title, section in self.items()}
-        return json.dumps(data, indent=4)
+        return json.dumps(self.as_dict(), indent=indent)
 
     def save(self, file_path: str) -> None:
         """Dump the configuration dictionary to a JSON file.

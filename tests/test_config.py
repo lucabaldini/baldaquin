@@ -16,9 +16,11 @@
 """Test suite for config.py
 """
 
+import json
+
 import pytest
 
-from baldaquin import logger
+from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
 from baldaquin import BALDAQUIN_DATA
 from baldaquin import config
 
@@ -118,7 +120,7 @@ def test_configuration_sections():
     print(section)
 
 
-def test_configuration():
+def test_application_configuration():
     """Test on the basic baldaquin configuration.
     """
     conf = config.UserApplicationConfiguration()
@@ -131,3 +133,35 @@ def test_configuration():
     conf.update_from_file(file_path)
     print(conf)
     assert conf['Logging'].value('terminal_level') == 'DEBUG'
+
+
+def _write_configuration_dict(file_path: str, data: dict) -> None:
+    """Utility function to write a configuration dictionary to disk.
+    """
+    logger.info(f'Writing configuration dictionary to {file_path}...')
+    logger.info(data)
+    with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+        output_file.write(json.dumps(data, indent=4))
+
+
+def test_resilience():
+    """Test the resilience of the configuration mechanism to format changes.
+    """
+    conf = config.UserApplicationConfiguration()
+    print(conf)
+    file_path = BALDAQUIN_DATA / 'resilience.cfg'
+    # Add an unknown section.
+    data = conf.as_dict()
+    data['Fake'] = {'fake_field': 3}
+    _write_configuration_dict(file_path, data)
+    conf.update_from_file(file_path)
+    # Add an unknown field in a legitimate section.
+    data = conf.as_dict()
+    data['Logging'] = {'fake_field': 3}
+    _write_configuration_dict(file_path, data)
+    conf.update_from_file(file_path)
+    # Set a wrong value for a legitimate parameter.
+    data = conf.as_dict()
+    data['Logging'] = {'terminal_level': 'FAKE'}
+    _write_configuration_dict(file_path, data)
+    conf.update_from_file(file_path)
