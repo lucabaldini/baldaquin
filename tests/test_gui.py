@@ -19,17 +19,13 @@
 from loguru import logger
 
 from baldaquin.__qt__ import exec_qapp
-from baldaquin.config import SampleConfiguration
-from baldaquin.gui import ConfigurationWidget, RunControlCardField, MainWindow, bootstrap_window
+from baldaquin.gui import RunControlCardField, MainWindow, bootstrap_window
 
 
 def _test_main_window():
     """Create a test window to display a the relevant graphical elements.
     """
     app, window = bootstrap_window(MainWindow)
-    config_widget = ConfigurationWidget(SampleConfiguration())
-    window.add_tab(config_widget, 'Monitor', 'hub')
-    window.add_logger_tab()
     # Interact with the widgets a little bit...
     logger.info('Howdy, partner?')
     window.run_control_card.set(RunControlCardField.UPTIME, 12.)

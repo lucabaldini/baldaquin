@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2023 the baldaquin team.
+# Copyright (C) 2022--2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,14 +22,12 @@ from pathlib import Path
 import sys
 from typing import Any
 
-import loguru
-from loguru import logger
 from matplotlib.figure import Figure
 
 from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, ConfigurationBase
+from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
@@ -72,7 +70,7 @@ def stylesheet_file_path(name: str = 'default') -> Path:
 
 class Button(QtWidgets.QPushButton):
 
-    """Small wrapper aroung the QtWidgets.QPushButton class.
+    """Small wrapper around the QtWidgets.QPushButton class.
 
     Arguments
     ---------
@@ -140,7 +138,7 @@ class DataWidgetBase(QtWidgets.QWidget):
     TITLE_WIDGET_NAME = 'data_widget_title'
     VALUE_WIDGET_NAME = 'data_widget_value'
     MISSING_VALUE_LABEL = '-'
-    VALUE_WIDGET_HEIGHT = 30
+    VALUE_WIDGET_HEIGHT = 28
 
     def __init__(self, name: str, title: str = None, value=None, units: str = None,
                  fmt: str = None, **kwargs) -> None:
@@ -364,22 +362,26 @@ class ParameterCheckBox(DataWidgetBase):
 class ParameterSpinBox(DataWidgetBase):
 
     """Spin box data widget, mapping ``int`` input parameters.
+
+    There's a few interesting tweaks, here, that we have to take into account.
+    The minimum and maximum values that the widget can hold are defined by the
+    signature of the underlying C++ class, which is limited to a 32-bit unsigned
+    integers, that is [-2,147,483,648, 2,147,483,647], inclusive. Trying to set
+    a minimum/maximum value outside of this range will result in an OverflowError.
     """
 
     VALUE_WIDGET_CLASS = QtWidgets.QSpinBox
+    _RANGE_MINIMUM = -2147483648
+    _RANGE_MAXIMUM = 2147483647
 
     def setup(self, **kwargs) -> None:
         """Overloaded method.
         """
+        self.value_widget.setMinimum(kwargs.get('min', self._RANGE_MINIMUM))
+        self.value_widget.setMaximum(kwargs.get('max', self._RANGE_MAXIMUM))
+        self.value_widget.setSingleStep(kwargs.get('step', 1))
         if self._units is not None:
             self.value_widget.setSuffix(f' {self._units}')
-        for key, value in kwargs.items():
-            if key == 'min':
-                self.value_widget.setMinimum(value)
-            elif key == 'max':
-                self.value_widget.setMaximum(value)
-            elif key == 'step':
-                self.value_widget.setSingleStep(value)
 
     def current_value(self) -> int:
         """Overloaded method.
@@ -389,6 +391,9 @@ class ParameterSpinBox(DataWidgetBase):
     def set_value(self, value) -> None:
         """Overloaded method.
         """
+        if value < self._RANGE_MINIMUM or value > self._RANGE_MAXIMUM:
+            raise OverflowError(f'Value {value} is outside of allowed range for '
+                                f'{self.__class__.__name__} ')
         self.value_widget.setValue(value)
 
 
@@ -448,29 +453,32 @@ class ParameterComboBox(DataWidgetBase):
         self.value_widget.setCurrentIndex(self.value_widget.findText(value))
 
 
-class ConfigurationWidget(QtWidgets.QWidget):
+class ConfigurationSectionWidget(QtWidgets.QGroupBox):
 
     """Basic widget to display and edit an instance of a
-    :class:`baldaquin.config.ConfigurationBase` subclass.
+    :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
-    def __init__(self, configuration: ConfigurationBase = None) -> None:
+    _WIDGET_NAME = 'configuration_section_widget'
+
+    def __init__(self, configuration_section=None) -> None:
         """Constructor.
         """
         super().__init__()
         self.setLayout(QtWidgets.QVBoxLayout())
-        if configuration is not None:
-            self.display(configuration)
+        self.setObjectName(self._WIDGET_NAME)
+        self._section_class = None
+        self._widget_dict = {}
+        if configuration_section:
+            self.display(configuration_section)
 
-    def display(self, configuration: ConfigurationBase) -> None:
+    def display(self, configuration_section) -> None:
         """Display a given configuration.
         """
-        # Keep a reference to the input configuration class so that we can return
-        # the current (possibly modified) configuration as an instance of the
-        # proper class.
-        self._config_class = configuration.__class__
+        self._section_class = configuration_section.__class__
+        self.setTitle(configuration_section.TITLE)
         self._widget_dict = {}
-        for param in configuration.values():
+        for param in configuration_section.values():
             widget = self.__param_widget(param)
             self._widget_dict[widget.name] = widget
             self.layout().addWidget(widget)
@@ -487,14 +495,14 @@ class ConfigurationWidget(QtWidgets.QWidget):
         """
         args = param.name, param.intent, param.value, param.units, param.fmt
         kwargs = param.constraints
-        type_ = param.type_name
-        if type_ == 'bool':
+        type_ = param.type
+        if type_ is bool:
             return ParameterCheckBox(*args, **kwargs)
-        if type_ == 'int':
+        if type_ is int:
             return ParameterSpinBox(*args, **kwargs)
-        if type_ == 'float':
+        if type_ is float:
             return ParameterDoubleSpinBox(*args, **kwargs)
-        if type_ == 'str':
+        if type_ is str:
             if 'choices' in kwargs:
                 return ParameterComboBox(*args, **kwargs)
             return ParameterLineEdit(*args, **kwargs)
@@ -519,13 +527,44 @@ class ConfigurationWidget(QtWidgets.QWidget):
         # pylint: disable=invalid-name
         return QtCore.QSize(400, 400)
 
-    def current_configuration(self) -> ConfigurationBase:
+    def current_configuration_section(self):
         """Return the current configuration displayed in the widget.
         """
-        configuration = self._config_class()
+        section = self._section_class()
         for key, widget in self._widget_dict.items():
-            configuration.update_value(key, widget.current_value())
-        return configuration
+            section.set_value(key, widget.current_value())
+        return section
+
+
+class SettingsConfigurationWidget(QtWidgets.QWidget):
+
+    """Composite widget to display the settings configuration.
+    """
+
+    # pylint: disable=too-few-public-methods
+
+    def __init__(self) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.setLayout(QtWidgets.QGridLayout())
+        self.layout().setColumnStretch(0, 1)
+        self.layout().setColumnStretch(1, 1)
+        self.logging_widget = None
+        self.buffering_widget = None
+        self.multicast_widget = None
+
+    def display(self, configuration) -> None:
+        """Display a given configuration.
+        """
+        self.logging_widget = ConfigurationSectionWidget(configuration.logging_section())
+        self.layout().addWidget(self.logging_widget, 0, 0)
+        self.buffering_widget = ConfigurationSectionWidget(configuration.buffering_section())
+        self.layout().addWidget(self.buffering_widget, 0, 1)
+        self.multicast_widget = ConfigurationSectionWidget(configuration.multicast_section())
+        self.layout().addWidget(self.multicast_widget, 1, 0)
+        # This is disabled until we have a proper multicast functionality in place.
+        self.multicast_widget.setEnabled(False)
 
 
 class PlotCanvasWidget(FigureCanvas):
@@ -581,36 +620,6 @@ class PlotCanvasWidget(FigureCanvas):
         """
         self._update_timer.stop()
         self._update()
-
-
-class LoggerDisplay(QtWidgets.QTextEdit):
-
-    """Simple widget to display records from the application logger.
-
-    This is simply connecting a QTextEdit as a sink of the application-wide
-    logger, which is made possible by the aweseome loguru library.
-    """
-
-    def __init__(self) -> None:
-        """Constructor.
-        """
-        super().__init__()
-        logger.add(self.display)
-
-    def display(self, message: loguru._handler.Message) -> None:
-        """Display a single message.
-        """
-        record = message.record
-        # icon = record["level"].icon
-        text = f'[{record["time"]}] {record["message"]}\n'
-        self.insertPlainText(text)
-
-    @staticmethod
-    def sizeHint() -> QtCore.QSize:
-        """Overloaded method defining the default size.
-        """
-        # pylint: disable=invalid-name
-        return QtCore.QSize(800, 400)
 
 
 class ControlBarIcon(Enum):
@@ -755,7 +764,7 @@ class SimpleControlBar(ControlBar):
     pause the system---all we can do is to start and stop the data acquisition.
 
     .. warning::
-        This has not been throroughly tested, and this derived class is still
+        This has not been thoroughly tested, and this derived class is still
         inheriting all the complex logic of its base class, but I do think that
         just re-implementing these two methods will do the trick.
     """
@@ -801,14 +810,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control_card.set(RunControlCardField.PROJECT_NAME, self._PROJECT_NAME)
         self.add_widget(self.run_control_card, 0, 0)
         self.tab_widget = QtWidgets.QTabWidget()
-        # tab.setTabPosition(tab.TabPosition.West)
+        # self.tab_widget.setTabPosition(self.tab_widget.TabPosition.West)
         self.tab_widget.setIconSize(self._TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
-        self.add_tab(self.event_handler_card, 'Event handler', 'share')
-        self.user_application_widget = ConfigurationWidget()
-        self.add_tab(self.user_application_widget, 'User application', 'sensors')
+        self.add_tab(self.event_handler_card, 'Event handler')
+        self.settings_widget = SettingsConfigurationWidget()
+        self.add_tab(self.settings_widget, 'Settings')
+        self.user_application_widget = ConfigurationSectionWidget()
+        self.add_tab(self.user_application_widget, 'User application')
         self.run_control = None
+        self._config_class = None
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Overloaded method to avoid closing the main GUI with the run control
@@ -902,11 +914,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_bar.set_stopped_triggered.connect(widget.stop_updating)
         return self.add_tab(widget, label, icon_name)
 
-    def add_logger_tab(self) -> LoggerDisplay:
-        """Add the default logger tab.
-        """
-        return self.add_tab(LoggerDisplay(), 'Logger', 'chat')
-
     def update_run_control_test_stand_id(self, test_stand_id: int) -> None:
         """Update the test stand ID in the run control card.
         """
@@ -976,7 +983,12 @@ class MainWindow(QtWidgets.QMainWindow):
         buffer_class = user_application.event_handler.BUFFER_CLASS.__name__
         self.event_handler_card.set(EventHandlerCardField.BUFFER_CLASS, buffer_class)
         # Display the application configuration.
-        self.user_application_widget.display(user_application.configuration)
+        # Keep a reference to the input configuration class so that we can return
+        # the current (possibly modified) configuration as an instance of the
+        # proper class.
+        self._config_class = user_application.configuration.__class__
+        self.settings_widget.display(user_application.configuration)
+        self.user_application_widget.display(user_application.configuration.application_section())
         # Connect the necessary signal for keeping the thing in synch.
         user_application.event_handler.output_file_set.connect(
             self.update_event_handler_output_file)
@@ -986,6 +998,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_bar.set_state(FsmState.STOPPED)
         self.control_bar.setup()
 
+    def current_configuration(self) -> UserApplicationConfiguration:
+        """Return the current user application configuration.
+        """
+        config = self._config_class()
+        for section in (self.settings_widget.logging_widget.current_configuration_section(),
+                        self.settings_widget.buffering_widget.current_configuration_section(),
+                        self.settings_widget.multicast_widget.current_configuration_section(),
+                        self.user_application_widget.current_configuration_section()):
+            config.overwrite_section(section)
+        return config
+
     def set_run_control_running(self) -> None:
         """Custom slot to set the run control in the RUNNING state.
 
@@ -994,7 +1017,7 @@ class MainWindow(QtWidgets.QMainWindow):
         in the GUI.
         """
         if self.run_control.is_stopped():
-            configuration = self.user_application_widget.current_configuration()
+            configuration = self.current_configuration()
             self.run_control.configure_user_application(configuration)
         self.run_control.set_running()
 

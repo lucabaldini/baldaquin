@@ -61,12 +61,12 @@ More specifically:
   :meth:`flush() <baldaquin.buf.BufferBase.flush()>` call;
 * :meth:`flush_needed() <baldaquin.buf.BufferBase.flush_needed()>` returns ``True``
   when either the buffer is almost full or the time since the last flush
-  exceeds the ``flush_interval`` value passed to the constructor.
+  exceeds the ``flush_timeout`` value passed to the constructor.
 
-By using the proper combination of ``flush_size`` and ``flush_interval`` it is
+By using the proper combination of ``flush_size`` and ``flush_timeout`` it is
 possible to achieve different effects, e.g., if ``flush_size`` is ``None``, then
 the I/O will effectively happen at regular time intervals, according to the
-``flush_interval`` value.
+``flush_timeout`` value.
 
 
 Sinks

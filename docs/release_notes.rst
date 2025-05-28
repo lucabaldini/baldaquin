@@ -4,6 +4,11 @@ Release notes
 =============
 
 
+* Major restructuring of the configuration facilities, which are now multi-section.
+* Logging and buffering configuration controlled from the main window.
+* Configuration update from file now resilient to format changes.
+* Fix for some funky behavior of the ParameterSpinBox class.
+* Minor refactoring of the buffer classes, which are now always unbounded.
 * Minor plasduino cleanup.
 * New TextLine class and associated text serial communication protocol.
 * New compilation and upload scheme for the arduino sketeches and associated artifacts.
@@ -15,8 +20,13 @@ Release notes
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/61
       * https://github.com/lucabaldini/baldaquin/pull/62
+      * https://github.com/lucabaldini/baldaquin/pull/66
 * Issue(s) closed
       * https://github.com/lucabaldini/baldaquin/issues/54
+      * https://github.com/lucabaldini/baldaquin/issues/56
+      * https://github.com/lucabaldini/baldaquin/issues/57
+      * https://github.com/lucabaldini/baldaquin/issues/64
+      * https://github.com/lucabaldini/baldaquin/issues/64
 
 
 *baldaquin 0.5.0 (Mon, 19 May 2025 09:29:50 +0200)*

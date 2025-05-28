@@ -22,13 +22,12 @@ from enum import Enum
 import json
 from pathlib import Path
 
-from loguru import logger
-
 from baldaquin import __version__, DEFAULT_CHARACTER_ENCODING
+from baldaquin import logger, reset_logger, add_log_file
 from baldaquin.__qt__ import QtCore
 from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationBase
+from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import PacketStatistics
 from baldaquin.timeline import Timeline, Timestamp
 
@@ -595,11 +594,11 @@ class RunControlBase(FiniteStateMachineBase):
         if self._user_application is None:
             raise AppNotLoadedError
 
-    def configure_user_application(self, configuration: ConfigurationBase) -> None:
+    def configure_user_application(self, configuration: UserApplicationConfiguration) -> None:
         """Apply a given configuration to the current user application.
         """
         self._check_user_application()
-        logger.info(f'Configuring user application...\n{configuration}')
+        logger.info('Configuring user application...')
         self._user_application.apply_configuration(configuration)
 
     def setup(self) -> None:
@@ -617,11 +616,27 @@ class RunControlBase(FiniteStateMachineBase):
     def start_run(self) -> None:
         """Overloaded method.
         """
+        # Note that configure_user_application() has been called before this.
+        # We should think carefully about whether we're doing the right thing...
         self._check_user_application()
         self._increment_run_id()
         self._create_data_folder()
-        self._user_application.configuration.save(self.config_file_path())
-        self._log_file_handler_id = logger.add(self.log_file_path())
+        # Apply all the necessary configurations. Note this needs to happen after
+        # the run ID has been incremented, so that the log file points to the
+        # right place.
+        configuration = self._user_application.configuration
+        logger.info(f'Applying configuration...\n{configuration}')
+        logger.info('Configuring logging...')
+        section = configuration.logging_section()
+        reset_logger(section.value('terminal_level'))
+        self._log_file_handler_id = add_log_file(self.log_file_path(), section.value('file_level'))
+        logger.info('Configuring packet buffering...')
+        section = configuration.buffering_section()
+        flush_size = section.value('flush_size')
+        flush_timeout = section.value('flush_timeout')
+        self._user_application.event_handler.configure_buffer(flush_size, flush_timeout)
+        configuration.save(self.config_file_path())
+        # Configuration applied and written, we might move on.
         self.start_timestamp = self.timeline.latch()
         self.stop_timestamp = None
         logger.info(f'Run Control started on {self.start_timestamp}')
@@ -641,7 +656,8 @@ class RunControlBase(FiniteStateMachineBase):
         self.stop_timestamp = self.timeline.latch()
         logger.info(f'Run Control stopped on {self.stop_timestamp}')
         logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
-        logger.remove(self._log_file_handler_id)
+        if self._log_file_handler_id is not None:
+            logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
         self.write_run_report()
         self.update_stats()
