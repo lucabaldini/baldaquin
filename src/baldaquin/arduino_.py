@@ -18,17 +18,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import os
 import shutil
 import subprocess
+from dataclasses import dataclass
 
-from baldaquin import logger
-from baldaquin import execute_shell_command
+from baldaquin import execute_shell_command, logger
 from baldaquin.event import EventHandlerBase
 from baldaquin.pkt import AbstractPacket
-from baldaquin.serial_ import SerialInterface, DeviceId, PortInfo, list_com_ports
-
+from baldaquin.serial_ import DeviceId, PortInfo, SerialInterface, list_com_ports
 
 # Initialize the necessary dictionaries to retrieve the boards by device_id or
 # designator---these will act as two small databases helping accessing board
@@ -320,7 +318,7 @@ class ArduinoProgrammingInterfaceBase:
             logger.error(f'Please make sure {cls.PROGRAM_NAME} is properly installed.')
             if cls.PROGRAM_URL is not None:
                 logger.error(f'See {cls.PROGRAM_URL} for more details.')
-            raise RuntimeError(f'{cls.PROGRAM_NAME} not found')
+            raise RuntimeError(f'{cls.PROGRAM_NAME} not found') # noqa B904
         return status
 
     @staticmethod

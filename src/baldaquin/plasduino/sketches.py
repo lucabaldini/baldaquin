@@ -21,7 +21,6 @@ from pathlib import Path
 from baldaquin import BALDAQUIN_ROOT
 from baldaquin.plasduino import PROJECT_NAME
 
-
 PLASDUINO_SKETCH_ROOT = BALDAQUIN_ROOT / PROJECT_NAME / 'sketches'
 
 # Dictionary holding the correspondence between the (sketch_id, sketch_version)

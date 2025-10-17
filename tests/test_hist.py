@@ -21,12 +21,14 @@ import numpy as np
 from baldaquin.hist import Histogram1d
 from baldaquin.plt_ import plt
 
+_RNG = np.random.default_rng(313)
+
 
 def test_hist1d(size=1000000, mean=10., sigma=2.):
     """A few tests for one-dimensional histograms.
     """
     binning = np.linspace(mean - 5. * sigma, mean + 5. * sigma, 100)
-    x = np.random.normal(mean, sigma, size)
+    x = _RNG.normal(mean, sigma, size)
     h = Histogram1d(binning, xlabel='x').fill(x)
     # Test that the histogram statistics is providing sensible values.
     # Note that the limits for the test, here, are purely heuristic---we should

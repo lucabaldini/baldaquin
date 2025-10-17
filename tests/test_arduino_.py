@@ -18,10 +18,8 @@
 
 import pytest
 
-from baldaquin import logger, BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA
-from baldaquin import arduino_
+from baldaquin import BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA, arduino_, logger
 from baldaquin.serial_ import DeviceId
-
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
             (0x2341, 0x0243), (0x2341, 0x006A))

@@ -18,8 +18,7 @@
 
 import pytest
 
-from baldaquin import logger
-from baldaquin import serial_
+from baldaquin import logger, serial_
 
 
 def test_device_id(pid: int = 0x0043, vid: int = 0x2341) -> None:

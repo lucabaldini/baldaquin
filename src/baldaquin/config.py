@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from baldaquin import logger, DEFAULT_CHARACTER_ENCODING, BALDAQUIN_DATA
+from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, logger
 
 
 class ConfigurationParameter:
@@ -294,7 +294,7 @@ class Configuration(dict):
         fields that can be legitimately updated get indeed updated.
         """
         logger.info(f'Updating configuration from {file_path}...')
-        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+        with open(file_path, encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             data = json.load(input_file)
         errors = False
         for title, section_data in data.items():
@@ -307,7 +307,7 @@ class Configuration(dict):
             for parameter_name, value in section_data.items():
                 try:
                     section.set_value(parameter_name, value)
-                except RuntimeError as exc:
+                except RuntimeError as exc: # noqa: PERF203
                     logger.warning(exc)
                     errors = True
         if errors:

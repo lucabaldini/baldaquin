@@ -20,7 +20,6 @@ from pathlib import Path
 
 from baldaquin import setup_project
 
-
 PROJECT_NAME = 'xnucleo'
 
 XNUCLEO_CONFIG, XNUCLEO_APP_CONFIG, XNUCLEO_DATA = setup_project(PROJECT_NAME)

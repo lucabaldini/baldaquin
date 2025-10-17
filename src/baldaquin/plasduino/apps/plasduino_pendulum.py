@@ -18,18 +18,21 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import inspect
+from dataclasses import dataclass
 from pathlib import Path
 
-from baldaquin import logger
-from baldaquin import plasduino
+from baldaquin import logger, plasduino
 from baldaquin.buf import WriteMode
-from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import AbstractPacket, PacketFile, Edge
+from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
+from baldaquin.pkt import AbstractPacket, Edge, PacketFile
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
-from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoDigitalEventHandler, \
-    PlasduinoDigitalConfiguration, PlasduinoDigitalUserApplicationBase
+from baldaquin.plasduino.common import (
+    PlasduinoDigitalConfiguration,
+    PlasduinoDigitalEventHandler,
+    PlasduinoDigitalUserApplicationBase,
+    PlasduinoRunControl,
+)
 from baldaquin.plasduino.protocol import COMMENT_PREFIX, TEXT_SEPARATOR, DigitalTransition
 from baldaquin.runctrl import RunControlBase
 

@@ -68,9 +68,6 @@ class SlidingStripChart:
         """
         if axes is None:
             axes = plt.gca()
-        if self.datetime:
-            x = np.array(self.x).astype('datetime64[s]')
-        else:
-            x = self.x
+        x = np.array(self.x).astype('datetime64[s]') if self.datetime else self.x
         axes.plot(x, self.y, label=self.label, **kwargs)
         setup_axes(axes, xlabel=self.xlabel, ylabel=self.ylabel, grids=True)

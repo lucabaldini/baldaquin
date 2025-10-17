@@ -22,19 +22,21 @@ import struct
 import time
 from typing import Any
 
-from baldaquin import arduino_
-from baldaquin import logger
-from baldaquin import plasduino
+from baldaquin import arduino_, logger, plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
-from baldaquin.plasduino.protocol import Marker, OpCode, AnalogReadout, DigitalTransition, \
-     InterruptMode
+from baldaquin.plasduino.protocol import (
+    AnalogReadout,
+    DigitalTransition,
+    InterruptMode,
+    Marker,
+    OpCode,
+)
 from baldaquin.plasduino.sketches import sketch_file_path
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import SerialInterface
 from baldaquin.strip import SlidingStripChart
-
 
 # List of supported boards, i.e., only the arduino uno at the moment.
 _SUPPORTED_BOARDS = (arduino_.UNO, )

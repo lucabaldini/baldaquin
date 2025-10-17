@@ -17,15 +17,21 @@
 """Basic run control structure.
 """
 
+import json
 from dataclasses import dataclass
 from enum import Enum
-import json
 from pathlib import Path
 
-from baldaquin import __version__, DEFAULT_CHARACTER_ENCODING
-from baldaquin import logger, reset_logger, add_log_file
+from baldaquin import (
+    DEFAULT_CHARACTER_ENCODING,
+    __version__,
+    add_log_file,
+    config_folder_path,
+    data_folder_path,
+    logger,
+    reset_logger,
+)
 from baldaquin.__qt__ import QtCore
-from baldaquin import config_folder_path, data_folder_path
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import PacketStatistics
@@ -301,7 +307,7 @@ class RunReport:
         """Load the report from file.
         """
         logger.info(f'Loading run report from {file_path}...')
-        with open(file_path, 'r', encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+        with open(file_path, encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
             return cls.from_dict(**json.load(input_file))
 
 

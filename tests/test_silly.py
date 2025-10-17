@@ -18,7 +18,7 @@
 
 
 from baldaquin import logger
-from baldaquin.silly.common import SillyPacket, SillyServer, SillyConfiguration
+from baldaquin.silly.common import SillyConfiguration, SillyPacket, SillyServer
 
 
 def test_packet():

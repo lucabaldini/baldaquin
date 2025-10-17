@@ -18,9 +18,17 @@
 
 import pytest
 
-from baldaquin import logger, BALDAQUIN_SCRATCH
-from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import Layout, Format, FieldMismatchError, PacketFile
+from baldaquin import BALDAQUIN_SCRATCH, logger
+from baldaquin.pkt import (
+    AbstractPacket,
+    FieldMismatchError,
+    FixedSizePacketBase,
+    Format,
+    Layout,
+    PacketFile,
+    PacketStatistics,
+    packetclass,
+)
 
 
 @packetclass

@@ -19,11 +19,12 @@
 import io
 import os
 from pathlib import Path
+
 import pytest
 
-from baldaquin import logger, BALDAQUIN_DATA
-from baldaquin.buf import FIFO, CircularBuffer, WriteMode, Sink
-from baldaquin.pkt import Layout, Format, packetclass, FixedSizePacketBase
+from baldaquin import BALDAQUIN_DATA, logger
+from baldaquin.buf import FIFO, CircularBuffer, Sink, WriteMode
+from baldaquin.pkt import FixedSizePacketBase, Format, Layout, packetclass
 
 
 @packetclass
@@ -102,7 +103,7 @@ def test_sink_header():
     # Create the sink---this should write the header into the output file...
     _ = Sink(file_path, WriteMode.TEXT, header=header)
     # ... open the output file and make sure the content is correct.
-    with open(file_path, 'r') as input_file:
+    with open(file_path) as input_file:
         assert input_file.read() == header
     # Cleanup.
     os.remove(file_path)
@@ -126,7 +127,7 @@ def test_buffer_flush(num_packets: int = 10):
     buffer.flush()
     # And now it should be empty.
     assert buffer.size() == 0
-    with open(text_file_path, 'r') as input_file:
+    with open(text_file_path) as input_file:
         logger.info(input_file.read())
     # Cleanup
     os.remove(binary_file_path)

@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from baldaquin.plt_ import matplotlib, plt, setup_axes, PlotCard
+from baldaquin.plt_ import PlotCard, matplotlib, plt, setup_axes
 
 
 class InvalidShapeError(RuntimeError):
@@ -60,7 +60,7 @@ class HistogramBase:
         """
         # Quick check on the binning and label tuples---we need N + 1 labels
         # for an N-dimensional histogram.
-        if not len(labels) == len(binning) + 1:
+        if len(labels) != len(binning) + 1:
             msg = f'Length mismatch between binning ({len(binning)}) and labels ({len(labels)})'
             raise RuntimeError(msg)
         # The binning is not supposed to change ever, so we turn it into a tuple...

@@ -25,9 +25,9 @@ import time
 from baldaquin import silly
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
-from baldaquin.gui import MainWindow
 from baldaquin.event import EventHandlerBase
-from baldaquin.pkt import packetclass, FixedSizePacketBase, Format
+from baldaquin.gui import MainWindow
+from baldaquin.pkt import FixedSizePacketBase, Format, packetclass
 from baldaquin.runctrl import RunControlBase
 
 

@@ -18,9 +18,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import struct
 import time
+from dataclasses import dataclass
 from typing import Any
 
 import serial
@@ -28,7 +28,6 @@ import serial.tools.list_ports
 import serial.tools.list_ports_common
 
 from baldaquin import logger
-
 
 # List of standard baud rates.
 STANDARD_BAUD_RATES = serial.Serial.BAUDRATES
@@ -115,7 +114,7 @@ class PortInfo:
     manufacturer: str = None
 
     @classmethod
-    def from_serial(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> 'PortInfo':
+    def from_serial(cls, port_info: serial.tools.list_ports_common.ListPortInfo) -> PortInfo:
         """Create a Port object from a ListPortInfo object.
         """
         device_id = DeviceId(port_info.vid, port_info.pid)

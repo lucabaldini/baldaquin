@@ -22,14 +22,18 @@ from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
-from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
-from baldaquin.pkt import packetclass, AbstractPacket
+from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
+from baldaquin.pkt import AbstractPacket, packetclass
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
-from baldaquin.plasduino.common import PlasduinoRunControl, PlasduinoAnalogEventHandler, \
-    PlasduinoAnalogConfiguration, PlasduinoAnalogUserApplicationBase
+from baldaquin.plasduino.common import (
+    PlasduinoAnalogConfiguration,
+    PlasduinoAnalogEventHandler,
+    PlasduinoAnalogUserApplicationBase,
+    PlasduinoRunControl,
+)
 from baldaquin.plasduino.protocol import AnalogReadout
-from baldaquin.runctrl import RunControlBase
 from baldaquin.plasduino.shields import Lab1
+from baldaquin.runctrl import RunControlBase
 
 
 class AppMainWindow(MainWindow):

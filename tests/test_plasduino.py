@@ -22,11 +22,10 @@ import sys
 import numpy as np
 import pytest
 
-from baldaquin import logger, BALDAQUIN_TEST_DATA, BALDAQUIN_ROOT
+from baldaquin import BALDAQUIN_ROOT, BALDAQUIN_TEST_DATA, logger
 from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
-
 
 PENDULUM_RUN = '396'
 PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / f'0101_000{PENDULUM_RUN}'

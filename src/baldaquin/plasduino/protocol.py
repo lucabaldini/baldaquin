@@ -18,8 +18,7 @@
 
 from enum import IntEnum
 
-from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, Format, Layout
-
+from baldaquin.pkt import AbstractPacket, FixedSizePacketBase, Format, Layout, packetclass
 
 COMMENT_PREFIX = '# '
 TEXT_SEPARATOR = ', '

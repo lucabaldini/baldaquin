@@ -20,8 +20,8 @@
 import sys
 from typing import Any
 
-from loguru import logger
 import matplotlib
+from loguru import logger
 from matplotlib import pyplot as plt
 
 if sys.flags.interactive:

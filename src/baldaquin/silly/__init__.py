@@ -18,7 +18,6 @@
 
 from baldaquin import setup_project
 
-
 PROJECT_NAME = 'silly'
 
 SILLY_CONFIG, SILLY_APP_CONFIG, SILLY_DATA = setup_project(PROJECT_NAME)

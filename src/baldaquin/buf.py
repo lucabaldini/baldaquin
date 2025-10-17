@@ -18,18 +18,18 @@
 
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
 import collections
+import io
+import queue
+import time
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from contextlib import contextmanager
 from enum import Enum
-import io
 from pathlib import Path
-import queue
-import time
 from typing import Any
 
-from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
+from baldaquin import DEFAULT_CHARACTER_ENCODING, logger
 from baldaquin.pkt import AbstractPacket
 from baldaquin.profile import timing
 
@@ -97,7 +97,7 @@ class Sink:
         """
         # pylint: disable=unspecified-encoding, bad-open-mode
         logger.debug(f'Opening output file {self.file_path} {self._open_kwargs}...')
-        output_file = open(self.file_path, **self._open_kwargs)
+        output_file = open(self.file_path, **self._open_kwargs) # noqa SIM115
         yield output_file
         output_file.close()
         logger.debug(f'Ouput file {self.file_path} closed.')
@@ -206,9 +206,7 @@ class AbstractBuffer(ABC):
     def flush_needed(self) -> bool:
         """Return True if the buffer needs to be flushed.
         """
-        if self.almost_full() or self.time_since_last_flush() > self._flush_timeout:
-            return True
-        return False
+        return self.almost_full() or self.time_since_last_flush() > self._flush_timeout
 
     def set_primary_sink(self, file_path: Path) -> Sink:
         """Set the primary sink for the buffer.

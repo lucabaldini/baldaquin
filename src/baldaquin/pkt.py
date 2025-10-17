@@ -18,15 +18,14 @@
 
 from __future__ import annotations
 
+import struct
 from abc import ABC, abstractmethod
 from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-import struct
 
-from baldaquin import logger, __version__
+from baldaquin import __version__, logger
 from baldaquin.timeline import Timeline
-
 
 DEFAULT_TEXT_PREFIX = '#'
 DEFAULT_TEXT_SEPARATOR = ','
@@ -85,7 +84,7 @@ class AbstractPacket(ABC):
     """Abstract base class for binary packets.
     """
 
-    def __post_init__(self) -> None:
+    def __post_init__(self) -> None: # noqa: B027
         """Hook for post-initialization.
         """
 
@@ -240,9 +239,9 @@ def _class_annotations(cls) -> dict:
     ancestors = cls.__mro__[:cls.__mro__.index(AbstractPacket)]
     annotations = {}
     for _cls in reversed(ancestors):
-        try:
+        try: # noqa: SIM105
             annotations.update(_cls.__annotations__)
-        except AttributeError:
+        except AttributeError: #noqa: PERF203
             pass
     return annotations
 
@@ -397,7 +396,7 @@ class PacketFile:
             self._input_file = None
         logger.debug(f'Input file {file_path} closed.')
 
-    def __iter__(self) -> 'PacketFile':
+    def __iter__(self) -> PacketFile:
         """Return the iterator object (self).
         """
         return self
@@ -449,7 +448,7 @@ class PacketStatistics:
         return self.__dict__
 
     @classmethod
-    def from_dict(cls, **kwargs) -> 'PacketStatistics':
+    def from_dict(cls, **kwargs) -> PacketStatistics:
         """Deserialization.
         """
         return cls(**kwargs)

@@ -17,19 +17,18 @@
 """
 
 
-from dataclasses import dataclass
 import datetime
-from pathlib import Path
 import time
+from dataclasses import dataclass
+from pathlib import Path
 
-from baldaquin import logger
-from baldaquin import xnucleo
+from baldaquin import logger, xnucleo
 from baldaquin.__qt__ import QtWidgets
-from baldaquin.arduino_ import ArduinoEventHandler
 from baldaquin.app import UserApplicationBase
+from baldaquin.arduino_ import ArduinoEventHandler
 from baldaquin.buf import WriteMode
 from baldaquin.config import UserApplicationConfiguration
-from baldaquin.gui import bootstrap_window, MainWindow, SimpleControlBar
+from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
 from baldaquin.strip import SlidingStripChart

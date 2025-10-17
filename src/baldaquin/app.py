@@ -22,6 +22,7 @@ from loguru import logger
 
 from baldaquin.__qt__ import QtCore
 from baldaquin.config import UserApplicationConfiguration
+
 if TYPE_CHECKING:
     # We only need RunControl for type annotations, hence the if clause.
     from baldaquin.runctrl import RunControlBase

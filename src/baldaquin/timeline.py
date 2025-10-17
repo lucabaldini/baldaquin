@@ -19,9 +19,9 @@
 from __future__ import annotations
 
 import calendar
-from dataclasses import dataclass
 import datetime
 import time
+from dataclasses import dataclass
 
 
 class tzoffset(datetime.tzinfo):
@@ -115,7 +115,7 @@ class Timestamp:
         return dict_
 
     @classmethod
-    def from_dict(cls, **kwargs) -> 'Timestamp':
+    def from_dict(cls, **kwargs) -> Timestamp:
         """Deserialization.
         """
         for key in cls._DATETIME_FIELDS:

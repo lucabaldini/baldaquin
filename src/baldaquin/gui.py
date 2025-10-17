@@ -17,24 +17,23 @@
 """Custom widgets for the user interface.
 """
 
+import sys
 from enum import Enum
 from pathlib import Path
-import sys
 from typing import Any
-
-from matplotlib.figure import Figure
-
-from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
-from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
-from baldaquin.pkt import PacketStatistics
-from baldaquin.runctrl import FsmState, FiniteStateMachineLogic, RunControlBase
 
 # This needs to stay *after* the from baldaquin.__qt__ import, in order for the
 # matplotlib monkeypatching to happen in time.
 # pylint: disable=no-name-in-module, wrong-import-order, ungrouped-imports, import-error
 from matplotlib.backends.backend_qtagg import FigureCanvas
+from matplotlib.figure import Figure
+
+from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
+from baldaquin.app import UserApplicationBase
+from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
+from baldaquin.pkt import PacketStatistics
+from baldaquin.runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
 
 # pylint: disable=too-many-lines
 
@@ -1027,7 +1026,7 @@ def bootstrap_qapplication():
     """
     # pylint: disable=unspecified-encoding
     qapp = QtWidgets.QApplication(sys.argv)
-    with open(stylesheet_file_path(), 'r') as stylesheet:
+    with open(stylesheet_file_path()) as stylesheet:
         qapp.setStyleSheet(stylesheet.read())
     return qapp
 
