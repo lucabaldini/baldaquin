@@ -19,20 +19,46 @@
 from __future__ import annotations
 
 import os
-from pathlib import Path
+import pathlib
 import subprocess
 import sys
 
 from loguru import logger
 
-from baldaquin._version import VERSION as __version__, TAG_DATE
+from baldaquin._version import __version__ as __base_version__
+
+
+def _git_suffix() -> str:
+    """If we are in a git repo, we want to add the necessary information to the
+    version string.
+
+    This will return something along the lines of ``+gf0f18e6.dirty``.
+    """
+    # pylint: disable=broad-except
+    kwargs = dict(cwd=pathlib.Path(__file__).parent, stderr=subprocess.DEVNULL)
+    try:
+        # Retrieve the git short sha to be appended to the base version string.
+        args = ["git", "rev-parse", "--short", "HEAD"]
+        sha = subprocess.check_output(args, **kwargs).decode().strip()
+        suffix = f"+g{sha}"
+        # If we have uncommitted changes, append a `.dirty` to the version suffix.
+        args = ["git", "diff", "--quiet"]
+        if subprocess.call(args, stdout=subprocess.DEVNULL, **kwargs) != 0:
+            suffix = f"{suffix}.dirty"
+        return suffix
+    except Exception:
+        return ""
+
+
+__version__ = f"{__base_version__}{_git_suffix()}"
+
 
 
 def start_message() -> None:
     """Print the start message.
     """
     msg = f"""
-    This is baldaquin version {__version__} ({TAG_DATE}).
+    This is baldaquin version {__version__}.
 
     Copyright (C) 2022--2025, the baldaquin team.
 
@@ -45,7 +71,7 @@ def start_message() -> None:
     print(msg)
 
 
-start_message()
+#start_message()
 
 
 def reset_logger(level: str = 'DEBUG') -> int:
@@ -97,7 +123,7 @@ reset_logger()
 
 
 # Basic package structure.
-BALDAQUIN_ROOT = Path(__file__).parent
+BALDAQUIN_ROOT = pathlib.Path(__file__).parent
 BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
 BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
 BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
@@ -131,7 +157,7 @@ def execute_shell_command(args):
     return subprocess.run(args, check=True)
 
 
-def _create_folder(folder_path: Path) -> None:
+def _create_folder(folder_path: pathlib.Path) -> None:
     """Create a given folder if it does not exist.
 
     This is a small utility function to ensure that the relevant directories
@@ -144,32 +170,32 @@ def _create_folder(folder_path: Path) -> None:
     """
     if not folder_path.exists():
         logger.info(f'Creating folder {folder_path}...')
-        Path.mkdir(folder_path, parents=True)
+        pathlib.Path.mkdir(folder_path, parents=True)
 
 
 # The path to the base folder for the output data defaults to ~/baldaquindata,
 # but can be changed via the $BALDAQUIN_DATA environmental variable.
 try:
-    BALDAQUIN_DATA = Path(os.environ['BALDAQUIN_DATA'])
+    BALDAQUIN_DATA = pathlib.Path(os.environ['BALDAQUIN_DATA'])
 except KeyError:
-    BALDAQUIN_DATA = Path.home() / 'baldaquindata'
+    BALDAQUIN_DATA = pathlib.Path.home() / 'baldaquindata'
 _create_folder(BALDAQUIN_DATA)
 
 
 # We're doing a similar thing for our scratch space.
 try:
-    BALDAQUIN_SCRATCH = Path(os.environ['BALDAQUIN_SCRATCH'])
+    BALDAQUIN_SCRATCH = pathlib.Path(os.environ['BALDAQUIN_SCRATCH'])
 except KeyError:
     BALDAQUIN_SCRATCH = BALDAQUIN_DATA / 'scratch'
 _create_folder(BALDAQUIN_SCRATCH)
 
 
 # On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
-BALDAQUIN_CONFIG = Path.home() / '.baldaquin'
+BALDAQUIN_CONFIG = pathlib.Path.home() / '.baldaquin'
 _create_folder(BALDAQUIN_CONFIG)
 
 
-def config_folder_path(project_name: str) -> Path:
+def config_folder_path(project_name: str) -> pathlib.Path:
     """Return the path to the configuration folder for a given project.
 
     Arguments
@@ -180,7 +206,7 @@ def config_folder_path(project_name: str) -> Path:
     return BALDAQUIN_CONFIG / project_name
 
 
-def data_folder_path(project_name: str) -> Path:
+def data_folder_path(project_name: str) -> pathlib.Path:
     """Return the path to the data folder for a given project.
 
     Arguments
@@ -191,7 +217,7 @@ def data_folder_path(project_name: str) -> Path:
     return BALDAQUIN_DATA / project_name
 
 
-def setup_project(project_name: str) -> tuple[Path, Path]:
+def setup_project(project_name: str) -> tuple[pathlib.Path, pathlib.Path]:
     """Setup the folder structure for a given project.
 
     This is essentially creating a folder for the configuration files and
