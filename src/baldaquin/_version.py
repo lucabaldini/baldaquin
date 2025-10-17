@@ -1,2 +1,1 @@
-VERSION = '0.6.0'
-TAG_DATE = 'Wed, 28 May 2025 11:03:01 +0200'
+__version__ = "0.6.0"
