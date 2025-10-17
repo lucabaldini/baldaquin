@@ -4,51 +4,100 @@ build-backend = "hatchling.build"
 
 [project]
 name = "baldaquin"
-version = "0.6.0"
-dependencies = [
-  "loguru",
-  "matplotlib",
-  "numpy",
-  "pydata-sphinx-theme",
-  "pyserial",
-  "PySide6",
-  "scipy"
-]
-requires-python = ">=3.7"
-authors = [
-  {name = "Luca Baldini", email = "luca.baldini@pi.infn.it"},
-]
-maintainers = [
-  {name = "Luca Baldini", email = "luca.baldini@pi.infn.it"}
-]
+dynamic = ["version"]
 description = "BALanced DAQ User INterface"
 readme = "README.md"
-license = {file = "LICENSE.txt"}
-keywords = ["DAQ", "Physics", "detector", "data flow"]
+license = { file = "LICENSE" }
+requires-python = ">=3.7"
 classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Programming Language :: Python"
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.13",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Topic :: Scientific/Engineering",
+    "Intended Audience :: Science/Research",
 ]
+authors = [
+  { name = "Luca Baldini", email = "luca.baldini@unipi.it" }
+  ]
+dependencies = [
+    "cycler",
+    "loguru",
+    "matplotlib",
+    "numpy",
+    "scipy",
+    "pyserial",
+    "PySide6",
+  ]
 
-# [project.optional-dependencies]
-# gui = ["PyQt5"]
-# cli = [
-#   "rich",
-#   "click",
-# ]
+[project.optional-dependencies]
+dev = [
+    "packaging",
+    "pytest",
+    "ruff",
+    "pylint",
+  ]
+docs = [
+    "sphinx",
+    "sphinxawesome-theme",
+    "sphinx-gallery",
+  ]
 
 [project.urls]
 Homepage = "https://github.com/lucabaldini/baldaquin"
 Documentation = "https://lucabaldini.github.io/baldaquin/"
 Repository = "https://github.com/lucabaldini/baldaquin"
-"Bug Tracker" = "https://github.com/lucabaldini/baldaquin/issues"
-Changelog = "https://lucabaldini.github.io/baldaquin/release_notes.html"
+Issues = "https://github.com/lucabaldini/baldaquin/issues"
 
 [project.scripts]
 baldaquin = "baldaquin.cli:main"
 
-# [project.gui-scripts]
-# spam-gui = "spam:main_gui"
-#
-# [project.entry-points."spam.magical"]
-# tomatoes = "spam:main_tomatoes"
+[tool.hatch.version]
+path = "src/baldaquin/_version.py"
+
+# ruff configuration, see https://docs.astral.sh/ruff/configuration/
+# Note we target the oldest Python version that we support, which helps
+# in avoiding features that are only available in newer versions.
+[tool.ruff]
+target-version = "py37"
+line-length = 100
+src = ["src"]
+exclude = ["docs"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort (imports)
+  "B",   # flake8-bugbear
+  "UP",  # pyupgrade (kept safe for py37)
+  "SIM", # flake8-simplify
+  "C4",  # flake8-comprehensions
+  "NPY", # NumPy-specific best practices
+  "PERF" # performance gotchas
+  ]
+ignore = [
+  "C408" # I sometimes like dict() calls better than literal dicts
+  ]
+
+# pylint is fairly noisy by default, and you might want to disable some rules.
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+  "missing-docstring",
+  "too-few-public-methods",
+  "too-many-arguments",
+  "too-many-positional-arguments",
+  "too-many-instance-attributes",
+  "too-many-locals",
+  "too-many-lines",
+  "use-dict-literal",
+  ]
+[tool.pylint.TYPECHECK]
+# Treat this module as “special”; skip strict import/member checks there.
+ignored-modules = ["scipy.special"]
+[tool.pylint.'BASIC']
+good-names = ["i", "j", "k", "x", "y", "z"]
+[tool.pylint.'FORMAT']
+max-line-length = 100
