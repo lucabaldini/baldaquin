@@ -50,6 +50,7 @@ def test_pendulum_process():
 
     This was done to debug issue https://github.com/lucabaldini/baldaquin/issues/50
     """
+    # pylint: disable=protected-access
     sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
     sys.dont_write_bytecode = True
     pendulum = importlib.import_module('plasduino_pendulum')
@@ -104,13 +105,15 @@ def transit_velocity(transit_time: np.array, pendulum_length: float, gate_distan
 def period_model(theta, T0):
     """Fitting model for the period as a function of the amplitude.
     """
+    # pylint: disable=invalid-name
     return T0 * (1. + 1. / 16. * theta**2 + 11. / 3072. * theta**4. + 173. / 737280. * theta**6.)
 
 
 @pytest.mark.skip
 def test_pendulum_custom_postprocess():
+    """Test the custom postprocess.
     """
-    """
+    # pylint: disable=protected-access
     sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
     sys.dont_write_bytecode = True
     pendulum = importlib.import_module('plasduino_pendulum')
@@ -156,6 +159,7 @@ def test_pendulum_sequence():
 def test_pendulum_plot():
     """Test a data file taken with the pendulum.
     """
+    # pylint: disable=invalid-name
     g = 9.81
     mass = 0.330
     pendulum_length = 1.110

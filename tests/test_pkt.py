@@ -49,6 +49,7 @@ class Readout(FixedSizePacketBase):
 def test_format():
     """Test the check for the packet layout and format characters.
     """
+    # pylint: disable=function-redefined, unused-variable
     with pytest.raises(ValueError) as info:
         @packetclass
         class Packet(FixedSizePacketBase):
@@ -69,6 +70,7 @@ def test_format():
 def test_readout():
     """Test a sensible packet structure.
     """
+    # pylint: disable=protected-access
     # Test the class variables.
     assert Readout._fields == ('header', 'milliseconds', 'adc_value')
     assert Readout._format == '>BLH'
@@ -109,6 +111,7 @@ def test_readout_subclass():
 def test_text():
     """Test the join_attributes() method.
     """
+    # pylint: disable=protected-access
     attrs = ('seconds', 'adc_value')
     fmts = ('%.6f', '%d')
     packet = Readout(0xaa, 100, 127)
@@ -120,6 +123,7 @@ def test_text():
 def test_repr():
     """Test the terminal formatting helper function.
     """
+    # pylint: disable=protected-access
     attrs = ('seconds', 'adc_value')
     fmts = ('%.6f', '%d')
     packet = Readout(0xaa, 100, 127)
@@ -130,7 +134,7 @@ def test_repr():
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.
     """
-
+    # pylint: disable=function-redefined
     @packetclass
     class Trigger(FixedSizePacketBase):
 

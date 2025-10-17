@@ -123,8 +123,8 @@ reset_logger()
 
 
 # Basic package structure.
-BALDAQUIN_ROOT = pathlib.Path(__file__).parent.parent
-BALDAQUIN_BASE = BALDAQUIN_ROOT.parent
+BALDAQUIN_ROOT = pathlib.Path(__file__).parent
+BALDAQUIN_BASE = BALDAQUIN_ROOT.parent.parent
 BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
 BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
 BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'

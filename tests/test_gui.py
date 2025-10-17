@@ -35,6 +35,6 @@ def _test_main_window():
 
 
 if __name__ == '__main__':
-    qapp, window = _test_main_window()
-    window.show()
+    qapp, qwindow = _test_main_window()
+    qwindow.show()
     exec_qapp(qapp)

@@ -28,6 +28,7 @@ _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
 def test_supported_boards():
     """List the supported boards.
     """
+    # pylint: disable=protected-access
     for board in arduino_._SUPPORTED_BOARDS:
         print(board)
 

@@ -92,7 +92,7 @@ class MonitorReadout(AbstractPacket):
 
     @classmethod
     def text_header(cls, prefix: str = '#', creator: str = None) -> str:
-        """
+        """Return the text header.
         """
         headers = ', '.join(map(str, cls.OUTPUT_HEADERS))
         return f'{AbstractPacket.text_header(prefix, creator)}{prefix}{headers}\n'

@@ -54,7 +54,7 @@ def test_parameter_bool():
         _test_base_mismatch(bool, value)
 
 
-def test_parameter_int(value=100):
+def test_parameter_int():
     """Test possible settings for int parameters.
     """
     _test_base_match(int, 100)
@@ -68,7 +68,7 @@ def test_parameter_int(value=100):
     _test_base_match(int, 100, min=87, step=13)
 
 
-def test_parameter_float(value=1.):
+def test_parameter_float():
     """Test possible settings for int parameters.
     """
     _test_base_match(float, 1.)
