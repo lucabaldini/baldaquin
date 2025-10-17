@@ -4,75 +4,70 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
+import importlib.metadata
 
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
-sys.path.insert(0, os.path.abspath('../baldaquin'))
-
-from baldaquin import __version__  # noqa E402
+from baldaquin import __version__, __name__ as __package_name__
 
 
-# -- Project information -----------------------------------------------------
-
-project = 'baldaquin'
-copyright = '2022-2025, The baldaquin team'
-author = 'The baldaquin team'
-
-# The full version, including alpha/beta/rc tags
-release = __version__
+# Get package metadata.
+_metadata = importlib.metadata.metadata(__package_name__)
 
 
-# -- General configuration ---------------------------------------------------
+# --- Project information ---
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
+project = __package_name__
+author = _metadata["Author-email"]
+copyright = f"2025-%Y, {author}"
+version = __version__
+release = version
+
+# --- General configuration ---
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
+
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
+    "sphinx.ext.autodoc",
+    "sphinx.ext.todo",
+    "sphinx.ext.viewcode",
     'sphinx.ext.napoleon',
     'sphinx.ext.imgmath',
     'sphinx.ext.extlinks'
 ]
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
-
-# List of patterns, relative to source directory, that match files and
-# directories to ignore when looking for source files.
-# This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
-
 autodoc_default_options = {
-    'members': True,
-    'member-order': 'bysource',
-    'undoc-members': True,
-    'private-members': True
+    "members": True,
+    "member-order": "bysource",
+    "undoc-members": True,
+    "private-members": True
 }
+todo_include_todos = True
 
-# -- Options for HTML output -------------------------------------------------
+# Options for syntax highlighting.
+pygments_style = "default"
+pygments_dark_style = "default"
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
-html_theme = 'pydata_sphinx_theme'
+# Options for internationalization.
+language = "en"
 
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# Options for markup.
+rst_prolog = f"""
+"""
 
+# Options for source files.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+
+# Options for templating.
+templates_path = ["_templates"]
+
+
+# --- Options for HTML output ---
+# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
+
+html_theme = "sphinxawesome_theme"
 html_theme_options = {
-    "logo": {
-        "image_light": "baldaquin_logo_small_light.png",
-        "image_dark": "baldaquin_logo_small_dark.png",
-        "text": "baldaquin",
-    },
-    "show_nav_level": 2
+    "awesome_external_links": True,
 }
+#html_logo = "_static/baldaquin_logo_small_light.png"
+#html_favicon = "_static/favicon.ico"
+html_permalinks_icon = "<span>#</span>"
+html_static_path = ["_static"]
+
