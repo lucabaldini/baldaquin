@@ -18,9 +18,17 @@
 
 import pytest
 
-from baldaquin import logger, BALDAQUIN_SCRATCH
-from baldaquin.pkt import packetclass, AbstractPacket, FixedSizePacketBase, PacketStatistics
-from baldaquin.pkt import Layout, Format, FieldMismatchError, PacketFile
+from baldaquin.env import BALDAQUIN_SCRATCH
+from baldaquin.pkt import (
+    AbstractPacket,
+    FieldMismatchError,
+    FixedSizePacketBase,
+    Format,
+    Layout,
+    PacketFile,
+    PacketStatistics,
+    packetclass,
+)
 
 
 @packetclass
@@ -41,46 +49,42 @@ class Readout(FixedSizePacketBase):
 def test_format():
     """Test the check for the packet layout and format characters.
     """
-    with pytest.raises(ValueError) as info:
+    # pylint: disable=function-redefined, unused-variable
+    with pytest.raises(ValueError):
         @packetclass
         class Packet(FixedSizePacketBase):
-            layout = 'W'
-    logger.info(info.value)
+            layout = "W"
 
-    with pytest.raises(ValueError) as info:
+    with pytest.raises(ValueError):
         @packetclass
         class Packet(FixedSizePacketBase):  # noqa: F811
-            trigger_id: 'W'  # noqa: F821
-    logger.info(info.value)
+            trigger_id: "W"  # noqa: F821
 
-    with pytest.raises(FieldMismatchError) as info:
+    with pytest.raises(FieldMismatchError):
         _ = Readout(0, 0, 0)
-    logger.info(info.value)
 
 
 def test_readout():
     """Test a sensible packet structure.
     """
+    # pylint: disable=protected-access
     # Test the class variables.
-    assert Readout._fields == ('header', 'milliseconds', 'adc_value')
-    assert Readout._format == '>BLH'
+    assert Readout._fields == ("header", "milliseconds", "adc_value")
+    assert Readout._format == ">BLH"
     assert Readout.size == 7
 
     # Create a class instance.
     packet = Readout(0xaa, 100, 127)
     assert isinstance(packet, AbstractPacket)
-    logger.info(packet)
     # Test the post-initialization.
     assert packet.seconds == packet.milliseconds / 1000.
     # Make sure that pack/unpack do roundtrip.
     twin = Readout.unpack(packet.pack())
-    logger.info(twin)
     for val1, val2 in zip(packet, twin):
         assert val1 == val2
     # Make sure that the packet fields cannot be modified.
-    with pytest.raises(AttributeError) as info:
+    with pytest.raises(AttributeError):
         packet.header = 3
-    logger.info(info.value)
 
 
 def test_readout_subclass():
@@ -101,28 +105,29 @@ def test_readout_subclass():
 def test_text():
     """Test the join_attributes() method.
     """
-    attrs = ('seconds', 'adc_value')
-    fmts = ('%.6f', '%d')
+    # pylint: disable=protected-access
+    attrs = ("seconds", "adc_value")
+    fmts = ("%.6f", "%d")
     packet = Readout(0xaa, 100, 127)
-    logger.info(packet)
-    assert packet._format_attributes(attrs, fmts) == ('0.100000', '127')
-    assert packet._text(attrs, fmts, ', ') == '0.100000, 127\n'
+    assert packet._format_attributes(attrs, fmts) == ("0.100000", "127")
+    assert packet._text(attrs, fmts, ", ") == "0.100000, 127\n"
 
 
 def test_repr():
     """Test the terminal formatting helper function.
     """
-    attrs = ('seconds', 'adc_value')
-    fmts = ('%.6f', '%d')
+    # pylint: disable=protected-access
+    attrs = ("seconds", "adc_value")
+    fmts = ("%.6f", "%d")
     packet = Readout(0xaa, 100, 127)
-    assert packet._repr(attrs) == 'Readout(seconds=0.1, adc_value=127)'
-    assert packet._repr(attrs, fmts) == 'Readout(seconds=0.100000, adc_value=127)'
+    assert packet._repr(attrs) == "Readout(seconds=0.1, adc_value=127)"
+    assert packet._repr(attrs, fmts) == "Readout(seconds=0.100000, adc_value=127)"
 
 
 def test_docs():
     """Small convenience function for the class docs---we copy/paste from here.
     """
-
+    # pylint: disable=function-redefined
     @packetclass
     class Trigger(FixedSizePacketBase):
 
@@ -133,16 +138,13 @@ def test_docs():
         timestamp: Format.UNSIGNED_LONG_LONG
 
     packet = Trigger(0xff, 1, 15426782)
-    print(packet)
-    print(len(packet))
-    print(isinstance(packet, AbstractPacket))
+    assert len(packet) == 10
+    assert isinstance(packet, AbstractPacket)
 
-    packet = Trigger.unpack(b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde')
-    print(packet)
+    packet = Trigger.unpack(b"\xff\x01\x00\x00\x00\x00\x00\xebd\xde")
 
-    with pytest.raises(AttributeError) as info:
+    with pytest.raises(AttributeError):
         packet.pin_number = 0
-    print(info)
 
     @packetclass
     class Trigger(FixedSizePacketBase):
@@ -157,40 +159,26 @@ def test_docs():
             self.seconds = self.microseconds / 1000000
 
     packet = Trigger(0xff, 1, 15426782)
-    print(packet.seconds)
-
-
-def test_text_output():
-    """Test the text representation of the packet.
-    """
-    header = Readout.text_header('#', creator='test_pkt.py')
-    print(header)
-    readout = Readout(0xaa, 2, 3)
-    print(readout.to_text(', '))
+    assert packet.seconds == 15.426782
 
 
 def test_binary_io(num_packets: int = 10):
     """Write to and read from file in binary format.
     """
-    file_path = BALDAQUIN_SCRATCH / 'test_pkt.dat'
-    logger.info(f'Writing output file {file_path}')
-    with open(file_path, 'wb') as output_file:
+    file_path = BALDAQUIN_SCRATCH / "test_pkt.dat"
+    with open(file_path, "wb") as output_file:
         for i in range(num_packets):
             output_file.write(Readout(0xaa, 1 * 1000, i + 100).data)
-    logger.info('Done.')
     with PacketFile(Readout).open(file_path) as input_file:
-        for packet in input_file:
-            logger.debug(packet)
+        for _ in input_file:
+            pass
     with PacketFile(Readout).open(file_path) as input_file:
         packets = input_file.read_all()
         assert len(packets) == num_packets
-        logger.debug(packets)
 
 
 def test_packets_statistics():
     """Small test for the PacketStatistics class.
     """
     stats = PacketStatistics()
-    logger.info(stats)
     stats.update(3, 3, 10)
-    logger.info(stats)

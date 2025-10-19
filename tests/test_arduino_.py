@@ -16,22 +16,16 @@
 """Test suite for arduino_.py
 """
 
+import contextlib
+
 import pytest
 
-from baldaquin import logger, BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA
 from baldaquin import arduino_
+from baldaquin.env import BALDAQUIN_SCRATCH
 from baldaquin.serial_ import DeviceId
-
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
             (0x2341, 0x0243), (0x2341, 0x006A))
-
-
-def test_supported_boards():
-    """List the supported boards.
-    """
-    for board in arduino_._SUPPORTED_BOARDS:
-        print(board)
 
 
 def test_concatenate_device_ids():
@@ -45,58 +39,49 @@ def test_board_retrieval():
     """
     for device_id in _UNO_IDS:
         assert arduino_.ArduinoBoard.by_device_id(device_id) == arduino_.UNO
-    assert arduino_.ArduinoBoard.by_designator('uno') == arduino_.UNO
+    assert arduino_.ArduinoBoard.by_designator("uno") == arduino_.UNO
 
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         arduino_.ArduinoBoard.by_device_id(DeviceId(-1, -1))
-    logger.info(info)
 
-    with pytest.raises(RuntimeError) as info:
-        arduino_.ArduinoBoard.by_designator('una')
-    logger.info(info)
+    with pytest.raises(RuntimeError):
+        arduino_.ArduinoBoard.by_designator("una")
 
 
 def test_autodetect():
     """Test the automatic detection of the Arduino board.
     """
-    ports = arduino_.autodetect_arduino_boards()
-    print(ports)
-    ports = arduino_.autodetect_arduino_boards(arduino_.UNO)
-    print(ports)
-    ports = arduino_.autodetect_arduino_board(arduino_.UNO)
-    print(ports)
+    arduino_.autodetect_arduino_boards()
+    arduino_.autodetect_arduino_boards(arduino_.UNO)
+    arduino_.autodetect_arduino_board(arduino_.UNO)
 
 
-def test_upload():
+def test_upload(test_data_path):
     """Test the sketch upload.
 
     Note this is within a try/except block because we cannot assume we have
-    arduino-cli installed.
+    arduino-cli installed, nor a board attached to upload to.
     """
-    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink_uno.hex'
-    try:
-        arduino_.upload_sketch(file_path, 'uno')
-    except RuntimeError as info:
-        logger.info(info)
+    file_path = test_data_path("blink", "blink_uno.hex")
+    with contextlib.suppress(RuntimeError):
+        arduino_.upload_sketch(file_path, "uno")
 
 
-def test_compile():
+def test_compile(test_data_path):
     """Test the sketch compilation.
 
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
-    try:
-        arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
-    except RuntimeError as info:
-        logger.info(info)
+    file_path = test_data_path("blink", "blink.ino")
+    with contextlib.suppress(RuntimeError):
+        arduino_.compile_sketch(file_path, "uno", BALDAQUIN_SCRATCH, verbose=False)
 
 
 def test_project_name():
     """Test the project name machinery.
     """
     interface = arduino_.ArduinoProgrammingInterfaceBase
-    for sketch_path in ('sketches/test/test.ino', 'sketches/test/', 'sketches/test'):
-        assert interface.project_base_name(sketch_path) == 'test'
-        assert interface.project_name('sketches/test/test', 'uno') == 'test_uno'
+    for sketch_path in ("sketches/test/test.ino", "sketches/test/", "sketches/test"):
+        assert interface.project_base_name(sketch_path) == "test"
+        assert interface.project_name("sketches/test/test", "uno") == "test_uno"

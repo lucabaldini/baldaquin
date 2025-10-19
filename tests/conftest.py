@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,5 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Test suite for gui.py
-"""
+import pathlib
+
+import pytest
+
+
+@pytest.fixture(scope="session")
+def test_data_dir() -> pathlib.Path:
+    """Return the path to the test data directory.
+    """
+    return pathlib.Path(__file__).parent / "data"
+
+
+@pytest.fixture
+def test_data_path(test_data_dir: pathlib.Path):
+    """Return a function to get a specific test data file path.
+    """
+    # pylint: disable=redefined-outer-name
+    def _get(*parts: str) -> pathlib.Path:
+        p = test_data_dir.joinpath(*parts)
+        assert p.exists(), f"Missing test data: {p}"
+        return p
+    return _get

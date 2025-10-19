@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,5 +13,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Test suite for gui.py
+"""xnucleo project.
 """
+
+from pathlib import Path
+
+from baldaquin.env import setup_project
+
+PROJECT_NAME = "xnucleo"
+
+XNUCLEO_CONFIG, XNUCLEO_APP_CONFIG, XNUCLEO_DATA = setup_project(PROJECT_NAME)
+
+XNUCLEO_ROOT = Path(__file__).parent
+
+XNUCLEO_SKETCHES = XNUCLEO_ROOT / "sketches"

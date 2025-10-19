@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2023--2024 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,5 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Test suite for gui.py
+"""Mock project.
 """
+
+from baldaquin.env import setup_project
+
+PROJECT_NAME = "silly"
+
+SILLY_CONFIG, SILLY_APP_CONFIG, SILLY_DATA = setup_project(PROJECT_NAME)

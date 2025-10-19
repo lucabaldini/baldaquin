@@ -13,5 +13,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Test suite for gui.py
+"""Profiling facilities.
 """
+
+import time
+from functools import wraps
+
+from .logging_ import logger
+
+
+def timing(func):
+    """Small decorator to time a generic function.
+    """
+    @wraps(func)
+    def wrap(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        logger.debug(f"Running time for {func.__name__}(): {time.time() - start_time:.6f} s")
+        return result
+    return wrap

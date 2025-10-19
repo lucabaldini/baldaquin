@@ -20,31 +20,22 @@ import json
 
 import pytest
 
-from baldaquin import logger, DEFAULT_CHARACTER_ENCODING
-from baldaquin import BALDAQUIN_DATA
 from baldaquin import config
+from baldaquin.env import BALDAQUIN_DATA, BALDAQUIN_ENCODING
 
 
 def _test_base_match(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    p = config.ConfigurationParameter('parameter', type_name, value, '', **constraints)
+    p = config.ConfigurationParameter("parameter", type_name, value, "", **constraints)
     assert p.value == value
 
 
 def _test_base_mismatch(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    with pytest.raises(RuntimeError) as info:
-        config.ConfigurationParameter('parameter', type_name, value, '', **constraints)
-    logger.info(info.value)
-
-
-def test_print_parameters():
-    """Print some parameters.
-    """
-    print(config.ConfigurationParameter('timeout', float, 10., 'timeout'))
-    print(config.ConfigurationParameter('timeout', float, 10., 'timeout', 's', '.6f', min=0.))
+    with pytest.raises(RuntimeError):
+        config.ConfigurationParameter("parameter", type_name, value, "", **constraints)
 
 
 def test_parameter_bool():
@@ -52,11 +43,11 @@ def test_parameter_bool():
     """
     for value in (True, False):
         _test_base_match(bool, value)
-    for value in (1, 1., 'test'):
+    for value in (1, 1., "test"):
         _test_base_mismatch(bool, value)
 
 
-def test_parameter_int(value=100):
+def test_parameter_int():
     """Test possible settings for int parameters.
     """
     _test_base_match(int, 100)
@@ -70,7 +61,7 @@ def test_parameter_int(value=100):
     _test_base_match(int, 100, min=87, step=13)
 
 
-def test_parameter_float(value=1.):
+def test_parameter_float():
     """Test possible settings for int parameters.
     """
     _test_base_match(float, 1.)
@@ -82,65 +73,47 @@ def test_parameter_float(value=1.):
 def test_parameter_str():
     """Test possible settings for int parameters.
     """
-    _test_base_match(str, 'howdy?')
-    _test_base_match(str, 'eggs', choices=('eggs', 'cheese'))
-    _test_base_mismatch(str, 'ham', choices=('eggs', 'cheese'))
+    _test_base_match(str, "howdy?")
+    _test_base_match(str, "eggs", choices=("eggs", "cheese"))
+    _test_base_mismatch(str, "ham", choices=("eggs", "cheese"))
     for value in (True, 1, 1.):
         _test_base_mismatch(str, value)
-
-
-def test_format():
-    """Test the formatted_value() method of the ConfigurationParameter class.
-    """
-    p = config.ConfigurationParameter('timeout', float, 10., 'timeout', 's', '.6f')
-    print(p.value)
-    print(p.formatted_value())
 
 
 def test_configuration_sections():
     """Test the configuration sections.
     """
     section = config.LoggingConfigurationSection()
-    print(section)
-    section.set_value('terminal_level', 'DEBUG')
-    assert section.value('terminal_level') == 'DEBUG'
-    with pytest.raises(RuntimeError) as info:
-        section.set_value('terminal_level', 'PHONY')
-    logger.info(info.value)
-    assert section.value('terminal_level') == 'DEBUG'
-    section.set_value('terminal_level', 'INFO')
-    assert section.value('terminal_level') == 'INFO'
-    with pytest.raises(RuntimeError) as info:
-        section.set_value('dummy', 'PHONY')
-    logger.info(info.value)
-    print(section.as_dict())
+    section.set_value("terminal_level", "DEBUG")
+    assert section.value("terminal_level") == "DEBUG"
+    with pytest.raises(RuntimeError):
+        section.set_value("terminal_level", "PHONY")
+    assert section.value("terminal_level") == "DEBUG"
+    section.set_value("terminal_level", "INFO")
+    assert section.value("terminal_level") == "INFO"
+    with pytest.raises(RuntimeError):
+        section.set_value("dummy", "PHONY")
+    _ = section.as_dict()
     section = config.BufferingConfigurationSection()
-    print(section)
     section = config.MulticastConfigurationSection()
-    print(section)
 
 
 def test_application_configuration():
     """Test on the basic baldaquin configuration.
     """
     conf = config.UserApplicationConfiguration()
-    print(conf)
-    file_path = BALDAQUIN_DATA / 'baldaquin.cfg'
+    file_path = BALDAQUIN_DATA / "baldaquin.cfg"
     conf.save(file_path)
-    conf['Logging'].set_value('terminal_level', 'CRITICAL')
-    print(conf)
-    assert conf['Logging'].value('terminal_level') == 'CRITICAL'
+    conf["Logging"].set_value("terminal_level", "CRITICAL")
+    assert conf["Logging"].value("terminal_level") == "CRITICAL"
     conf.update_from_file(file_path)
-    print(conf)
-    assert conf['Logging'].value('terminal_level') == 'DEBUG'
+    assert conf["Logging"].value("terminal_level") == "DEBUG"
 
 
 def _write_configuration_dict(file_path: str, data: dict) -> None:
     """Utility function to write a configuration dictionary to disk.
     """
-    logger.info(f'Writing configuration dictionary to {file_path}...')
-    logger.info(data)
-    with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+    with open(file_path, "w", encoding=BALDAQUIN_ENCODING) as output_file:
         output_file.write(json.dumps(data, indent=4))
 
 
@@ -148,20 +121,19 @@ def test_resilience():
     """Test the resilience of the configuration mechanism to format changes.
     """
     conf = config.UserApplicationConfiguration()
-    print(conf)
-    file_path = BALDAQUIN_DATA / 'resilience.cfg'
+    file_path = BALDAQUIN_DATA / "resilience.cfg"
     # Add an unknown section.
     data = conf.as_dict()
-    data['Fake'] = {'fake_field': 3}
+    data["Fake"] = {"fake_field": 3}
     _write_configuration_dict(file_path, data)
     conf.update_from_file(file_path)
     # Add an unknown field in a legitimate section.
     data = conf.as_dict()
-    data['Logging'] = {'fake_field': 3}
+    data["Logging"] = {"fake_field": 3}
     _write_configuration_dict(file_path, data)
     conf.update_from_file(file_path)
     # Set a wrong value for a legitimate parameter.
     data = conf.as_dict()
-    data['Logging'] = {'terminal_level': 'FAKE'}
+    data["Logging"] = {"terminal_level": "FAKE"}
     _write_configuration_dict(file_path, data)
     conf.update_from_file(file_path)

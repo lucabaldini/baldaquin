@@ -13,13 +13,6 @@ baldaquin: BALd DAQ User INterface
    :class: only-light
    :align: right
 
-.. figure:: _static/baldaquin_logo_dark.png
-   :width: 180pt
-   :class: only-dark
-   :align: right
-
-|
-
 baldaquin (or the BALd DAQ User INterface) is an attempt at a general-purpose,
 modular and reusable data acquisition framework based on modern technologies.
 (And, before you get *too* excited, baldaquin is just a stub, and chances are

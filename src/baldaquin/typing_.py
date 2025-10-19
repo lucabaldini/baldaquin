@@ -1,4 +1,4 @@
-# Copyright (C) 2022 the baldaquin team.
+# Copyright (C) 2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,5 +13,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Test suite for gui.py
+"""Type annotations.
 """
+
+import pathlib
+from typing import Union
+
+import numpy as np
+
+ArrayLike = Union[float, np.ndarray]
+
+PathLike = Union[str, pathlib.Path]
