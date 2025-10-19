@@ -18,7 +18,6 @@
 
 import time
 
-from baldaquin.logging_ import logger
 from baldaquin.timeline import Timeline, Timestamp
 
 
@@ -58,10 +57,8 @@ def test_serialization():
     # Create a timeline and a timestamp.
     timeline = Timeline()
     timestamp = timeline.latch()
-    logger.info(timestamp)
     # Serialize...
     kwargs = timestamp.to_dict()
-    logger.info(kwargs)
     # ... and deserialize.
     twin = Timestamp.from_dict(**kwargs)
     # The two things should be identical.

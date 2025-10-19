@@ -19,14 +19,12 @@
 import pytest
 
 from baldaquin import serial_
-from baldaquin.logging_ import logger
 
 
 def test_device_id(pid: int = 0x0043, vid: int = 0x2341) -> None:
     """Test the DeviceId data class.
     """
     dev_id = serial_.DeviceId(vid, pid)
-    print(dev_id)
     assert dev_id.vid == vid
     assert dev_id.pid == pid
     assert dev_id == serial_.DeviceId(vid, pid)
@@ -40,27 +38,23 @@ def test_list_com_ports() -> None:
     """Test the COM port listing.
     """
     ports = serial_.list_com_ports()
-    for port in ports:
-        print(port)
-    assert isinstance(ports, list)
+    for _ in ports:
+        pass
     assert all(isinstance(port, serial_.PortInfo) for port in ports)
     ports = serial_.list_com_ports((0x2341, 0x0043))
-    for port in ports:
-        print(port)
+    for _ in ports:
+        pass
 
 
 def test_text_line() -> None:
     """Test the simple text protocol for the serial port.
     """
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         line = serial_.TextLine.from_text('Hello world;1')
-    logger.info(info.value)
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         line = serial_.TextLine.from_text('#Hello world;1')
-    logger.info(info.value)
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         line = serial_.TextLine.from_text('Hello world;1\n')
-    logger.info(info.value)
     line = serial_.TextLine.from_text('#Hello world;1\n')
     name, version = line.unpack(str, int)
     assert name == 'Hello world'
@@ -68,9 +62,8 @@ def test_text_line() -> None:
     name, version = line.unpack()
     assert name == 'Hello world'
     assert version == '1'
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         name, version = line.unpack(str)
-    logger.info(info.value)
     # Test text line insertion.
     line = serial_.TextLine.from_text('#1;2;3\n')
     line.prepend('ciao')

@@ -21,7 +21,6 @@ import time
 import pytest
 
 from baldaquin import BALDAQUIN_SCRATCH
-from baldaquin.logging_ import logger
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FiniteStateMachineBase, InvalidFsmTransitionError, RunReport
 from baldaquin.timeline import Timeline
@@ -91,8 +90,6 @@ def test_report():
 
     # Make sure that the serialization/deserialization roundtrips.
     kwargs = report.to_dict()
-    logger.info(kwargs)
-    logger.info(report.dumps())
     twin = RunReport.from_dict(**kwargs)
     assert twin == report
     assert twin.baldaquin_version == report.baldaquin_version
@@ -107,7 +104,6 @@ def test_report():
     file_path = BALDAQUIN_SCRATCH / 'test_report.json'
     report.save(file_path)
     twin = RunReport.load(file_path)
-    logger.info(report)
     assert twin == report
     assert twin.baldaquin_version == report.baldaquin_version
     assert twin.test_stand_id == report.test_stand_id

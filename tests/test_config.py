@@ -21,7 +21,6 @@ import json
 import pytest
 
 from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, config
-from baldaquin.logging_ import logger
 
 
 def _test_base_match(type_name, value, **constraints):
@@ -34,16 +33,8 @@ def _test_base_match(type_name, value, **constraints):
 def _test_base_mismatch(type_name, value, **constraints):
     """Base test function where we expect the parameter to match the input value.
     """
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         config.ConfigurationParameter('parameter', type_name, value, '', **constraints)
-    logger.info(info.value)
-
-
-def test_print_parameters():
-    """Print some parameters.
-    """
-    print(config.ConfigurationParameter('timeout', float, 10., 'timeout'))
-    print(config.ConfigurationParameter('timeout', float, 10., 'timeout', 's', '.6f', min=0.))
 
 
 def test_parameter_bool():
@@ -88,57 +79,39 @@ def test_parameter_str():
         _test_base_mismatch(str, value)
 
 
-def test_format():
-    """Test the formatted_value() method of the ConfigurationParameter class.
-    """
-    p = config.ConfigurationParameter('timeout', float, 10., 'timeout', 's', '.6f')
-    print(p.value)
-    print(p.formatted_value())
-
-
 def test_configuration_sections():
     """Test the configuration sections.
     """
     section = config.LoggingConfigurationSection()
-    print(section)
     section.set_value('terminal_level', 'DEBUG')
     assert section.value('terminal_level') == 'DEBUG'
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         section.set_value('terminal_level', 'PHONY')
-    logger.info(info.value)
     assert section.value('terminal_level') == 'DEBUG'
     section.set_value('terminal_level', 'INFO')
     assert section.value('terminal_level') == 'INFO'
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         section.set_value('dummy', 'PHONY')
-    logger.info(info.value)
-    print(section.as_dict())
+    _ = section.as_dict()
     section = config.BufferingConfigurationSection()
-    print(section)
     section = config.MulticastConfigurationSection()
-    print(section)
 
 
 def test_application_configuration():
     """Test on the basic baldaquin configuration.
     """
     conf = config.UserApplicationConfiguration()
-    print(conf)
     file_path = BALDAQUIN_DATA / 'baldaquin.cfg'
     conf.save(file_path)
     conf['Logging'].set_value('terminal_level', 'CRITICAL')
-    print(conf)
     assert conf['Logging'].value('terminal_level') == 'CRITICAL'
     conf.update_from_file(file_path)
-    print(conf)
     assert conf['Logging'].value('terminal_level') == 'DEBUG'
 
 
 def _write_configuration_dict(file_path: str, data: dict) -> None:
     """Utility function to write a configuration dictionary to disk.
     """
-    logger.info(f'Writing configuration dictionary to {file_path}...')
-    logger.info(data)
     with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
         output_file.write(json.dumps(data, indent=4))
 
@@ -147,7 +120,6 @@ def test_resilience():
     """Test the resilience of the configuration mechanism to format changes.
     """
     conf = config.UserApplicationConfiguration()
-    print(conf)
     file_path = BALDAQUIN_DATA / 'resilience.cfg'
     # Add an unknown section.
     data = conf.as_dict()

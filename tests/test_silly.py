@@ -16,17 +16,13 @@
 """Unit tests for the silly apps.
 """
 
-
-from baldaquin.logging_ import logger
 from baldaquin.silly.common import SillyConfiguration, SillyPacket, SillyServer
 
 
 def test_packet():
     """Test the basic packet structure.
     """
-    packet = SillyPacket(0, 1, 13080, 120)
-    logger.info(packet)
-    logger.info(packet.timestamp)
+    _ = SillyPacket(0, 1, 13080, 120)
 
 
 def test_server():
@@ -35,13 +31,10 @@ def test_server():
     server = SillyServer()
     for _ in range(5):
         data = server.next()
-        logger.info(data)
-        packet = SillyPacket.unpack(data)
-        logger.info(packet)
+        _ = SillyPacket.unpack(data)
 
 
 def test_configuration():
     """Test for the server configuration.
     """
-    config = SillyConfiguration()
-    logger.info(config)
+    _ = SillyConfiguration()

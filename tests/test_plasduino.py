@@ -24,7 +24,6 @@ import numpy as np
 import pytest
 
 from baldaquin import BALDAQUIN_ROOT
-from baldaquin.logging_ import logger
 from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
@@ -37,14 +36,8 @@ PENDULUM_DATA_FOLDER = TEST_DATA_FOLDER / f'0101_000{PENDULUM_RUN}'
 def test_protocol():
     """Test the protocol.
     """
-    readout = AnalogReadout(0xa2, 1, 1000, 255)
-    logger.info(readout)
-    logger.info(AnalogReadout.text_header('Something [a. u.]'))
-    logger.info(readout.to_text())
-    transition = DigitalTransition(0xa1, 1, 1000000)
-    logger.info(transition)
-    logger.info(DigitalTransition.text_header())
-    logger.info(transition.to_text())
+    _ = AnalogReadout(0xa2, 1, 1000, 255)
+    _ = DigitalTransition(0xa1, 1, 1000000)
 
 
 @pytest.mark.skip
@@ -110,31 +103,6 @@ def period_model(theta, T0):
     """
     # pylint: disable=invalid-name
     return T0 * (1. + 1. / 16. * theta**2 + 11. / 3072. * theta**4. + 173. / 737280. * theta**6.)
-
-
-@pytest.mark.skip
-def test_pendulum_custom_postprocess():
-    """Test the custom postprocess.
-    """
-    # pylint: disable=protected-access
-    sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
-    sys.dont_write_bytecode = True
-    pendulum = importlib.import_module('plasduino_pendulum')
-    sys.dont_write_bytecode = False
-    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
-    with PacketFile(DigitalTransition).open(file_path) as input_file:
-        data = input_file.read_all()
-    for i in range(5, len(data) - 3, 2):
-        t1 = pendulum.Pendulum._secs_avg(data, i - 4, i - 5)
-        t2 = pendulum.Pendulum._secs_avg(data, i - 2, i - 3)
-        t3 = pendulum.Pendulum._secs_avg(data, i, i - 1)
-        t4 = pendulum.Pendulum._secs_avg(data, i + 2, i + 1)
-        dt2 = pendulum.Pendulum._secs_diff(data, i - 2, i - 3)
-        dt3 = pendulum.Pendulum._secs_diff(data, i, i - 1)
-        # average_time = 0.5 * (t2 + t3)
-        transit_time = 0.5 * (dt2 + dt3)
-        period = 0.5 * (t3 - t1 + t4 - t2)
-        print(period, transit_time, t3 - t1, t4 - t2)
 
 
 def test_pendulum_sequence():

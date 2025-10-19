@@ -24,7 +24,6 @@ import pytest
 
 from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING
 from baldaquin.buf import FIFO, CircularBuffer, Sink, WriteMode
-from baldaquin.logging_ import logger
 from baldaquin.pkt import FixedSizePacketBase, Format, Layout, packetclass
 
 
@@ -53,9 +52,8 @@ def _test_buffer_base(buffer_class, num_packets: int = 10, **kwargs):
         buffer.put(packet)
     assert buffer.size() == num_packets
     # Since we have no sink connected, any flush attempt should raise an exception.
-    with pytest.raises(RuntimeError) as info:
+    with pytest.raises(RuntimeError):
         buffer.flush()
-    logger.info(info)
     buffer.clear()
 
 
@@ -89,9 +87,8 @@ def test_sink_contextmanager():
     with sink.open() as output_file:
         assert isinstance(output_file, io.IOBase)
     # Check that creating another sink with the same file path raises an exception.
-    with pytest.raises(FileExistsError) as info:
+    with pytest.raises(FileExistsError):
         sink = Sink(file_path, WriteMode.BINARY)
-    logger.info(info)
     # Cleanup.
     os.remove(file_path)
 
@@ -129,7 +126,7 @@ def test_buffer_flush(num_packets: int = 10):
     # And now it should be empty.
     assert buffer.size() == 0
     with open(text_file_path, encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
-        logger.info(input_file.read())
+        _ = input_file.read()
     # Cleanup
     os.remove(binary_file_path)
     os.remove(text_file_path)
