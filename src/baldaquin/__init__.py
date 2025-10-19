@@ -42,7 +42,7 @@ def _git_suffix() -> str:
         if subprocess.call(args, stdout=subprocess.DEVNULL, **kwargs) != 0:
             suffix = f"{suffix}.dirty"
         return suffix
-    except Exception:
+    except (subprocess.CalledProcessError, FileNotFoundError, OSError):
         return ""
 
 
