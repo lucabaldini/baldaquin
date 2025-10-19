@@ -53,12 +53,12 @@ def test_format():
     with pytest.raises(ValueError):
         @packetclass
         class Packet(FixedSizePacketBase):
-            layout = 'W'
+            layout = "W"
 
     with pytest.raises(ValueError):
         @packetclass
         class Packet(FixedSizePacketBase):  # noqa: F811
-            trigger_id: 'W'  # noqa: F821
+            trigger_id: "W"  # noqa: F821
 
     with pytest.raises(FieldMismatchError):
         _ = Readout(0, 0, 0)
@@ -69,8 +69,8 @@ def test_readout():
     """
     # pylint: disable=protected-access
     # Test the class variables.
-    assert Readout._fields == ('header', 'milliseconds', 'adc_value')
-    assert Readout._format == '>BLH'
+    assert Readout._fields == ("header", "milliseconds", "adc_value")
+    assert Readout._format == ">BLH"
     assert Readout.size == 7
 
     # Create a class instance.
@@ -106,22 +106,22 @@ def test_text():
     """Test the join_attributes() method.
     """
     # pylint: disable=protected-access
-    attrs = ('seconds', 'adc_value')
-    fmts = ('%.6f', '%d')
+    attrs = ("seconds", "adc_value")
+    fmts = ("%.6f", "%d")
     packet = Readout(0xaa, 100, 127)
-    assert packet._format_attributes(attrs, fmts) == ('0.100000', '127')
-    assert packet._text(attrs, fmts, ', ') == '0.100000, 127\n'
+    assert packet._format_attributes(attrs, fmts) == ("0.100000", "127")
+    assert packet._text(attrs, fmts, ", ") == "0.100000, 127\n"
 
 
 def test_repr():
     """Test the terminal formatting helper function.
     """
     # pylint: disable=protected-access
-    attrs = ('seconds', 'adc_value')
-    fmts = ('%.6f', '%d')
+    attrs = ("seconds", "adc_value")
+    fmts = ("%.6f", "%d")
     packet = Readout(0xaa, 100, 127)
-    assert packet._repr(attrs) == 'Readout(seconds=0.1, adc_value=127)'
-    assert packet._repr(attrs, fmts) == 'Readout(seconds=0.100000, adc_value=127)'
+    assert packet._repr(attrs) == "Readout(seconds=0.1, adc_value=127)"
+    assert packet._repr(attrs, fmts) == "Readout(seconds=0.100000, adc_value=127)"
 
 
 def test_docs():
@@ -141,7 +141,7 @@ def test_docs():
     assert len(packet) == 10
     assert isinstance(packet, AbstractPacket)
 
-    packet = Trigger.unpack(b'\xff\x01\x00\x00\x00\x00\x00\xebd\xde')
+    packet = Trigger.unpack(b"\xff\x01\x00\x00\x00\x00\x00\xebd\xde")
 
     with pytest.raises(AttributeError):
         packet.pin_number = 0
@@ -165,8 +165,8 @@ def test_docs():
 def test_binary_io(num_packets: int = 10):
     """Write to and read from file in binary format.
     """
-    file_path = BALDAQUIN_SCRATCH / 'test_pkt.dat'
-    with open(file_path, 'wb') as output_file:
+    file_path = BALDAQUIN_SCRATCH / "test_pkt.dat"
+    with open(file_path, "wb") as output_file:
         for i in range(num_packets):
             output_file.write(Readout(0xaa, 1 * 1000, i + 100).data)
     with PacketFile(Readout).open(file_path) as input_file:

@@ -85,8 +85,8 @@ def test_report():
     time.sleep(0.5)
     stop_timestamp = timeline.latch()
     stats = PacketStatistics(10, 10, 100)
-    report = RunReport('0.3.1', 101, 66, start_timestamp, stop_timestamp,
-                       'Test project', 'TestApplication', stats)
+    report = RunReport("0.3.1", 101, 66, start_timestamp, stop_timestamp,
+                       "Test project", "TestApplication", stats)
 
     # Make sure that the serialization/deserialization roundtrips.
     kwargs = report.to_dict()
@@ -101,7 +101,7 @@ def test_report():
     assert twin.statistics == report.statistics
 
     # Test the file IO.
-    file_path = BALDAQUIN_SCRATCH / 'test_report.json'
+    file_path = BALDAQUIN_SCRATCH / "test_report.json"
     report.save(file_path)
     twin = RunReport.load(file_path)
     assert twin == report

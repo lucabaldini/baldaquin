@@ -29,7 +29,7 @@ def test_hist1d(size=1000000, mean=10., sigma=2.):
     """
     binning = np.linspace(mean - 5. * sigma, mean + 5. * sigma, 100)
     x = _RNG.normal(mean, sigma, size)
-    h = Histogram1d(binning, xlabel='x').fill(x)
+    h = Histogram1d(binning, xlabel="x").fill(x)
     # Test that the histogram statistics is providing sensible values.
     # Note that the limits for the test, here, are purely heuristic---we should
     # probably do something more sensible from the statistcal point of view.
@@ -37,11 +37,11 @@ def test_hist1d(size=1000000, mean=10., sigma=2.):
     assert abs((hist_sumw - size) / size) < 1.e-5
     assert abs(hist_mean - x.mean()) < 5.e-4
     assert abs(hist_rms - x.std()) < 5.e-3
-    plt.figure('Histogram 1d')
+    plt.figure("Histogram 1d")
     h.plot()
     h.stat_box()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_hist1d()
     plt.show()

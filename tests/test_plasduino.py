@@ -27,7 +27,7 @@ from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
-PENDULUM_RUN = '396'
+PENDULUM_RUN = "396"
 
 
 def test_protocol():
@@ -44,11 +44,11 @@ def test_pendulum_process(test_data_path):
     This was done to debug issue https://github.com/lucabaldini/baldaquin/issues/50
     """
     # pylint: disable=protected-access
-    sys.path.append(str(BALDAQUIN_SOURCE / 'plasduino' / 'apps'))
+    sys.path.append(str(BALDAQUIN_SOURCE / "plasduino" / "apps"))
     sys.dont_write_bytecode = True
-    pendulum = importlib.import_module('plasduino_pendulum')
+    pendulum = importlib.import_module("plasduino_pendulum")
     sys.dont_write_bytecode = False
-    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data.dat')
+    file_path = test_data_path(f"0101_000{PENDULUM_RUN}", f"0101_000{PENDULUM_RUN}_data.dat")
     with PacketFile(DigitalTransition).open(file_path) as input_file:
         data = input_file.read_all()
 
@@ -64,14 +64,14 @@ def test_pendulum_process(test_data_path):
     smooth_period = np.array([oscillation.period for oscillation in oscillations])
     smooth_transit_time = np.array([oscillation.transit_time for oscillation in oscillations])
 
-    plt.figure('Simple processing: period')
-    plt.plot(simple_time, simple_period, label='Simple')
-    plt.plot(smooth_time, smooth_period, label='Smooth')
-    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
-    plt.figure('Simple processing: transit time')
-    plt.plot(simple_time, simple_transit_time, label='Simple')
-    plt.plot(smooth_time, smooth_transit_time, label='Smooth')
-    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True, legend=True)
+    plt.figure("Simple processing: period")
+    plt.plot(simple_time, simple_period, label="Simple")
+    plt.plot(smooth_time, smooth_period, label="Smooth")
+    setup_gca(xlabel="Time [s]", ylabel="Period [s]", grids=True, legend=True)
+    plt.figure("Simple processing: transit time")
+    plt.plot(simple_time, simple_transit_time, label="Simple")
+    plt.plot(smooth_time, smooth_transit_time, label="Smooth")
+    setup_gca(xlabel="Time [s]", ylabel="Period [s]", grids=True, legend=True)
 
 
 def transit_velocity(transit_time: np.array, pendulum_length: float, gate_distance: float,
@@ -105,7 +105,7 @@ def period_model(theta, T0):
 def test_pendulum_sequence(test_data_path):
     """Draw the signal sequence.
     """
-    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data.dat')
+    file_path = test_data_path(f"0101_000{PENDULUM_RUN}", f"0101_000{PENDULUM_RUN}_data.dat")
     with PacketFile(DigitalTransition).open(file_path) as input_file:
         data = input_file.read_all()
     sequence = data[-11:-1]
@@ -119,9 +119,9 @@ def test_pendulum_sequence(test_data_path):
             y += [1, 0]
         else:
             y += [0, 1]
-    plt.figure('Initial sequence')
+    plt.figure("Initial sequence")
     plt.plot(x, y)
-    setup_gca(ymax=1.1, xlabel='Time [ms]', ylabel='Status (high = occulted)')
+    setup_gca(ymax=1.1, xlabel="Time [ms]", ylabel="Status (high = occulted)")
 
 
 def test_pendulum_plot(test_data_path):
@@ -136,8 +136,8 @@ def test_pendulum_plot(test_data_path):
     T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
     # optical_gate_width = 0.001
 
-    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data_proc.txt')
-    time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
+    file_path = test_data_path(f"0101_000{PENDULUM_RUN}", f"0101_000{PENDULUM_RUN}_data_proc.txt")
+    time_, period, transit_time = np.loadtxt(file_path, delimiter=",", unpack=True)
     velocity = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
 
     # Correct the period for the width of the optical gate!
@@ -147,27 +147,27 @@ def test_pendulum_plot(test_data_path):
     energy = 0.5 * mass * velocity**2.
     energy_loss = np.diff(energy) / (0.5 * (energy[:-1] + energy[1:]))
 
-    plt.figure('Period')
-    plt.plot(time_, period, 'o')
-    setup_gca(xlabel='Time [s]', ylabel='Period [s]', grids=True)
+    plt.figure("Period")
+    plt.plot(time_, period, "o")
+    setup_gca(xlabel="Time [s]", ylabel="Period [s]", grids=True)
 
-    # plt.figure('Transit time')
-    # plt.plot(time_, transit_time, 'o')
-    # setup_gca(xlabel='Time [s]', ylabel='Transit time [s]', grids=True)
+    # plt.figure("Transit time")
+    # plt.plot(time_, transit_time, "o")
+    # setup_gca(xlabel="Time [s]", ylabel="Transit time [s]", grids=True)
 
-    plt.figure('Amplitude')
-    plt.plot(amplitude, period, 'o')
+    plt.figure("Amplitude")
+    plt.plot(amplitude, period, "o")
     plt.plot(amplitude, period_model(amplitude, T0))
-    setup_gca(xlabel='Amplitude [rad]', ylabel='Period [s]', grids=True)
+    setup_gca(xlabel="Amplitude [rad]", ylabel="Period [s]", grids=True)
 
-    plt.figure('Amplitude residuals')
-    plt.plot(amplitude, period - period_model(amplitude, T0), 'o')
-    setup_gca(xlabel='Amplitude [rad]', ylabel='Period residuals [s]', grids=True)
+    plt.figure("Amplitude residuals")
+    plt.plot(amplitude, period - period_model(amplitude, T0), "o")
+    setup_gca(xlabel="Amplitude [rad]", ylabel="Period residuals [s]", grids=True)
 
-    plt.figure('Energy')
-    plt.plot(time_, energy, 'o')
-    setup_gca(xlabel='Period [s]', ylabel='Energy [J]', grids=True)
+    plt.figure("Energy")
+    plt.plot(time_, energy, "o")
+    setup_gca(xlabel="Period [s]", ylabel="Energy [J]", grids=True)
 
-    plt.figure('Energy loss')
-    plt.plot(time_[1:], energy_loss * 100., 'o')
-    setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss [%]', grids=True)
+    plt.figure("Energy loss")
+    plt.plot(time_[1:], energy_loss * 100., "o")
+    setup_gca(xlabel="Period [s]", ylabel="Fractional energy loss [%]", grids=True)

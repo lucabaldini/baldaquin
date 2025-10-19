@@ -50,23 +50,23 @@ def test_text_line() -> None:
     """Test the simple text protocol for the serial port.
     """
     with pytest.raises(RuntimeError):
-        line = serial_.TextLine.from_text('Hello world;1')
+        line = serial_.TextLine.from_text("Hello world;1")
     with pytest.raises(RuntimeError):
-        line = serial_.TextLine.from_text('#Hello world;1')
+        line = serial_.TextLine.from_text("#Hello world;1")
     with pytest.raises(RuntimeError):
-        line = serial_.TextLine.from_text('Hello world;1\n')
-    line = serial_.TextLine.from_text('#Hello world;1\n')
+        line = serial_.TextLine.from_text("Hello world;1\n")
+    line = serial_.TextLine.from_text("#Hello world;1\n")
     name, version = line.unpack(str, int)
-    assert name == 'Hello world'
+    assert name == "Hello world"
     assert version == 1
     name, version = line.unpack()
-    assert name == 'Hello world'
-    assert version == '1'
+    assert name == "Hello world"
+    assert version == "1"
     with pytest.raises(RuntimeError):
         name, version = line.unpack(str)
     # Test text line insertion.
-    line = serial_.TextLine.from_text('#1;2;3\n')
-    line.prepend('ciao')
-    assert line.decode() == '#ciao;1;2;3\n'
-    line.append('howdy')
-    assert line.decode() == '#ciao;1;2;3;howdy\n'
+    line = serial_.TextLine.from_text("#1;2;3\n")
+    line.prepend("ciao")
+    assert line.decode() == "#ciao;1;2;3\n"
+    line.append("howdy")
+    assert line.decode() == "#ciao;1;2;3;howdy\n"

@@ -40,7 +40,7 @@ class Packet(FixedSizePacketBase):
     def as_text(self):
         """Simple text formatting function.
         """
-        return f'{self.header}, {self.packet_id}\n'
+        return f"{self.header}, {self.packet_id}\n"
 
 
 def _test_buffer_base(buffer_class, num_packets: int = 10, **kwargs):
@@ -80,7 +80,7 @@ def _scrap_file(file_path: Path) -> Path:
 def test_sink_contextmanager():
     """Test the context manager sink protocol.
     """
-    file_path = _scrap_file(BALDAQUIN_DATA / 'sink.dat')
+    file_path = _scrap_file(BALDAQUIN_DATA / "sink.dat")
     # Create the sink.
     sink = Sink(file_path, WriteMode.BINARY)
     # Open the sink.
@@ -96,8 +96,8 @@ def test_sink_contextmanager():
 def test_sink_header():
     """Test the header for a text sink.
     """
-    file_path = _scrap_file(BALDAQUIN_DATA / 'sink.txt')
-    header = '#This is a file header.\n'
+    file_path = _scrap_file(BALDAQUIN_DATA / "sink.txt")
+    header = "#This is a file header.\n"
     # Create the sink---this should write the header into the output file...
     _ = Sink(file_path, WriteMode.TEXT, header=header)
     # ... open the output file and make sure the content is correct.
@@ -110,12 +110,12 @@ def test_sink_header():
 def test_buffer_flush(num_packets: int = 10):
     """Test the full flush mechanism with multiple sinks.
     """
-    binary_file_path = _scrap_file(BALDAQUIN_DATA / 'sink.dat')
-    text_file_path = _scrap_file(BALDAQUIN_DATA / 'sink.txt')
+    binary_file_path = _scrap_file(BALDAQUIN_DATA / "sink.dat")
+    text_file_path = _scrap_file(BALDAQUIN_DATA / "sink.txt")
     # Create a buffer and assign two sinks.
     buffer = CircularBuffer()
     buffer.set_primary_sink(binary_file_path)
-    buffer.add_custom_sink(text_file_path, WriteMode.TEXT, Packet.as_text, '#File header\n')
+    buffer.add_custom_sink(text_file_path, WriteMode.TEXT, Packet.as_text, "#File header\n")
     # Fill the buffer with some packets.
     for i in range(num_packets):
         packet = Packet(Packet.header, i)

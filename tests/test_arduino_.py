@@ -39,13 +39,13 @@ def test_board_retrieval():
     """
     for device_id in _UNO_IDS:
         assert arduino_.ArduinoBoard.by_device_id(device_id) == arduino_.UNO
-    assert arduino_.ArduinoBoard.by_designator('uno') == arduino_.UNO
+    assert arduino_.ArduinoBoard.by_designator("uno") == arduino_.UNO
 
     with pytest.raises(RuntimeError):
         arduino_.ArduinoBoard.by_device_id(DeviceId(-1, -1))
 
     with pytest.raises(RuntimeError):
-        arduino_.ArduinoBoard.by_designator('una')
+        arduino_.ArduinoBoard.by_designator("una")
 
 
 def test_autodetect():
@@ -62,9 +62,9 @@ def test_upload(test_data_path):
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed, nor a board attached to upload to.
     """
-    file_path = test_data_path('blink', 'blink_uno.hex')
+    file_path = test_data_path("blink", "blink_uno.hex")
     with contextlib.suppress(RuntimeError):
-        arduino_.upload_sketch(file_path, 'uno')
+        arduino_.upload_sketch(file_path, "uno")
 
 
 def test_compile(test_data_path):
@@ -73,15 +73,15 @@ def test_compile(test_data_path):
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = test_data_path('blink', 'blink.ino')
+    file_path = test_data_path("blink", "blink.ino")
     with contextlib.suppress(RuntimeError):
-        arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
+        arduino_.compile_sketch(file_path, "uno", BALDAQUIN_SCRATCH, verbose=False)
 
 
 def test_project_name():
     """Test the project name machinery.
     """
     interface = arduino_.ArduinoProgrammingInterfaceBase
-    for sketch_path in ('sketches/test/test.ino', 'sketches/test/', 'sketches/test'):
-        assert interface.project_base_name(sketch_path) == 'test'
-        assert interface.project_name('sketches/test/test', 'uno') == 'test_uno'
+    for sketch_path in ("sketches/test/test.ino", "sketches/test/", "sketches/test"):
+        assert interface.project_base_name(sketch_path) == "test"
+        assert interface.project_name("sketches/test/test", "uno") == "test_uno"
