@@ -18,7 +18,7 @@
 
 import time
 
-from baldaquin import logger
+from baldaquin.logging_ import logger
 from baldaquin.timeline import Timeline, Timestamp
 
 

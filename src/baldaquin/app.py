@@ -18,10 +18,9 @@
 
 from typing import TYPE_CHECKING
 
-from loguru import logger
-
-from baldaquin.__qt__ import QtCore
-from baldaquin.config import UserApplicationConfiguration
+from .__qt__ import QtCore
+from .config import UserApplicationConfiguration
+from .logging_ import logger
 
 if TYPE_CHECKING:
     # We only need RunControl for type annotations, hence the if clause.

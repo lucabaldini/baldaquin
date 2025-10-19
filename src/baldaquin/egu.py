@@ -21,8 +21,8 @@ from __future__ import annotations
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from baldaquin import logger
-from baldaquin.plt_ import plt, setup_gca
+from .logging_ import logger
+from .plt_ import plt, setup_gca
 
 
 class ConversionBase:

@@ -20,7 +20,8 @@ import time
 
 import pytest
 
-from baldaquin import BALDAQUIN_SCRATCH, logger
+from baldaquin import BALDAQUIN_SCRATCH
+from baldaquin.logging_ import logger
 from baldaquin.pkt import PacketStatistics
 from baldaquin.runctrl import FiniteStateMachineBase, InvalidFsmTransitionError, RunReport
 from baldaquin.timeline import Timeline

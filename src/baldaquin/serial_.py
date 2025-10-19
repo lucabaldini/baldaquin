@@ -27,7 +27,7 @@ import serial
 import serial.tools.list_ports
 import serial.tools.list_ports_common
 
-from baldaquin import logger
+from .logging_ import logger
 
 # List of standard baud rates.
 STANDARD_BAUD_RATES = serial.Serial.BAUDRATES

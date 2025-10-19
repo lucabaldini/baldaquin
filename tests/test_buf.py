@@ -22,8 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, logger
+from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING
 from baldaquin.buf import FIFO, CircularBuffer, Sink, WriteMode
+from baldaquin.logging_ import logger
 from baldaquin.pkt import FixedSizePacketBase, Format, Layout, packetclass
 
 

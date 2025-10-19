@@ -21,9 +21,6 @@ from __future__ import annotations
 import os
 import pathlib
 import subprocess
-import sys
-
-from loguru import logger
 
 from baldaquin._version import __version__ as __base_version__
 
@@ -71,56 +68,6 @@ def start_message() -> None:
     print(msg)
 
 
-#start_message()
-
-
-def reset_logger(level: str = 'DEBUG') -> int:
-    """Minimal configuration facility for the loguru logger.
-
-    A few remarks about the loguru internals. In order to keep the API clean, the
-    author of the library made the deliberate decision not to allow to change handlers,
-    so that the preferred way to change the logger configuration is to remove all the
-    existing handlers and start from scratch---this is exactly what we are doing here.
-
-    Also note that whenever you add a new handler, you get back an ID that can be used
-    to remove the handler later on. The default handler (which we get rid of at the
-    first call to this function) is guaranteed to have ID 0.
-
-    Arguments
-    ---------
-    level : str
-        The minimum logging level to be used by the logger. Defaults to 'DEBUG'.
-        Other possible values are 'INFO', 'WARNING', 'ERROR', and 'CRITICAL'.
-
-    Returns
-    -------
-    int
-        The ID of the handler that was added.
-    """
-    # Remove all existing handlers.
-    logger.remove()
-    # Create a plain, terminal-based logger.
-    fmt = '>>> <level>[{level}] {message}</level>'
-    return logger.add(sys.stderr, level=level, colorize=True, format=fmt)
-
-
-def add_log_file(file_path: str, level: str = 'DEBUG') -> int:
-    """Add a new file-based handler to the logger.
-
-    Arguments
-    ---------
-    file_path : str
-        The path to the file where the log messages should be written.
-
-    level : str
-        The minimum logging level to be used by the logger. Defaults to 'DEBUG'.
-    """
-    logger.info(f'Directing logger output to {file_path} (level={level})...')
-    return logger.add(file_path, level=level)
-
-
-reset_logger()
-
 
 # Basic package structure.
 BALDAQUIN_ROOT = pathlib.Path(__file__).parent
@@ -151,7 +98,7 @@ DEFAULT_CHARACTER_ENCODING = 'utf-8'
 def execute_shell_command(args):
     """Execute a shell command.
     """
-    logger.info(f'About to execute "{" ".join(args)}"...')
+    #logger.info(f'About to execute "{" ".join(args)}"...')
     return subprocess.run(args, check=True)
 
 
@@ -167,7 +114,7 @@ def _create_folder(folder_path: pathlib.Path) -> None:
         The path to the target folder.
     """
     if not folder_path.exists():
-        logger.info(f'Creating folder {folder_path}...')
+        #logger.info(f'Creating folder {folder_path}...')
         pathlib.Path.mkdir(folder_path, parents=True)
 
 

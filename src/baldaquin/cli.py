@@ -23,7 +23,8 @@ import importlib
 import importlib.util
 import sys
 
-from baldaquin import BALDAQUIN_DATA, BALDAQUIN_ROOT, arduino_, logger, serial_
+from . import BALDAQUIN_DATA, BALDAQUIN_ROOT, arduino_, serial_
+from .logging_ import logger
 
 # List of defaults projects shipped with the package.
 _DEFAULT_PROJECTS = ('plasduino', 'silly')

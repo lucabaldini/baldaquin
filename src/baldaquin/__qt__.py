@@ -44,7 +44,7 @@ import operator
 import os
 import sys
 
-from loguru import logger
+from .logging_ import logger
 
 # pylint: disable=unused-import, import-error, invalid-name
 

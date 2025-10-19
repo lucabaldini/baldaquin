@@ -28,12 +28,12 @@ from typing import Any
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from baldaquin import BALDAQUIN_ICONS, BALDAQUIN_SKINS
-from baldaquin.__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
-from baldaquin.app import UserApplicationBase
-from baldaquin.config import ConfigurationParameter, UserApplicationConfiguration
-from baldaquin.pkt import PacketStatistics
-from baldaquin.runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
+from . import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from .__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
+from .app import UserApplicationBase
+from .config import ConfigurationParameter, UserApplicationConfiguration
+from .pkt import PacketStatistics
+from .runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
 
 # pylint: disable=too-many-lines
 

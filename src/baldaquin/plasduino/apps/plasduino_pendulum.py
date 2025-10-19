@@ -22,9 +22,10 @@ import inspect
 from dataclasses import dataclass
 from pathlib import Path
 
-from baldaquin import DEFAULT_CHARACTER_ENCODING, logger, plasduino
+from baldaquin import DEFAULT_CHARACTER_ENCODING, plasduino
 from baldaquin.buf import WriteMode
 from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
+from baldaquin.logging_ import logger
 from baldaquin.pkt import AbstractPacket, Edge, PacketFile
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG
 from baldaquin.plasduino.common import (

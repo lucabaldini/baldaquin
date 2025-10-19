@@ -24,8 +24,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from enum import Enum, IntEnum
 
-from baldaquin import __version__, logger
-from baldaquin.timeline import Timeline
+from . import __version__
+from .logging_ import logger
+from .timeline import Timeline
 
 DEFAULT_TEXT_PREFIX = '#'
 DEFAULT_TEXT_SEPARATOR = ','

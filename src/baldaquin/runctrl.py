@@ -22,20 +22,18 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from baldaquin import (
+from . import (
     DEFAULT_CHARACTER_ENCODING,
     __version__,
-    add_log_file,
     config_folder_path,
     data_folder_path,
-    logger,
-    reset_logger,
 )
-from baldaquin.__qt__ import QtCore
-from baldaquin.app import UserApplicationBase
-from baldaquin.config import UserApplicationConfiguration
-from baldaquin.event import PacketStatistics
-from baldaquin.timeline import Timeline, Timestamp
+from .__qt__ import QtCore
+from .app import UserApplicationBase
+from .config import UserApplicationConfiguration
+from .event import PacketStatistics
+from .logging_ import logger, setup_logger, start_file_logging
+from .timeline import Timeline, Timestamp
 
 
 class FsmState(Enum):
@@ -634,8 +632,9 @@ class RunControlBase(FiniteStateMachineBase):
         logger.info(f'Applying configuration...\n{configuration}')
         logger.info('Configuring logging...')
         section = configuration.logging_section()
-        reset_logger(section.value('terminal_level'))
-        self._log_file_handler_id = add_log_file(self.log_file_path(), section.value('file_level'))
+        setup_logger(section.value('terminal_level'))
+        self._log_file_handler_id = start_file_logging(self.log_file_path(),
+                                                       section.value('file_level'))
         logger.info('Configuring packet buffering...')
         section = configuration.buffering_section()
         flush_size = section.value('flush_size')

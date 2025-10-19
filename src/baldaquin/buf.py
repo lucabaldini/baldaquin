@@ -29,9 +29,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from baldaquin import DEFAULT_CHARACTER_ENCODING, logger
-from baldaquin.pkt import AbstractPacket
-from baldaquin.profile import timing
+from . import DEFAULT_CHARACTER_ENCODING
+from .logging_ import logger
+from .pkt import AbstractPacket
+from .profile import timing
 
 
 class WriteMode(Enum):

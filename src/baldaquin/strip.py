@@ -20,7 +20,7 @@ import collections
 
 import numpy as np
 
-from baldaquin.plt_ import plt, setup_axes
+from .plt_ import plt, setup_axes
 
 
 class SlidingStripChart:

@@ -18,7 +18,7 @@
 
 import numpy as np
 
-from baldaquin.plt_ import PlotCard, matplotlib, plt, setup_axes
+from .plt_ import PlotCard, matplotlib, plt, setup_axes
 
 
 class InvalidShapeError(RuntimeError):

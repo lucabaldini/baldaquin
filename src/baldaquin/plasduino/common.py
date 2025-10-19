@@ -22,10 +22,11 @@ import struct
 import time
 from typing import Any
 
-from baldaquin import arduino_, logger, plasduino
+from baldaquin import arduino_, plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
+from baldaquin.logging_ import logger
 from baldaquin.plasduino.protocol import (
     AnalogReadout,
     DigitalTransition,

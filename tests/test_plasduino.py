@@ -23,7 +23,8 @@ import sys
 import numpy as np
 import pytest
 
-from baldaquin import BALDAQUIN_ROOT, logger
+from baldaquin import BALDAQUIN_ROOT
+from baldaquin.logging_ import logger
 from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca

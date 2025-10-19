@@ -22,11 +22,10 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from loguru import logger
-
-from baldaquin.__qt__ import QtCore
-from baldaquin.buf import CircularBuffer, WriteMode
-from baldaquin.pkt import AbstractPacket, PacketStatistics
+from .__qt__ import QtCore
+from .buf import CircularBuffer, WriteMode
+from .logging_ import logger
+from .pkt import AbstractPacket, PacketStatistics
 
 
 class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):

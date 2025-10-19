@@ -21,8 +21,9 @@ import sys
 from typing import Any
 
 import matplotlib
-from loguru import logger
 from matplotlib import pyplot as plt
+
+from .logging_ import logger
 
 if sys.flags.interactive:
     plt.ion()

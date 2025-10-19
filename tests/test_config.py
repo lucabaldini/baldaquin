@@ -20,7 +20,8 @@ import json
 
 import pytest
 
-from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, config, logger
+from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, config
+from baldaquin.logging_ import logger
 
 
 def _test_base_match(type_name, value, **constraints):

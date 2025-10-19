@@ -21,7 +21,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, logger
+from . import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING
+from .logging_ import logger
 
 
 class ConfigurationParameter:

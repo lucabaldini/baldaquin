@@ -19,7 +19,7 @@
 import time
 from functools import wraps
 
-from loguru import logger
+from .logging_ import logger
 
 
 def timing(func):
