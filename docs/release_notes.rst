@@ -4,6 +4,19 @@ Release notes
 =============
 
 
+* Adopted src/ layout with baldaquin package moved to src/baldaquin/
+* Introduced dynamic versioning with git integration
+* Replaced Makefile with nox sessions for development tasks
+* Updated all copyright headers to 2025
+* Consolidated environment/logging setup into dedicated modules
+* Default quote character changes from single to double quote.
+* Major clean up and linting.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/73
+ Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/69
+
+
 *baldaquin 0.6.0 (Wed, 28 May 2025 11:03:01 +0200)*
 
 * Major restructuring of the configuration facilities, which are now multi-section.
