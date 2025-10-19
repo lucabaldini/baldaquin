@@ -47,4 +47,3 @@ def _git_suffix() -> str:
 
 
 __version__ = f"{__base_version__}{_git_suffix()}"
-
