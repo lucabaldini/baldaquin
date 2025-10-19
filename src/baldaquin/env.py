@@ -19,6 +19,7 @@
 
 import os
 import pathlib
+from typing import Tuple
 
 from .logging_ import logger
 from .typing_ import PathLike
@@ -115,7 +116,7 @@ def data_folder_path(project_name: str) -> pathlib.Path:
     return BALDAQUIN_DATA / project_name
 
 
-def setup_project(project_name: str) -> tuple[pathlib.Path, pathlib.Path]:
+def setup_project(project_name: str) -> Tuple[pathlib.Path, pathlib.Path]:
     """Setup the folder structure for a given project.
 
     Arguments
