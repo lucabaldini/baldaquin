@@ -35,15 +35,15 @@ class SillyRead(SillyUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Silly readout'
+    NAME = "Silly readout"
     CONFIGURATION_CLASS = SillyConfiguration
-    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / 'silly_read.cfg'
+    CONFIGURATION_FILE_PATH = SILLY_APP_CONFIG / "silly_read.cfg"
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
         """
         packet = SillyPacket.unpack(packet_data)
-        logger.debug(f'{packet} <- {packet_data}')
+        logger.debug(f"{packet} <- {packet_data}")
         return packet
 
 
@@ -53,5 +53,5 @@ def main() -> None:
     bootstrap_window(SillyMainWindow, SillyRunControl(), SillyRead())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

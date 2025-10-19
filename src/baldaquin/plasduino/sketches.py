@@ -21,14 +21,14 @@ from pathlib import Path
 from baldaquin.env import BALDAQUIN_SOURCE
 from baldaquin.plasduino import PROJECT_NAME
 
-PLASDUINO_SKETCH_ROOT = BALDAQUIN_SOURCE / PROJECT_NAME / 'sketches'
+PLASDUINO_SKETCH_ROOT = BALDAQUIN_SOURCE / PROJECT_NAME / "sketches"
 
 # Dictionary holding the correspondence between the (sketch_id, sketch_version)
 # tuple and the name of the actual sketch to be uploaded on the board.
 # (This could have been handled in a more sensible way with a hash, but it's too late.)
 _PLASDUINO_SKETCH_DICT = {
-    (1, 3): 'digital_timer.hex',
-    (2, 3): 'analog_sampling.hex'
+    (1, 3): "digital_timer.hex",
+    (2, 3): "analog_sampling.hex"
 }
 
 
@@ -52,6 +52,6 @@ def sketch_file_path(sketch_id: int, sketch_version: int) -> Path:
     try:
         file_name = _PLASDUINO_SKETCH_DICT[(sketch_id, sketch_version)]
     except KeyError as exc:
-        raise RuntimeError(f'No information for sketch {sketch_id} version {sketch_version}') \
+        raise RuntimeError(f"No information for sketch {sketch_id} version {sketch_version}") \
             from exc
     return PLASDUINO_SKETCH_ROOT / file_name

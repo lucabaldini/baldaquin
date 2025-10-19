@@ -62,7 +62,7 @@ class PlasduinoSerialInterface(SerialInterface):
         to fix this nonsense, now. Extra work on the transmitting side, and extra
         work on the receiving side too. Good job, Luca!
         """
-        return super().read_and_unpack(f'>{fmt}')
+        return super().read_and_unpack(f">{fmt}")
 
     def read_sketch_info(self):
         """Read the information about the sketch loaded on the board.
@@ -71,8 +71,8 @@ class PlasduinoSerialInterface(SerialInterface):
         the plasduino sketches send out, and this should be the first function
         called after a setup.
         """
-        sketch_id = self.read_and_unpack('B')
-        sketch_version = self.read_and_unpack('B')
+        sketch_id = self.read_and_unpack("B")
+        sketch_version = self.read_and_unpack("B")
         return sketch_id, sketch_version
 
     def read_run_end_marker(self) -> None:
@@ -83,12 +83,12 @@ class PlasduinoSerialInterface(SerialInterface):
         sketch when the run is stopped and all the measurements have been completed,
         and needs to be taken out of the way in order for the next run to take place.)
         """
-        logger.info('Waiting for the run end marker...')
-        marker = self.read_and_unpack('B')
+        logger.info("Waiting for the run end marker...")
+        marker = self.read_and_unpack("B")
         if not marker == Marker.RUN_END_MARKER:
-            raise RuntimeError(f'Run end marker mismatch '
-                  f'(expected {hex(Marker.RUN_END_MARKER)}, found {hex(marker)}).')
-        logger.info('Run end marker correctly read.')
+            raise RuntimeError(f"Run end marker mismatch "
+                  f"(expected {hex(Marker.RUN_END_MARKER)}, found {hex(marker)}).")
+        logger.info("Run end marker correctly read.")
 
     def read_until_run_end_marker(self, timeout: float = None) -> None:
         """Read data from the serial port until the end-of-run marker is found.
@@ -101,17 +101,17 @@ class PlasduinoSerialInterface(SerialInterface):
         timeout : float (default None)
             The timeout (in s) to be temporarily set for the transaction.
         """
-        logger.info('Scanning serial input for run-end marker...')
+        logger.info("Scanning serial input for run-end marker...")
         previous_timeout = self.timeout
         if timeout != self.timeout:
             self.timeout = timeout
-            logger.debug(f'Serial port timeout temporarily set to {self.timeout} s...')
-        data = self.read_until(struct.pack('B', Marker.RUN_END_MARKER))
+            logger.debug(f"Serial port timeout temporarily set to {self.timeout} s...")
+        data = self.read_until(struct.pack("B", Marker.RUN_END_MARKER))
         if len(data) > 0:
-            logger.debug(f'{len(data)} byte(s) found: {data}')
+            logger.debug(f"{len(data)} byte(s) found: {data}")
         if previous_timeout != self.timeout:
             self.timeout = previous_timeout
-            logger.debug(f'Serial port timeout restored to {self.timeout} s...')
+            logger.debug(f"Serial port timeout restored to {self.timeout} s...")
 
     def write_opcode(self, opcode: OpCode) -> int:
         """Write the value of a given opcode to the serial port.
@@ -125,8 +125,8 @@ class PlasduinoSerialInterface(SerialInterface):
         opcode : OpCode
             The operational code to be written to the serial port.
         """
-        logger.debug(f'Writing {opcode} to the serial port...')
-        return self.pack_and_write(opcode.value, 'B')
+        logger.debug(f"Writing {opcode} to the serial port...")
+        return self.pack_and_write(opcode.value, "B")
 
     def write_start_run(self) -> int:
         """ Write a start run command to the serial port.
@@ -161,14 +161,14 @@ class PlasduinoSerialInterface(SerialInterface):
             The format string.
         """
         self.write_opcode(opcode)
-        logger.debug(f'Writing configuration value {value} to the serial port')
+        logger.debug(f"Writing configuration value {value} to the serial port")
         self.pack_and_write(value, fmt)
-        target_opcode = self.read_and_unpack('B')
-        actual_opcode = self.read_and_unpack('B')
+        target_opcode = self.read_and_unpack("B")
+        actual_opcode = self.read_and_unpack("B")
         actual_value = self.read_and_unpack(fmt)
-        logger.debug(f'Board response ({target_opcode}, {actual_opcode}, {actual_value})...')
+        logger.debug(f"Board response ({target_opcode}, {actual_opcode}, {actual_value})...")
         if actual_opcode != opcode or actual_value != value:
-            raise RuntimeError(f'Write/read mismatch in {self.__class__.__name__}.write_cmd()')
+            raise RuntimeError(f"Write/read mismatch in {self.__class__.__name__}.write_cmd()")
 
     def setup_analog_sampling_sketch(self, pins: list[int], sampling_interval: int) -> None:
         """Setup the `analog_sampling` sketch.
@@ -182,16 +182,16 @@ class PlasduinoSerialInterface(SerialInterface):
         sampling_interval : int
             The sampling interval in ms.
         """
-        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pins), 'B')
+        self.write_cmd(OpCode.OP_CODE_SELECT_NUM_ANALOG_PINS, len(pins), "B")
         for pin in pins:
-            self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, 'B')
-        self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, 'I')
+            self.write_cmd(OpCode.OP_CODE_SELECT_ANALOG_PIN, pin, "B")
+        self.write_cmd(OpCode.OP_CODE_SELECT_SAMPLING_INTERVAL, sampling_interval, "I")
 
     def setup_digital_timer_sketch(self, interrupt_mode0, interrupt_mode1) -> None:
         """Setup the `digital_timer` sketch.
         """
-        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode0, 'B')
-        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode1, 'B')
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode0, "B")
+        self.write_cmd(OpCode.OP_CODE_SELECT_INTERRUPT_MODE, interrupt_mode1, "B")
 
 
 class PlasduinoRunControl(RunControlBase):
@@ -242,19 +242,19 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         """
         port_info = arduino_.autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port_info is None:
-            raise RuntimeError('Could not find a suitable arduino board connected.')
+            raise RuntimeError("Could not find a suitable arduino board connected.")
         self.serial_interface.connect(port_info, timeout=timeout)
         self.serial_interface.pulse_dtr()
-        logger.info('Hand-shaking with the arduino board...')
+        logger.info("Hand-shaking with the arduino board...")
 
         # Temporarily set a finite timeout to handle the case where there is not
         # sensible sketch pre-loaded on the board, and we have to start from scratch.
         self.serial_interface.timeout = handshake_timeout
         try:
             sketch_id, sketch_version = self.serial_interface.read_sketch_info()
-            logger.info(f'Sketch {sketch_id} version {sketch_version} loaded onboard...')
+            logger.info(f"Sketch {sketch_id} version {sketch_version} loaded onboard...")
         except struct.error:
-            logger.warning('There seems to be no plasduino scketch pre-loaded on the board...')
+            logger.warning("There seems to be no plasduino scketch pre-loaded on the board...")
             sketch_id, sketch_version = None, None
         # Now put back the actual target timeout.
         self.serial_interface.timeout = timeout
@@ -269,8 +269,8 @@ class PlasduinoEventHandlerBase(EventHandlerBase):
         arduino_.upload_sketch(file_path, board.designator, port_info.name)
         sketch_id, sketch_version = self.serial_interface.read_sketch_info()
         if (sketch_id, sketch_version) != (self.SKETCH_ID, self.SKETCH_VERSION):
-            raise RuntimeError(f'Could not upload sketch {self.SKETCH_ID} '
-                               f'version {self.SKETCH_VERSION}')
+            raise RuntimeError(f"Could not upload sketch {self.SKETCH_ID} "
+                               f"version {self.SKETCH_VERSION}")
 
     def close_serial_interface(self) -> None:
         """Close the serial interface.
@@ -314,7 +314,7 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
             The amount of time (in ms) we wait before polling the serial port
             for additional pending packets.
         """
-        logger.info(f'Waiting {wait_time} ms for pending packet(s)...')
+        logger.info(f"Waiting {wait_time} ms for pending packet(s)...")
         if wait_time is not None:
             time.sleep(wait_time / 1000.)
         num_bytes = self.serial_interface.in_waiting
@@ -322,10 +322,10 @@ class PlasduinoAnalogEventHandler(PlasduinoEventHandlerBase):
         # AnalogReadout.size, + 1. If this is not the case, it might indicate that
         # we have not waited enough.
         if num_bytes % AnalogReadout.size != 1:
-            logger.warning(f'{num_bytes} pending bytes on the serial port, expected 1, 9 or 17...')
+            logger.warning(f"{num_bytes} pending bytes on the serial port, expected 1, 9 or 17...")
         num_packets = num_bytes // AnalogReadout.size
         if num_packets > 0:
-            logger.info(f'Reading the last {num_packets} packet(s) from the serial port...')
+            logger.info(f"Reading the last {num_packets} packet(s) from the serial port...")
             for _ in range(num_packets):
                 self.acquire_packet()
             self.flush_buffer()
@@ -352,7 +352,7 @@ class PlasduinoAnalogConfiguration(UserApplicationConfiguration):
     """
 
     _PARAMETER_SPECS = (
-        ('strip_chart_max_length', int, 200, 'Strip chart maximum length',
+        ("strip_chart_max_length", int, 200, "Strip chart maximum length",
             dict(min=10, max=1000000)),
     )
 
@@ -397,11 +397,11 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
     _ADDITIONAL_PENDING_WAIT = 200
 
     @staticmethod
-    def create_strip_charts(pins: list[int], ylabel: str = 'ADC counts'):
+    def create_strip_charts(pins: list[int], ylabel: str = "ADC counts"):
         """Create all the strip charts for displaying real-time data.
         """
-        kwargs = dict(xlabel='Time [s]', ylabel=ylabel)
-        return {pin: SlidingStripChart(label=f'Pin {pin}', **kwargs) for pin in pins}
+        kwargs = dict(xlabel="Time [s]", ylabel=ylabel)
+        return {pin: SlidingStripChart(label=f"Pin {pin}", **kwargs) for pin in pins}
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).

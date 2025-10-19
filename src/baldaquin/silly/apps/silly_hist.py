@@ -38,7 +38,7 @@ class MainWindow(SillyMainWindow):
         """Constructor.
         """
         super().__init__()
-        self.pha_tab = self.add_plot_canvas_tab('PHA distribution')
+        self.pha_tab = self.add_plot_canvas_tab("PHA distribution")
 
     def setup_user_application(self, user_application):
         """Overloaded method.
@@ -52,15 +52,15 @@ class SillyHist(SillyUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Silly histogram display'
+    NAME = "Silly histogram display"
     CONFIGURATION_CLASS = SillyConfiguration
-    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / 'silly_hist.cfg'
+    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / "silly_hist.cfg"
 
     def __init__(self):
         """Overloaded constructor.
         """
         super().__init__()
-        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel='PHA [ADC counts]')
+        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel="PHA [ADC counts]")
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
@@ -76,5 +76,5 @@ def main() -> None:
     bootstrap_window(MainWindow, SillyRunControl(), SillyHist())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

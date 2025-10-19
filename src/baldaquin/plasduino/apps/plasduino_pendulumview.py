@@ -47,7 +47,7 @@ class AppMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
-        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts', update_interval=100)
+        self.strip_chart_tab = self.add_plot_canvas_tab("Strip charts", update_interval=100)
 
     def setup_user_application(self, user_application):
         """Overloaded method.
@@ -63,7 +63,7 @@ class PositionReadout(AnalogReadout):
     readout---this is just changing the label for the text otuput.
     """
 
-    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Position [a. u.]')
+    OUTPUT_HEADERS = ("Pin number", "Time [s]", "Position [a. u.]")
 
 
 class PendulumView(PlasduinoAnalogUserApplicationBase):
@@ -71,9 +71,9 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Pendulum View'
+    NAME = "Pendulum View"
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
-    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_pendulumview.cfg'
+    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / "plasduino_pendulumview.cfg"
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _PINS = Lab1.PENDVIEW_PINS
     _SAMPLING_INTERVAL = 50
@@ -82,18 +82,18 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel='Position [ADC counts]')
+        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel="Position [ADC counts]")
 
     def configure(self) -> None:
         """Overloaded method.
         """
         for chart in self.strip_chart_dict.values():
-            chart.reset(self.configuration.application_section().value('strip_chart_max_length'))
+            chart.reset(self.configuration.application_section().value("strip_chart_max_length"))
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
-        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, PositionReadout.to_text,
                                            PositionReadout.text_header(creator=self.NAME))
 
@@ -111,5 +111,5 @@ def main() -> None:
     bootstrap_window(AppMainWindow, PlasduinoRunControl(), PendulumView())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

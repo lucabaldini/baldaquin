@@ -20,10 +20,10 @@ from pathlib import Path
 
 from baldaquin.env import setup_project
 
-PROJECT_NAME = 'xnucleo'
+PROJECT_NAME = "xnucleo"
 
 XNUCLEO_CONFIG, XNUCLEO_APP_CONFIG, XNUCLEO_DATA = setup_project(PROJECT_NAME)
 
 XNUCLEO_ROOT = Path(__file__).parent
 
-XNUCLEO_SKETCHES = XNUCLEO_ROOT / 'sketches'
+XNUCLEO_SKETCHES = XNUCLEO_ROOT / "sketches"

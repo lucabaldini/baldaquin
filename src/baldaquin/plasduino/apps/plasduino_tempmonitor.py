@@ -48,7 +48,7 @@ class AppMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
-        self.strip_chart_tab = self.add_plot_canvas_tab('Strip charts')
+        self.strip_chart_tab = self.add_plot_canvas_tab("Strip charts")
 
     def setup_user_application(self, user_application):
         """Overloaded method.
@@ -71,15 +71,15 @@ class TemperatureReadout(AnalogReadout):
     * it allows to easily implement the text conversion.
     """
 
-    _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / 'NXFT15XH103FA2B.dat'
+    _CONVERSION_FILE_PATH = PLASDUINO_SENSORS / "NXFT15XH103FA2B.dat"
     _ADC_NUM_BITS = 10
     _CONVERSION_COLS = (0, 2)
     _CONVERTER = ThermistorConversion.from_file(_CONVERSION_FILE_PATH, Lab1.SHUNT_RESISTANCE,
                                                 _ADC_NUM_BITS, *_CONVERSION_COLS)
 
-    OUTPUT_HEADERS = ('Pin number', 'Time [s]', 'Temperature [deg C]')
-    OUTPUT_ATTRIBUTES = ('pin_number', 'seconds', 'temperature')
-    OUTPUT_FMTS = ('%d', '%.3f', '%.2f')
+    OUTPUT_HEADERS = ("Pin number", "Time [s]", "Temperature [deg C]")
+    OUTPUT_ATTRIBUTES = ("pin_number", "seconds", "temperature")
+    OUTPUT_FMTS = ("%d", "%.3f", "%.2f")
 
     def __post_init__(self) -> None:
         """Post initialization.
@@ -93,9 +93,9 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
     """Simplest possible user application for testing purposes.
     """
 
-    NAME = 'Temperature Monitor'
+    NAME = "Temperature Monitor"
     CONFIGURATION_CLASS = PlasduinoAnalogConfiguration
-    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / 'plasduino_tempmonitor.cfg'
+    CONFIGURATION_FILE_PATH = PLASDUINO_APP_CONFIG / "plasduino_tempmonitor.cfg"
     EVENT_HANDLER_CLASS = PlasduinoAnalogEventHandler
     _PINS = Lab1.TEMPMON_PINS
     _SAMPLING_INTERVAL = 500
@@ -104,19 +104,19 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel='Temperature [deg C]')
+        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel="Temperature [deg C]")
 
     def configure(self) -> None:
         """Overloaded method.
         """
-        max_length = self.configuration.application_section().value('strip_chart_max_length')
+        max_length = self.configuration.application_section().value("strip_chart_max_length")
         for chart in self.strip_chart_dict.values():
             chart.reset(max_length)
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
-        file_path = Path(f'{run_control.output_file_path_base()}_data.txt')
+        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
                                            TemperatureReadout.text_header(creator=self.NAME))
 
@@ -135,5 +135,5 @@ def main() -> None:
     bootstrap_window(AppMainWindow, PlasduinoRunControl(), TemperatureMonitor())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

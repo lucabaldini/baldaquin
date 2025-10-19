@@ -113,10 +113,10 @@ class SillyConfiguration(UserApplicationConfiguration):
     """
 
     _PARAMETER_SPECS = (
-        ('rate', float, 5., 'Target event rate', 'Hz', '.1f', dict(min=0.)),
-        ('pha_mean', float, 1000., 'Mean pulse height', 'ADC counts', '.1f',
+        ("rate", float, 5., "Target event rate", "Hz", ".1f", dict(min=0.)),
+        ("pha_mean", float, 1000., "Mean pulse height", "ADC counts", ".1f",
             dict(min=500., max=10000.)),
-        ('pha_sigma', float, 50., 'Pulse height rms', 'ADC counts', '.1f', dict(min=10.))
+        ("pha_sigma", float, 50., "Pulse height rms", "ADC counts", ".1f", dict(min=10.))
     )
 
 
@@ -131,9 +131,9 @@ class SillyUserApplicationBase(UserApplicationBase):
         """Overloaded method.
         """
         section = self.configuration.application_section()
-        rate = section.value('rate')
-        pha_mean = section.value('pha_mean')
-        pha_sigma = section.value('pha_sigma')
+        rate = section.value("rate")
+        pha_mean = section.value("pha_mean")
+        pha_sigma = section.value("pha_sigma")
         self.event_handler.server.setup(rate, pha_mean, pha_sigma)
 
 
