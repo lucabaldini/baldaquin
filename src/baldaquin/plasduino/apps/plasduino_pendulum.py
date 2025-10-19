@@ -22,7 +22,7 @@ import inspect
 from dataclasses import dataclass
 from pathlib import Path
 
-from baldaquin import logger, plasduino
+from baldaquin import DEFAULT_CHARACTER_ENCODING, logger, plasduino
 from baldaquin.buf import WriteMode
 from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
 from baldaquin.pkt import AbstractPacket, Edge, PacketFile
@@ -100,6 +100,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         """
         return 0.5 * (data[i].seconds + data[j].seconds)
 
+    @staticmethod
     def _secs_diff(data: tuple[DigitalTransition], i: int, j: int) -> float:
         """Convenience function for calculating the difference of the `seconds`
         fields for two given indices in a tuple of digital transitions.
@@ -172,7 +173,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         oscillations = self.postprocess_data(data)
         file_path = Path(f'{run_control.output_file_path_base()}_data_proc.txt')
         logger.info(f'Writing output file {file_path}...')
-        with open(file_path, 'w') as output_file:
+        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
             output_file.write(Oscillation.text_header(creator=self.NAME))
             for oscillation in oscillations:
                 output_file.write(oscillation.to_text())

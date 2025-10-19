@@ -46,7 +46,7 @@ import sys
 
 from loguru import logger
 
-# pylint: disable=unused-import, import-error
+# pylint: disable=unused-import, import-error, invalid-name
 
 # Global flag to handle the Qt bindings in a consistent fashion.
 AVAILABLE_BALDAQUIN_QT_WRAPPERS = ('PySide2', 'PySide6', 'PyQt5', 'PyQt6')

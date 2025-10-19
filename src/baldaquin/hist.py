@@ -235,7 +235,7 @@ class HistogramBase:
         """
         return self.__mul__(value)
 
-    def _plot(self, **kwargs) -> None:
+    def _plot(self, axes, **kwargs) -> None:
         """No-op plot() method, to be overloaded by derived classes.
         """
         raise NotImplementedError(f'_plot() not implemented for {self.__class__.__name__}')

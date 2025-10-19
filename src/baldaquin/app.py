@@ -123,6 +123,6 @@ class UserApplicationBase:
         the run.
         """
 
-    def process_packet(self, packet):
+    def process_packet(self, packet_data):
         """Optional hook for a user application to do something with the event data.
         """

@@ -326,7 +326,7 @@ class RunControlBase(FiniteStateMachineBase):
         updating the information on the control GUI as the data taking proceeds.
     """
 
-    # pylint: disable=c-extension-no-member, too-many-instance-attributes
+    # pylint: disable=c-extension-no-member, too-many-instance-attributes, too-many-public-methods
     _PROJECT_NAME = None
     _DEFAULT_REFRESH_INTERVAL = 750
 

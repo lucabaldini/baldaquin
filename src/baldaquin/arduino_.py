@@ -717,6 +717,8 @@ class ArduinoSerialInterface(SerialInterface):
     """Specialized serial interface to interact with arduino boards.
     """
 
+    # pylint: disable=too-many-ancestors
+
     def handshake(self, sketch_name: str, sketch_version: int, sketch_folder_path: str,
                   timeout: float = 5.) -> None:
         """Simple handshake routine to check that the proper sketch is uploaded
