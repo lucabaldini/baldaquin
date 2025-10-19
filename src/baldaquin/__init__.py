@@ -173,6 +173,7 @@ def _create_folder(folder_path: pathlib.Path) -> None:
 
 # The path to the base folder for the output data defaults to ~/baldaquindata,
 # but can be changed via the $BALDAQUIN_DATA environmental variable.
+# pylint: disable=invalid-name
 try:
     BALDAQUIN_DATA = pathlib.Path(os.environ['BALDAQUIN_DATA'])
 except KeyError:
