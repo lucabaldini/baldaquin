@@ -18,7 +18,7 @@ import shutil
 
 import nox
 
-from baldaquin import __name__ as __package_name__
+__package_name__ = "baldaquin"
 
 # Basic environment.
 _ROOT_DIR = pathlib.Path(__file__).parent
