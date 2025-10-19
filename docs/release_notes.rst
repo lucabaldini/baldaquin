@@ -4,6 +4,10 @@ Release notes
 =============
 
 
+Version 0.7.0 (2025-10-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
 * Adopted src/ layout with baldaquin package moved to src/baldaquin/
 * Introduced dynamic versioning with git integration
 * Replaced Makefile with nox sessions for development tasks
