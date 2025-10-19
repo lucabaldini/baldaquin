@@ -29,7 +29,7 @@ class InvalidShapeError(RuntimeError):
     def __init__(self, expected, actual):
         """Constructor.
         """
-        super().__init__(f'Invalid array shape: {expected} expected, got {actual}')
+        super().__init__(f"Invalid array shape: {expected} expected, got {actual}")
 
 
 class HistogramBase:
@@ -61,7 +61,7 @@ class HistogramBase:
         # Quick check on the binning and label tuples---we need N + 1 labels
         # for an N-dimensional histogram.
         if len(labels) != len(binning) + 1:
-            msg = f'Length mismatch between binning ({len(binning)}) and labels ({len(labels)})'
+            msg = f"Length mismatch between binning ({len(binning)}) and labels ({len(labels)})"
             raise RuntimeError(msg)
         # The binning is not supposed to change ever, so we turn it into a tuple...
         self.binning = tuple(binning)
@@ -118,7 +118,7 @@ class HistogramBase:
         else:
             mean = (bin_centers * content).sum() / sumw
             rms = np.sqrt(((bin_centers - mean)**2. * content).sum() / sumw)
-        return {'Sum of weights': sumw, 'Mean':  mean, 'RMS': rms}
+        return {"Sum of weights": sumw, "Mean":  mean, "RMS": rms}
 
     def _check_array_shape(self, data: np.array) -> None:
         """Check the shape of a given array used to update the histogram.
@@ -169,7 +169,7 @@ class HistogramBase:
         return self
 
     @staticmethod
-    def bisect(binning: np.array, values: np.array, side: str = 'left') -> np.array:
+    def bisect(binning: np.array, values: np.array, side: str = "left") -> np.array:
         """Return the indices corresponding to a given array of values for a
         given binning.
         """
@@ -238,7 +238,7 @@ class HistogramBase:
     def _plot(self, axes, **kwargs) -> None:
         """No-op plot() method, to be overloaded by derived classes.
         """
-        raise NotImplementedError(f'_plot() not implemented for {self.__class__.__name__}')
+        raise NotImplementedError(f"_plot() not implemented for {self.__class__.__name__}")
 
     def plot(self, axes=None, **kwargs) -> None:
         """Plot the histogram.
@@ -256,9 +256,9 @@ class Histogram1d(HistogramBase):
     """A one-dimensional histogram.
     """
 
-    PLOT_OPTIONS = dict(lw=1.25, alpha=0.4, histtype='stepfilled')
+    PLOT_OPTIONS = dict(lw=1.25, alpha=0.4, histtype="stepfilled")
 
-    def __init__(self, xbinning: np.array, xlabel: str = '', ylabel: str = 'Entries/bin') -> None:
+    def __init__(self, xbinning: np.array, xlabel: str = "", ylabel: str = "Entries/bin") -> None:
         """Constructor.
         """
         HistogramBase.__init__(self, (xbinning, ), [xlabel, ylabel])
@@ -285,10 +285,10 @@ class Histogram2d(HistogramBase):
     """A two-dimensional histogram.
     """
 
-    PLOT_OPTIONS = dict(cmap=plt.get_cmap('hot'))
+    PLOT_OPTIONS = dict(cmap=plt.get_cmap("hot"))
     # pylint: disable=invalid-name
 
-    def __init__(self, xbinning, ybinning, xlabel='', ylabel='', zlabel='Entries/bin'):
+    def __init__(self, xbinning, ybinning, xlabel="", ylabel="", zlabel="Entries/bin"):
         """Constructor.
         """
         # pylint: disable=too-many-arguments
@@ -306,9 +306,9 @@ class Histogram2d(HistogramBase):
             # Parameters norm and vmin/vmax should not be used simultaneously
             # If logz is requested, we intercent the bounds when created the norm
             # and refrain from passing vmin/vmax downstream.
-            vmin = kwargs.pop('vmin', None)
-            vmax = kwargs.pop('vmax', None)
-            kwargs.setdefault('norm', matplotlib.colors.LogNorm(vmin, vmax))
+            vmin = kwargs.pop("vmin", None)
+            vmax = kwargs.pop("vmax", None)
+            kwargs.setdefault("norm", matplotlib.colors.LogNorm(vmin, vmax))
         axes.hist2d(x, y, bins, weights=w, **kwargs)
         color_bar = axes.colorbar()
         if self.labels[2] is not None:

@@ -131,10 +131,10 @@ class SplineConversion(ConversionBase):
         kwrargs : dict
             optional keyword arguments passed to ``np.loadtxt()``
         """
-        logger.info(f'Reading conversion data from {file_path}...')
+        logger.info(f"Reading conversion data from {file_path}...")
         raw, physical = np.loadtxt(file_path, usecols=(col_raw, col_physical),
                                    unpack=True, **kwargs)
-        logger.info(f'Done, {len(raw)} data point(s) found.')
+        logger.info(f"Done, {len(raw)} data point(s) found.")
         return raw, physical
 
     @classmethod
@@ -149,7 +149,7 @@ class SplineConversion(ConversionBase):
         """Plot the interpolating spline.
         """
         plt.plot(self._raw, self._physical)
-        setup_gca(xlabel='Raw units', ylabel='Physical units')
+        setup_gca(xlabel="Raw units", ylabel="Physical units")
 
     def _conversion_function(self, raw):
         """Overloaded method.

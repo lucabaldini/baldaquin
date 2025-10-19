@@ -33,7 +33,7 @@ class UserApplicationBase:
     """
 
     # pylint: disable=c-extension-no-member
-    NAME = 'User application'
+    NAME = "User application"
     EVENT_HANDLER_CLASS = None
     CONFIGURATION_CLASS = None
     CONFIGURATION_FILE_PATH = None
@@ -70,24 +70,24 @@ class UserApplicationBase:
     def setup(self) -> None:
         """Function called when the run control transitions from RESET to STOPPED.
         """
-        logger.info(f'{self.__class__.__name__}.setup(): nothing to do...')
+        logger.info(f"{self.__class__.__name__}.setup(): nothing to do...")
 
     def teardown(self) -> None:
         """Function called when the run control transitions from STOPPED to RESET.
         """
-        logger.info(f'{self.__class__.__name__}.teardown(): nothing to do...')
+        logger.info(f"{self.__class__.__name__}.teardown(): nothing to do...")
 
     def start_run(self) -> None:
         """Start the event handler.
         """
-        logger.info(f'Starting {self.NAME} user application...')
+        logger.info(f"Starting {self.NAME} user application...")
         self.event_handler.reset_statistics()
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop_run(self) -> None:
         """Stop the event handler.
         """
-        logger.info(f'Stopping {self.NAME} user application...')
+        logger.info(f"Stopping {self.NAME} user application...")
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
@@ -95,7 +95,7 @@ class UserApplicationBase:
     def pause(self) -> None:
         """Pause the event handler.
         """
-        logger.info(f'Pausing {self.NAME} user application...')
+        logger.info(f"Pausing {self.NAME} user application...")
         self.event_handler.stop()
         QtCore.QThreadPool.globalInstance().waitForDone()
         self.event_handler.flush_buffer()
@@ -103,7 +103,7 @@ class UserApplicationBase:
     def resume(self) -> None:
         """Resume the event handler.
         """
-        logger.info(f'Resuming {self.NAME} user application...')
+        logger.info(f"Resuming {self.NAME} user application...")
         QtCore.QThreadPool.globalInstance().start(self.event_handler)
 
     def stop(self) -> None:
@@ -111,13 +111,13 @@ class UserApplicationBase:
         """
         self.stop_run()
 
-    def pre_start(self, run_control: 'RunControlBase') -> None:
+    def pre_start(self, run_control: "RunControlBase") -> None:
         """Hook that subclasses can use to perform any operation that needs to
         be done right before the application is stared (e.g., adding a custom
         sink to the underlying packet buffer.)
         """
 
-    def post_stop(self, run_control: 'RunControlBase') -> None:
+    def post_stop(self, run_control: "RunControlBase") -> None:
         """Hook that subclasses can use to post-process the data collected in
         the run.
         """

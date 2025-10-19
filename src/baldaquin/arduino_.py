@@ -137,7 +137,7 @@ class ArduinoBoard:
         """Return the fully qualified board name (FQBN), as defined in
         https://arduino.github.io/arduino-cli/1.1/platform-specification/
         """
-        return f'{self.vendor}:{self.architecture}:{self.designator}'
+        return f"{self.vendor}:{self.architecture}:{self.designator}"
 
     @staticmethod
     def concatenate_device_ids(*boards: ArduinoBoard) -> tuple[DeviceId]:
@@ -184,7 +184,7 @@ class ArduinoBoard:
         try:
             return _DEVICE_ID_DICT[device_id]
         except KeyError as exception:
-            raise RuntimeError(f'Unsupported device ID {device_id}') from exception
+            raise RuntimeError(f"Unsupported device ID {device_id}") from exception
 
     @staticmethod
     def by_designator(designator: str) -> ArduinoBoard:
@@ -206,12 +206,12 @@ class ArduinoBoard:
         try:
             return _BOARD_DESIGNATOR_DICT[designator]
         except KeyError as exception:
-            raise RuntimeError(f'Unsupported designator {designator}') from exception
+            raise RuntimeError(f"Unsupported designator {designator}") from exception
 
 
 # --------------------------------------------------------------------------------------------------
 # Define the supported boards.
-UNO = ArduinoBoard('uno', 'Arduino UNO', 'arduino', 'avr', 'arduino', 115200, 'atmega328p',
+UNO = ArduinoBoard("uno", "Arduino UNO", "arduino", "avr", "arduino", 115200, "atmega328p",
                    ((0x2341, 0x0043),
                     (0x2341, 0x0001),
                     (0x2A03, 0x0043),
@@ -247,12 +247,12 @@ def autodetect_arduino_boards(*boards: ArduinoBoard) -> list[PortInfo]:
     # If we are passing no boards, we are interested in all the supported ones.
     if len(boards) == 0:
         boards = _SUPPORTED_BOARDS
-    logger.info(f'Autodetecting Arduino boards {[board.name for board in boards]}...')
+    logger.info(f"Autodetecting Arduino boards {[board.name for board in boards]}...")
     ports = list_com_ports(*ArduinoBoard.concatenate_device_ids(*boards))
     for port in ports:
         board = ArduinoBoard.by_device_id(port.device_id)
         if port is not None:
-            logger.debug(f'{port.name} -> {board.designator} ({board.name})')
+            logger.debug(f"{port.name} -> {board.designator} ({board.name})")
     return ports
 
 
@@ -277,7 +277,7 @@ def autodetect_arduino_board(*boards: ArduinoBoard) -> PortInfo:
         return None
     port = ports[0]
     if len(ports) > 1:
-        logger.warning(f'More than one arduino board found, picking {port}...')
+        logger.warning(f"More than one arduino board found, picking {port}...")
     return port
 
 
@@ -290,8 +290,8 @@ class ArduinoProgrammingInterfaceBase:
 
     PROGRAM_NAME = None
     PROGRAM_URL = None
-    SKETCH_EXTENSION = '.ino'
-    ARTIFACT_EXTENSION = '.hex'
+    SKETCH_EXTENSION = ".ino"
+    ARTIFACT_EXTENSION = ".hex"
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -322,10 +322,10 @@ class ArduinoProgrammingInterfaceBase:
         try:
             status = execute_shell_command(args)
         except FileNotFoundError:
-            logger.error(f'Please make sure {cls.PROGRAM_NAME} is properly installed.')
+            logger.error(f"Please make sure {cls.PROGRAM_NAME} is properly installed.")
             if cls.PROGRAM_URL is not None:
-                logger.error(f'See {cls.PROGRAM_URL} for more details.')
-            raise RuntimeError(f'{cls.PROGRAM_NAME} not found') # noqa B904
+                logger.error(f"See {cls.PROGRAM_URL} for more details.")
+            raise RuntimeError(f"{cls.PROGRAM_NAME} not found") # noqa B904
         return status
 
     @staticmethod
@@ -389,14 +389,14 @@ class ArduinoProgrammingInterfaceBase:
         to the sketch source and the target board designator.
         """
         base_name = ArduinoProgrammingInterfaceBase.project_base_name(sketch_path)
-        return f'{base_name}_{board_designator}'
+        return f"{base_name}_{board_designator}"
 
     @staticmethod
     def artifact_name(sketch_name: str, board_designator: str) -> str:
         """Return the name of the artifact for a given sketch and board designator.
         """
-        return f'{sketch_name}_{board_designator}'\
-               f'{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}'
+        return f"{sketch_name}_{board_designator}"\
+               f"{ArduinoProgrammingInterfaceBase.ARTIFACT_EXTENSION}"
 
 
 class ArduinoCli(ArduinoProgrammingInterfaceBase):
@@ -419,8 +419,8 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
 
     # pylint: disable=line-too-long, too-few-public-methods, arguments-differ
 
-    PROGRAM_NAME = 'arduino-cli'
-    PROGRAM_URL = 'https://github.com/arduino/arduino-cli'
+    PROGRAM_NAME = "arduino-cli"
+    PROGRAM_URL = "https://github.com/arduino/arduino-cli"
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -468,15 +468,15 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
 
         """  # noqa F811
         args = [
-            ArduinoCli.PROGRAM_NAME, 'upload',
-            '--port', port,
-            '--fqbn', board.fqbn(),
+            ArduinoCli.PROGRAM_NAME, "upload",
+            "--port", port,
+            "--fqbn", board.fqbn(),
             # Note we have to cast to string in case file_path is a Path, as
             # subprocess is adamant in requiring a string.
-            '--input-file', str(file_path)
+            "--input-file", str(file_path)
             ]
         if verbose:
-            args.append('--verbose')
+            args.append("--verbose")
         return ArduinoCli._execute(args)
 
     @staticmethod
@@ -570,25 +570,25 @@ class ArduinoCli(ArduinoProgrammingInterfaceBase):
         # Cache the project name for the sketch.
         project_name = ArduinoCli.project_name(sketch_path, board.designator)
         # Path to the output (compiled) file.
-        file_name = f'{project_name}.hex'
+        file_name = f"{project_name}.hex"
 
         # Assemble the arguments and execute the compilation command.
         args = [
-            ArduinoCli.PROGRAM_NAME, 'compile',
-            '--output-dir', str(output_dir),
-            '--fqbn', board.fqbn(),
-            '--build-property', f'build.project_name={project_name}',
+            ArduinoCli.PROGRAM_NAME, "compile",
+            "--output-dir", str(output_dir),
+            "--fqbn", board.fqbn(),
+            "--build-property", f"build.project_name={project_name}",
             str(sketch_path)
             ]
         if verbose:
-            args.append('--verbose')
+            args.append("--verbose")
         status = ArduinoCli._execute(args)
 
         # If necessary, copy the compilation artifacts to the source sketch folder.
         if copy_artifacts:
             src = os.path.join(output_dir, file_name)
             dest = os.path.join(ArduinoCli.folder_path(sketch_path), file_name)
-            logger.info(f'Copying {src} to {dest}...')
+            logger.info(f"Copying {src} to {dest}...")
             shutil.copyfile(src, dest)
 
         return status
@@ -636,8 +636,8 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
 
     # pylint: disable=line-too-long, too-few-public-methods, arguments-differ
 
-    PROGRAM_NAME = 'avrdude'
-    PROGRAM_URL = 'https://github.com/avrdudes/avrdude'
+    PROGRAM_NAME = "avrdude"
+    PROGRAM_URL = "https://github.com/avrdudes/avrdude"
 
     @staticmethod
     def upload(file_path: str, port: str, board: ArduinoBoard,
@@ -645,15 +645,15 @@ class AvrDude(ArduinoProgrammingInterfaceBase):
         """Upload a sketch to a board.
         """
         args = [
-            AvrDude.PROGRAM_NAME, '-V', '-F',
-            '-c', board.upload_protocol,
-            '-b', f'{board.upload_speed}',
-            '-p', board.build_mcu,
-            '-P', port,
-            '-U', f'flash:w:{file_path}'
+            AvrDude.PROGRAM_NAME, "-V", "-F",
+            "-c", board.upload_protocol,
+            "-b", f"{board.upload_speed}",
+            "-p", board.build_mcu,
+            "-P", port,
+            "-U", f"flash:w:{file_path}"
             ]
         if verbose:
-            args.append('-v')
+            args.append("-v")
         return AvrDude._execute(args)
 
 
@@ -678,14 +678,14 @@ def upload_sketch(file_path: str, board_designator: str,
         If True, the program will run in verbose mode.
     """
     if not os.path.exists(file_path):
-        raise RuntimeError(f'Could not find file {file_path}')
+        raise RuntimeError(f"Could not find file {file_path}")
     board = ArduinoBoard.by_designator(board_designator)
     if port_name is None:
         port = autodetect_arduino_board(board)
         if port is None:
-            raise RuntimeError(f'Could not autodetect port with {board.name}')
+            raise RuntimeError(f"Could not autodetect port with {board.name}")
         port_name = port.name
-    logger.info(f'Uploading sketch {file_path} for {board} to port {port_name}...')
+    logger.info(f"Uploading sketch {file_path} for {board} to port {port_name}...")
     return ArduinoCli.upload(file_path, port_name, board, verbose)
 
 
@@ -713,9 +713,9 @@ def compile_sketch(file_path: str, board_designator: str, output_dir: str,
         If True, the program will run in verbose mode.
     """
     if not os.path.exists(file_path):
-        raise RuntimeError(f'Could not find file {file_path}')
+        raise RuntimeError(f"Could not find file {file_path}")
     board = ArduinoBoard.by_designator(board_designator)
-    logger.info(f'Compiling sketch {file_path} for {board}...')
+    logger.info(f"Compiling sketch {file_path} for {board}...")
     return ArduinoCli.compile(file_path, output_dir, board, verbose)
 
 
@@ -732,7 +732,7 @@ class ArduinoSerialInterface(SerialInterface):
         on the arduino board attached to the serial port, and upload the sketch
         if that is not the case.
         """
-        logger.info('Performing handshake with the Arduino board...')
+        logger.info("Performing handshake with the Arduino board...")
         # Temporarily set a finite timeout to handle the case where there is not
         # sensible sketch pre-loaded on the board, and we have to start from scratch.
         # (And we need to cache the previous timeout value in order to restore it later).
@@ -741,22 +741,22 @@ class ArduinoSerialInterface(SerialInterface):
         # Read the sketch name and version from the board.
         try:
             name, version = self.read_text_line().unpack(str, int)
-            logger.info(f'Sketch {name} version {version} loaded onboard...')
+            logger.info(f"Sketch {name} version {version} loaded onboard...")
         except RuntimeError as exception:
-            logger.warning('Could not determine the sketch loaded onboard.')
+            logger.warning("Could not determine the sketch loaded onboard.")
             logger.debug(exception)
             name, version = None, None
         # Now put back the actual target timeout.
         self.set_timeout(previous_timeout)
         # If the sketch uploaded onboard is the one we expect, we're good to go.
         if (name, version) == (sketch_name, sketch_version):
-            logger.info('Sketch is up to date, nothing to do!')
+            logger.info("Sketch is up to date, nothing to do!")
             return
         # Otherwise, we need to upload the proper sketch and, before that,
         # retrieve the specific board we are talking to---this information is
         # available in the PortInfo object attached to the serial interface
         # at connection time.
-        logger.info(f'Triggering upload of sketch {sketch_name} version {sketch_version}...')
+        logger.info(f"Triggering upload of sketch {sketch_name} version {sketch_version}...")
         board = ArduinoBoard.by_device_id(self.port_info.device_id)
         file_name = ArduinoCli.artifact_name(sketch_name, board.designator)
         file_path = os.path.join(sketch_folder_path, sketch_name, file_name)
@@ -764,7 +764,7 @@ class ArduinoSerialInterface(SerialInterface):
         upload_sketch(file_path, board.designator, self.port)
         name, version = self.read_text_line().unpack(str, int)
         if (name, version) != (sketch_name, sketch_version):
-            raise RuntimeError(f'Could not upload sketch {name} version {version}')
+            raise RuntimeError(f"Could not upload sketch {name} version {version}")
 
 
 class ArduinoEventHandler(EventHandlerBase):
@@ -790,7 +790,7 @@ class ArduinoEventHandler(EventHandlerBase):
         """
         port_info = autodetect_arduino_board(*_SUPPORTED_BOARDS)
         if port_info is None:
-            raise RuntimeError('Could not find a suitable arduino board connected.')
+            raise RuntimeError("Could not find a suitable arduino board connected.")
         self.serial_interface.connect(port_info, timeout=timeout)
         self.serial_interface.pulse_dtr()
 

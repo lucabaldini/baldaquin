@@ -122,7 +122,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         # At this point the buffer should be empty, as we should have hd a flush()
         # call at the stop of the previous run.
         if self._buffer.size() > 0:
-            logger.warning('Event buffer is not empty at the start run, clearing it...')
+            logger.warning("Event buffer is not empty at the start run, clearing it...")
             self._buffer.clear()
         self.__running = True
         while self.__running:

@@ -37,10 +37,10 @@ class FsmState(Enum):
     """Enum for the run control finite state machine possible states.
     """
 
-    RESET = 'Reset'
-    STOPPED = 'Stopped'
-    RUNNING = 'Running'
-    PAUSED = 'Paused'
+    RESET = "Reset"
+    STOPPED = "Stopped"
+    RUNNING = "Running"
+    PAUSED = "Paused"
 
 
 class InvalidFsmTransitionError(RuntimeError):
@@ -51,7 +51,7 @@ class InvalidFsmTransitionError(RuntimeError):
     def __init__(self, src, dest):
         """Constructor.
         """
-        super().__init__(f'Invalid FSM transition {src.name} -> {dest.name}.')
+        super().__init__(f"Invalid FSM transition {src.name} -> {dest.name}.")
 
 
 class FiniteStateMachineLogic:
@@ -243,7 +243,7 @@ class AppNotLoadedError(RuntimeError):
     def __init__(self):
         """Constructor.
         """
-        super().__init__('User application not loaded.')
+        super().__init__("User application not loaded.")
 
 
 @dataclass
@@ -262,25 +262,25 @@ class RunReport:
     statistics: PacketStatistics
 
     _VERSION = 1
-    _VERSION_FIELD_NAME = 'report_version'
+    _VERSION_FIELD_NAME = "report_version"
 
     def to_dict(self):
         """Serialization.
         """
         _dict = {self._VERSION_FIELD_NAME: self._VERSION}
         _dict.update(self.__dict__)
-        for key in ('start_timestamp', 'stop_timestamp', 'statistics'):
+        for key in ("start_timestamp", "stop_timestamp", "statistics"):
             _dict[key] = _dict[key].to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, **kwargs) -> 'RunReport':
+    def from_dict(cls, **kwargs) -> "RunReport":
         """Deserialization.
         """
         _ = kwargs.pop(cls._VERSION_FIELD_NAME)
-        for key in ('start_timestamp', 'stop_timestamp'):
+        for key in ("start_timestamp", "stop_timestamp"):
             kwargs.update({key: Timestamp.from_dict(**kwargs[key])})
-        for key in ('statistics', ):
+        for key in ("statistics", ):
             kwargs.update({key: PacketStatistics.from_dict(**kwargs[key])})
         return cls(**kwargs)
 
@@ -292,15 +292,15 @@ class RunReport:
     def save(self, file_path: str) -> None:
         """Save the report to file.
         """
-        logger.info(f'Writing run report to {file_path}...')
-        with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
+        logger.info(f"Writing run report to {file_path}...")
+        with open(file_path, "w", encoding=BALDAQUIN_ENCODING) as output_file:
             output_file.write(self.dumps())
 
     @classmethod
     def load(cls, file_path):
         """Load the report from file.
         """
-        logger.info(f'Loading run report from {file_path}...')
+        logger.info(f"Loading run report from {file_path}...")
         with open(file_path, encoding=BALDAQUIN_ENCODING) as input_file:
             return cls.from_dict(**json.load(input_file))
 
@@ -333,7 +333,7 @@ class RunControlBase(FiniteStateMachineBase):
         """Constructor.
         """
         if self._PROJECT_NAME is None:
-            msg = f'{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set.'
+            msg = f"{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set."
             raise RuntimeError(msg)
         super().__init__()
         self._test_stand_id = self._read_test_stand_id()
@@ -380,12 +380,12 @@ class RunControlBase(FiniteStateMachineBase):
     def _test_stand_id_file_path(self) -> Path:
         """Return the path to the configuration file holding the test stand id.
         """
-        return self._config_file_path('test_stand.cfg')
+        return self._config_file_path("test_stand.cfg")
 
     def _run_id_file_path(self) -> Path:
         """Return the path to the configuration file holding the run id.
         """
-        return self._config_file_path('run.cfg')
+        return self._config_file_path("run.cfg")
 
     def _file_name_base(self, label: str = None, extension: str = None) -> str:
         """Generic function implementing a file name factory, given the
@@ -399,11 +399,11 @@ class RunControlBase(FiniteStateMachineBase):
         extension : str
             The file extension
         """
-        file_name = f'{self._test_stand_id:04d}_{self._run_id:06d}'
+        file_name = f"{self._test_stand_id:04d}_{self._run_id:06d}"
         if label is not None:
-            file_name = f'{file_name}_{label}'
+            file_name = f"{file_name}_{label}"
         if extension is not None:
-            file_name = f'{file_name}.{extension}'
+            file_name = f"{file_name}.{extension}"
         return file_name
 
     def data_folder_path(self) -> Path:
@@ -425,7 +425,7 @@ class RunControlBase(FiniteStateMachineBase):
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
         """
-        return self._file_name_base('data', 'dat')
+        return self._file_name_base("data", "dat")
 
     def data_file_path(self) -> Path:
         """Return the path to the current data file.
@@ -438,7 +438,7 @@ class RunControlBase(FiniteStateMachineBase):
         Note that RunControlBase subclasses can overload this if a different
         naming convention is desired.
         """
-        return self._file_name_base('run', 'log')
+        return self._file_name_base("run", "log")
 
     def log_file_path(self) -> Path:
         """Return the path to the current log file.
@@ -448,7 +448,7 @@ class RunControlBase(FiniteStateMachineBase):
     def config_file_name(self) -> str:
         """Return the file name for the current configuration.
         """
-        return self._file_name_base('config', 'json')
+        return self._file_name_base("config", "json")
 
     def config_file_path(self) -> Path:
         """Return the path to the current configuration.
@@ -458,7 +458,7 @@ class RunControlBase(FiniteStateMachineBase):
     def report_file_name(self) -> str:
         """Return the file name for the current run report.
         """
-        return self._file_name_base('report', 'json')
+        return self._file_name_base("report", "json")
 
     def report_file_path(self) -> Path:
         """Return the path to the current run report.
@@ -481,12 +481,12 @@ class RunControlBase(FiniteStateMachineBase):
             The default value, to be used if the file is not found.
         """
         if not file_path.exists():
-            logger.warning(f'Configuration file {file_path} not found, creating one...')
+            logger.warning(f"Configuration file {file_path} not found, creating one...")
             RunControlBase._write_config_file(file_path, default)
             return default
-        logger.info(f'Reading configuration file {file_path}...')
+        logger.info(f"Reading configuration file {file_path}...")
         value = int(file_path.read_text())
-        logger.info(f'Done, {value} found.')
+        logger.info(f"Done, {value} found.")
         return value
 
     @staticmethod
@@ -501,8 +501,8 @@ class RunControlBase(FiniteStateMachineBase):
         value : int
             The value to be written.
         """
-        logger.info(f'Writing {value} to config file {file_path}...')
-        file_path.write_text(f'{value}')
+        logger.info(f"Writing {value} to config file {file_path}...")
+        file_path.write_text(f"{value}")
 
     def _read_test_stand_id(self, default: int = 101) -> int:
         """Read the test stand id from the proper configuration file.
@@ -531,7 +531,7 @@ class RunControlBase(FiniteStateMachineBase):
         """Create the folder for the output data.
         """
         folder_path = self.data_folder_path()
-        logger.info(f'Creating output data folder {folder_path}')
+        logger.info(f"Creating output data folder {folder_path}")
         Path.mkdir(folder_path)
 
     def elapsed_time(self) -> float:
@@ -576,11 +576,11 @@ class RunControlBase(FiniteStateMachineBase):
     def load_user_application(self, user_application: UserApplicationBase) -> None:
         """Set the user application to be run.
         """
-        logger.info('Loading user application...')
+        logger.info("Loading user application...")
         if not self.is_reset():
-            raise RuntimeError(f'Cannot load a user application in the {self.state().name} state')
+            raise RuntimeError(f"Cannot load a user application in the {self.state().name} state")
         if not isinstance(user_application, UserApplicationBase):
-            raise RuntimeError(f'Invalid user application of type {type(user_application)}')
+            raise RuntimeError(f"Invalid user application of type {type(user_application)}")
         self._user_application = user_application
         # Mind we want to set the state to STOPPED before we emit the user_application_loaded()
         # signal, in order to avoid triggering invalid transtions downstream.
@@ -598,7 +598,7 @@ class RunControlBase(FiniteStateMachineBase):
         """Apply a given configuration to the current user application.
         """
         self._check_user_application()
-        logger.info('Configuring user application...')
+        logger.info("Configuring user application...")
         self._user_application.apply_configuration(configuration)
 
     def setup(self) -> None:
@@ -625,22 +625,22 @@ class RunControlBase(FiniteStateMachineBase):
         # the run ID has been incremented, so that the log file points to the
         # right place.
         configuration = self._user_application.configuration
-        logger.info(f'Applying configuration...\n{configuration}')
-        logger.info('Configuring logging...')
+        logger.info(f"Applying configuration...\n{configuration}")
+        logger.info("Configuring logging...")
         section = configuration.logging_section()
-        setup_logger(section.value('terminal_level'))
+        setup_logger(section.value("terminal_level"))
         self._log_file_handler_id = start_file_logging(self.log_file_path(),
-                                                       section.value('file_level'))
-        logger.info('Configuring packet buffering...')
+                                                       section.value("file_level"))
+        logger.info("Configuring packet buffering...")
         section = configuration.buffering_section()
-        flush_size = section.value('flush_size')
-        flush_timeout = section.value('flush_timeout')
+        flush_size = section.value("flush_size")
+        flush_timeout = section.value("flush_timeout")
         self._user_application.event_handler.configure_buffer(flush_size, flush_timeout)
         configuration.save(self.config_file_path())
         # Configuration applied and written, we might move on.
         self.start_timestamp = self.timeline.latch()
         self.stop_timestamp = None
-        logger.info(f'Run Control started on {self.start_timestamp}')
+        logger.info(f"Run Control started on {self.start_timestamp}")
         self._user_application.event_handler.set_primary_sink(self.data_file_path())
         self._user_application.pre_start(self)
         self._user_application.start_run()
@@ -655,8 +655,8 @@ class RunControlBase(FiniteStateMachineBase):
         self._user_application.stop_run()
         self._user_application.post_stop(self)
         self.stop_timestamp = self.timeline.latch()
-        logger.info(f'Run Control stopped on {self.stop_timestamp}')
-        logger.info(f'Total elapsed time: {self.elapsed_time():6f} s.')
+        logger.info(f"Run Control stopped on {self.stop_timestamp}")
+        logger.info(f"Total elapsed time: {self.elapsed_time():6f} s.")
         if self._log_file_handler_id is not None:
             logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None

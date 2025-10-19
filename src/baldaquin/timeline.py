@@ -104,7 +104,7 @@ class Timestamp:
     seconds: float
 
     # These are the fields that need special handling when serializing/deserializing.
-    _DATETIME_FIELDS = ('utc_datetime', 'local_datetime')
+    _DATETIME_FIELDS = ("utc_datetime", "local_datetime")
 
     def to_dict(self) -> dict:
         """Serialization.
@@ -130,7 +130,7 @@ class Timestamp:
     def __str__(self) -> str:
         """String formatting.
         """
-        return f'{self.local_datetime} ({self.seconds} s)'
+        return f"{self.local_datetime} ({self.seconds} s)"
 
 
 class Timeline:
@@ -164,10 +164,10 @@ class Timeline:
 
     _POSIX_ORIGIN = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
-    def __init__(self, origin: str = '1970-01-01') -> None:
+    def __init__(self, origin: str = "1970-01-01") -> None:
         """Constructor.
         """
-        self.origin = datetime.datetime.fromisoformat(f'{origin}')
+        self.origin = datetime.datetime.fromisoformat(f"{origin}")
         self.origin = self.origin.replace(tzinfo=datetime.timezone.utc)
         self._timestamp_offset = (self.origin - self._POSIX_ORIGIN).total_seconds()
 
@@ -196,6 +196,6 @@ class Timeline:
         # Add the offset to the UTC datetime and setup the tzinfo so that
         # the offset is included by default in the string representation.
         local_datetime = utc_datetime + datetime.timedelta(seconds=offset)
-        local_datetime = local_datetime.replace(tzinfo=tzoffset('Local', offset))
+        local_datetime = local_datetime.replace(tzinfo=tzoffset("Local", offset))
         seconds = utc_datetime.timestamp() - self._timestamp_offset
         return Timestamp(utc_datetime, local_datetime, seconds)

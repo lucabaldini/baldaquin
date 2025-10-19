@@ -38,32 +38,32 @@ from .runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
 # pylint: disable=too-many-lines
 
 
-_DEFAULT_ICON_CATALOG = 'material3'
-_DEFAULT_ICON_STYLE = 'FILL0_wght400_GRAD0_opsz48'
+_DEFAULT_ICON_CATALOG = "material3"
+_DEFAULT_ICON_STYLE = "FILL0_wght400_GRAD0_opsz48"
 
 
-def _icon_file_path(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
+def _icon_file_path(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = "svg",
                     style: str = _DEFAULT_ICON_STYLE) -> str:
     """Return the path to a given icon file.
 
     Note this is returning a string, rather than a Path object, as the function
     is mainly used in Qt calls, where Path objects are not readily understood.
     """
-    file_name = f'{name}_{style}.{fmt}'
-    return f'{BALDAQUIN_ICONS / catalog / file_name}'
+    file_name = f"{name}_{style}.{fmt}"
+    return f"{BALDAQUIN_ICONS / catalog / file_name}"
 
 
-def load_icon(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = 'svg',
+def load_icon(name: str, catalog: str = _DEFAULT_ICON_CATALOG, fmt: str = "svg",
               style: str = _DEFAULT_ICON_STYLE) -> QtGui.QIcon:
     """Load an icon from the given catalog.
     """
     return QtGui.QIcon(_icon_file_path(name, catalog, fmt, style))
 
 
-def stylesheet_file_path(name: str = 'default') -> Path:
+def stylesheet_file_path(name: str = "default") -> Path:
     """Return the path to a given stylesheet file.
     """
-    file_name = f'{name}.qss'
+    file_name = f"{name}.qss"
     return BALDAQUIN_SKINS / file_name
 
 
@@ -134,9 +134,9 @@ class DataWidgetBase(QtWidgets.QWidget):
     """
 
     VALUE_WIDGET_CLASS = None
-    TITLE_WIDGET_NAME = 'data_widget_title'
-    VALUE_WIDGET_NAME = 'data_widget_value'
-    MISSING_VALUE_LABEL = '-'
+    TITLE_WIDGET_NAME = "data_widget_title"
+    VALUE_WIDGET_NAME = "data_widget_value"
+    MISSING_VALUE_LABEL = "-"
     VALUE_WIDGET_HEIGHT = 28
 
     def __init__(self, name: str, title: str = None, value=None, units: str = None,
@@ -276,12 +276,12 @@ class RunControlCardField(Enum):
     the card less error-prone.
     """
 
-    PROJECT_NAME = 'Project'
-    USER_APPLICATION = 'User application'
-    TEST_STAND_ID = 'Test stand'
-    RUN_ID = 'Run ID'
-    STATE = 'State'
-    UPTIME = 'Uptime'
+    PROJECT_NAME = "Project"
+    USER_APPLICATION = "User application"
+    TEST_STAND_ID = "Test stand"
+    RUN_ID = "Run ID"
+    STATE = "State"
+    UPTIME = "Uptime"
 
 
 class RunControlCard(CardWidget):
@@ -293,7 +293,7 @@ class RunControlCard(CardWidget):
         RunControlCardField.UPTIME: 0.
         }
     _KWARGS_DICT = {
-        RunControlCardField.UPTIME: dict(units='s', fmt='.3f')
+        RunControlCardField.UPTIME: dict(units="s", fmt=".3f")
         }
 
 
@@ -302,12 +302,12 @@ class EventHandlerCardField(Enum):
     """Specialized card for the event handler.
     """
 
-    FILE_PATH = 'Path to the output file'
-    BUFFER_CLASS = 'Data buffer type'
-    NUM_PACKETS_PROCESSED = 'Number of packets processed'
-    AVERAGE_EVENT_RATE = 'Average event rate'
-    NUM_PACKETS_WRITTEN = 'Number of packets written to disk'
-    NUM_BYTES_WRITTEN = 'Number of bytes written to disk'
+    FILE_PATH = "Path to the output file"
+    BUFFER_CLASS = "Data buffer type"
+    NUM_PACKETS_PROCESSED = "Number of packets processed"
+    AVERAGE_EVENT_RATE = "Average event rate"
+    NUM_PACKETS_WRITTEN = "Number of packets written to disk"
+    NUM_BYTES_WRITTEN = "Number of bytes written to disk"
 
 
 class EventHandlerCard(CardWidget):
@@ -323,7 +323,7 @@ class EventHandlerCard(CardWidget):
         EventHandlerCardField.NUM_BYTES_WRITTEN: 0
         }
     _KWARGS_DICT = {
-        EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units='Hz', fmt='.3f')
+        EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units="Hz", fmt=".3f")
         }
 
     def set_file_path(self, file_path: Path) -> None:
@@ -376,11 +376,11 @@ class ParameterSpinBox(DataWidgetBase):
     def setup(self, **kwargs) -> None:
         """Overloaded method.
         """
-        self.value_widget.setMinimum(kwargs.get('min', self._RANGE_MINIMUM))
-        self.value_widget.setMaximum(kwargs.get('max', self._RANGE_MAXIMUM))
-        self.value_widget.setSingleStep(kwargs.get('step', 1))
+        self.value_widget.setMinimum(kwargs.get("min", self._RANGE_MINIMUM))
+        self.value_widget.setMaximum(kwargs.get("max", self._RANGE_MAXIMUM))
+        self.value_widget.setSingleStep(kwargs.get("step", 1))
         if self._units is not None:
-            self.value_widget.setSuffix(f' {self._units}')
+            self.value_widget.setSuffix(f" {self._units}")
 
     def current_value(self) -> int:
         """Overloaded method.
@@ -391,8 +391,8 @@ class ParameterSpinBox(DataWidgetBase):
         """Overloaded method.
         """
         if value < self._RANGE_MINIMUM or value > self._RANGE_MAXIMUM:
-            raise OverflowError(f'Value {value} is outside of allowed range for '
-                                f'{self.__class__.__name__} ')
+            raise OverflowError(f"Value {value} is outside of allowed range for "
+                                f"{self.__class__.__name__} ")
         self.value_widget.setValue(value)
 
 
@@ -439,7 +439,7 @@ class ParameterComboBox(DataWidgetBase):
     def setup(self, **kwargs) -> None:
         """Overloaded method.
         """
-        self.value_widget.addItems(kwargs.get('choices', ()))
+        self.value_widget.addItems(kwargs.get("choices", ()))
 
     def current_value(self) -> str:
         """Overloaded method.
@@ -458,7 +458,7 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
     :class:`baldaquin.config.UserApplicationConfiguration` subclass.
     """
 
-    _WIDGET_NAME = 'configuration_section_widget'
+    _WIDGET_NAME = "configuration_section_widget"
 
     def __init__(self, configuration_section=None) -> None:
         """Constructor.
@@ -502,10 +502,10 @@ class ConfigurationSectionWidget(QtWidgets.QGroupBox):
         if type_ is float:
             return ParameterDoubleSpinBox(*args, **kwargs)
         if type_ is str:
-            if 'choices' in kwargs:
+            if "choices" in kwargs:
                 return ParameterComboBox(*args, **kwargs)
             return ParameterLineEdit(*args, **kwargs)
-        raise RuntimeError(f'Unknown parameter type {type_}')
+        raise RuntimeError(f"Unknown parameter type {type_}")
 
     def current_value(self, name: str) -> Any:
         """Retrieve the current value for a given key.
@@ -605,7 +605,7 @@ class PlotCanvasWidget(FigureCanvas):
         for plot in self._plot_list:
             plot.plot(self.axes)
         self.axes.set_autoscale_on(True)
-        self.axes.legend(loc='upper left')
+        self.axes.legend(loc="upper left")
         self.axes.figure.canvas.draw()
 
     def start_updating(self) -> None:
@@ -626,11 +626,11 @@ class ControlBarIcon(Enum):
     """Small enum for the icon of the control bar buttons.
     """
 
-    TEARDOWN = 'file_download'
-    SETUP = 'file_upload'
-    START = 'play_arrow'
-    PAUSE = 'pause'
-    STOP = 'stop'
+    TEARDOWN = "file_download"
+    SETUP = "file_upload"
+    START = "play_arrow"
+    PAUSE = "pause"
+    STOP = "stop"
 
 
 class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
@@ -651,9 +651,9 @@ class ControlBar(FiniteStateMachineLogic, QtWidgets.QFrame):
         QtWidgets.QFrame.__init__(self, parent)
         self.setLayout(QtWidgets.QHBoxLayout())
         # Create the necessary buttons.
-        self.reset_button = self._add_button(ControlBarIcon.SETUP, 'Setup/teardown')
-        self.start_button = self._add_button(ControlBarIcon.START, 'Start/pause')
-        self.stop_button = self._add_button(ControlBarIcon.STOP, 'Start/pause')
+        self.reset_button = self._add_button(ControlBarIcon.SETUP, "Setup/teardown")
+        self.start_button = self._add_button(ControlBarIcon.START, "Start/pause")
+        self.stop_button = self._add_button(ControlBarIcon.STOP, "Start/pause")
         # We start in the RESET state, where the start and stop buttons are disabled.
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(False)
@@ -797,7 +797,7 @@ class MainWindow(QtWidgets.QMainWindow):
         """Constructor.
         """
         if self._PROJECT_NAME is None:
-            msg = f'{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set.'
+            msg = f"{self.__class__.__name__} needs to be subclassed, and _PROJECT_NAME set."
             raise RuntimeError(msg)
         super().__init__(parent)
         self.setCentralWidget(QtWidgets.QWidget())
@@ -813,11 +813,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tab_widget.setIconSize(self._TAB_ICON_SIZE)
         self.add_widget(self.tab_widget, 0, 1, 2, 1)
         self.event_handler_card = EventHandlerCard()
-        self.add_tab(self.event_handler_card, 'Event handler')
+        self.add_tab(self.event_handler_card, "Event handler")
         self.settings_widget = SettingsConfigurationWidget()
-        self.add_tab(self.settings_widget, 'Settings')
+        self.add_tab(self.settings_widget, "Settings")
         self.user_application_widget = ConfigurationSectionWidget()
-        self.add_tab(self.user_application_widget, 'User application')
+        self.add_tab(self.user_application_widget, "User application")
         self.run_control = None
         self._config_class = None
 

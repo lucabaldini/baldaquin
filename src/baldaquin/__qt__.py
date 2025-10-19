@@ -30,7 +30,7 @@ was to rename uses of .exec to .exec_() to avoid this conflict. Python 3 removed
 the exec keyword, freeing the name up to be used. As a result from PyQt6 .exec()
 calls are named just as in Qt. At the time of writing, PySide6 still supports
 the exec_() form of things, but PySide6 version 6.4.3 emits a deprecation warning
-along the lines of "'exec_' will be removed in the future. Use 'exec' instead."
+along the lines of '"exec_" will be removed in the future. Use "exec" instead.'
 We handle this by wrapping the call into a small exec_qapp() helper function, and
 we use that consistently throughout the code.
 
@@ -49,17 +49,13 @@ from .logging_ import logger
 # pylint: disable=unused-import, import-error, invalid-name
 
 # Global flag to handle the Qt bindings in a consistent fashion.
-AVAILABLE_BALDAQUIN_QT_WRAPPERS = ('PySide2', 'PySide6', 'PyQt5', 'PyQt6')
-DEFAULT_BALDAQUIN_QT_WRAPPER = 'PySide6'
-try:
-    BALDAQUIN_QT_WRAPPER = os.environ['BALDAQUIN_QT_WRAPPER']
-    logger.info(f'$BALDAQUIN_QT_WRAPPER environmental variable set to {BALDAQUIN_QT_WRAPPER}')
-except KeyError:
-    BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
+AVAILABLE_BALDAQUIN_QT_WRAPPERS = ("PySide2", "PySide6", "PyQt5", "PyQt6")
+DEFAULT_BALDAQUIN_QT_WRAPPER = "PySide6"
+BALDAQUIN_QT_WRAPPER = os.getenv("BALDAQUIN_QT_WRAPPER", DEFAULT_BALDAQUIN_QT_WRAPPER)
 if BALDAQUIN_QT_WRAPPER not in AVAILABLE_BALDAQUIN_QT_WRAPPERS:
-    logger.error(f'{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available')
+    logger.error(f"{DEFAULT_BALDAQUIN_QT_WRAPPER} Qt Python wrapper is not available")
     BALDAQUIN_QT_WRAPPER = DEFAULT_BALDAQUIN_QT_WRAPPER
-logger.info(f'Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}')
+logger.info(f"Qt Python wrapper set to {BALDAQUIN_QT_WRAPPER}")
 
 
 def _exec_qapp_old_style(qapp):
@@ -74,7 +70,7 @@ def _exec_qapp_new_style(qapp):
     sys.exit(qapp.exec())
 
 
-if BALDAQUIN_QT_WRAPPER == 'PySide6':
+if BALDAQUIN_QT_WRAPPER == "PySide6":
     # pylint: disable=invalid-name, protected-access, no-name-in-module
     from PySide6 import QtCore, QtGui, QtWidgets
     exec_qapp = _exec_qapp_new_style
@@ -82,26 +78,26 @@ if BALDAQUIN_QT_WRAPPER == 'PySide6':
     from matplotlib import __version__, parse_version
     _plt_version = parse_version(__version__)
     if (_plt_version.major, _plt_version.minor, _plt_version.micro) < (3, 6, 2):
-        bug_url = 'https://github.com/matplotlib/matplotlib/issues/24315'
-        logger.info(f'Monkeypatching matplotlib Qt compatibility layer for {bug_url}...')
+        bug_url = "https://github.com/matplotlib/matplotlib/issues/24315"
+        logger.info(f"Monkeypatching matplotlib Qt compatibility layer for {bug_url}...")
         import matplotlib.backends.qt_compat as _qtcompat
         _QT_API = _qtcompat.QT_API
-        _qtcompat._to_int = operator.attrgetter('value') if _QT_API in ('PyQt6', 'PySide6') else int
+        _qtcompat._to_int = operator.attrgetter("value") if _QT_API in ("PyQt6", "PySide6") else int
 
 
-if BALDAQUIN_QT_WRAPPER == 'PySide2':
+if BALDAQUIN_QT_WRAPPER == "PySide2":
     from PySide2 import QtCore, QtGui, QtWidgets  # noqa F811
     exec_qapp = _exec_qapp_old_style
 
 
-if BALDAQUIN_QT_WRAPPER == 'PyQt6':
+if BALDAQUIN_QT_WRAPPER == "PyQt6":
     from PyQt6 import QtCore, QtGui, QtWidgets  # noqa F811
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot
     exec_qapp = _exec_qapp_new_style
 
 
-if BALDAQUIN_QT_WRAPPER == 'PyQt5':
+if BALDAQUIN_QT_WRAPPER == "PyQt5":
     from PyQt5 import QtCore, QtGui, QtWidgets  # noqa F811
     QtCore.Signal = QtCore.pyqtSignal
     QtCore.Slot = QtCore.pyqtSlot

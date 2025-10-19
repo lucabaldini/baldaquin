@@ -81,7 +81,7 @@ class DeviceId:
     def __repr__(self) -> str:
         """String formatting.
         """
-        return f'(vid={self._hex(self.vid)}, pid={self._hex(self.pid)})'
+        return f"(vid={self._hex(self.vid)}, pid={self._hex(self.pid)})"
 
 
 @dataclass
@@ -137,12 +137,12 @@ def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
     list of PortInfo objects
         The list of COM ports.
     """
-    logger.info('Scanning serial devices...')
+    logger.info("Scanning serial devices...")
     # Populate the initial list of ports.
     ports = [PortInfo.from_serial(item) for item in serial.tools.list_ports.comports()]
     for port_info in ports:
         logger.debug(port_info)
-    logger.info(f'Done, {len(ports)} device(s) found.')
+    logger.info(f"Done, {len(ports)} device(s) found.")
     # If we're not filtering over device ids, we're done.
     if len(device_ids) == 0:
         return ports
@@ -154,10 +154,10 @@ def list_com_ports(*device_ids: DeviceId) -> list[PortInfo]:
         for i, entry in enumerate(device_ids):
             if isinstance(entry, tuple):
                 device_ids[i] = DeviceId(*entry)
-        logger.info(f'Filtering port list for specific devices: {device_ids}...')
+        logger.info(f"Filtering port list for specific devices: {device_ids}...")
         # Do the actual filtering.
         ports = [port_info for port_info in ports if port_info.device_id in device_ids]
-        logger.info(f'Done, {len(ports)} device(s) remaining.')
+        logger.info(f"Done, {len(ports)} device(s) remaining.")
     for port in ports:
         logger.debug(port)
     return ports
@@ -191,7 +191,7 @@ class TextLine(bytearray):
 
     Example
     -------
-    >>> message = TextLine.from_text('#Hello world;1\\n')
+    >>> message = TextLine.from_text("#Hello world;1\\n")
     >>> name, version = message.unpack(str, int)
     >>> print(name, type(name))
     Hello world, <class 'str'>
@@ -199,23 +199,23 @@ class TextLine(bytearray):
     1 <class 'int'>
     """
 
-    _ENCODING = 'utf-8'
-    _HEADER = '#'
+    _ENCODING = "utf-8"
+    _HEADER = "#"
     _HEADER_ORD = ord(_HEADER)
-    _LINE_FEED = '\n'
+    _LINE_FEED = "\n"
     _LINE_FEED_ORD = ord(_LINE_FEED)
-    _SEPARATOR = ';'
+    _SEPARATOR = ";"
 
     def __init__(self, data: bytes) -> None:
         """Constructor.
         """
         super().__init__(data)
         if len(data) == 0:
-            raise RuntimeError(f'Empty buffer passed to the {self.__class__.__name__} constructor')
+            raise RuntimeError(f"Empty buffer passed to the {self.__class__.__name__} constructor")
         if not self[0] == self._HEADER_ORD:
-            raise RuntimeError(f'Serial text line {self} does not start with {self._HEADER}')
+            raise RuntimeError(f"Serial text line {self} does not start with {self._HEADER}")
         if not self[-1] == self._LINE_FEED_ORD:
-            raise RuntimeError(f'Serial text line {self} does not end with a line feed')
+            raise RuntimeError(f"Serial text line {self} does not end with a line feed")
 
     @classmethod
     def from_text(cls, text: str) -> bytes:
@@ -231,7 +231,7 @@ class TextLine(bytearray):
         value : str
             The string to be prepended.
         """
-        self[1:1] = bytes(f'{value}{self._SEPARATOR}', self._ENCODING)
+        self[1:1] = bytes(f"{value}{self._SEPARATOR}", self._ENCODING)
 
     def append(self, value: str) -> None:
         """Append a string field to the text line.
@@ -241,7 +241,7 @@ class TextLine(bytearray):
         value : str
             The string to be prepended.
         """
-        self[-1:-1] = bytes(f'{self._SEPARATOR}{value}', self._ENCODING)
+        self[-1:-1] = bytes(f"{self._SEPARATOR}{value}", self._ENCODING)
 
     def unpack(self, *converters) -> tuple:
         """Unpack the message in its (properly formatted) fields.
@@ -334,13 +334,13 @@ class SerialInterface(serial.Serial):
               otherwise wait until the timeout expires and return all bytes that
               were received until then.
         """
-        logger.debug(f'Configuring serial connection (port = {port_info.name}, '
-                     f'baudarate = {baudrate}, timeout = {timeout})...')
+        logger.debug(f"Configuring serial connection (port = {port_info.name}, "
+                     f"baudarate = {baudrate}, timeout = {timeout})...")
         self.port_info = port_info
         self.port = port_info.name
         self.baudrate = baudrate
         self.timeout = timeout
-        logger.info(f'Opening serial connection to port {self.port}...')
+        logger.info(f"Opening serial connection to port {self.port}...")
         self.open()
 
     def set_timeout(self, timeout: float) -> None:
@@ -351,13 +351,13 @@ class SerialInterface(serial.Serial):
         timeout : float
             The timeout in seconds.
         """
-        logger.info(f'Setting serial connection timeout to {timeout} s...')
+        logger.info(f"Setting serial connection timeout to {timeout} s...")
         self.timeout = timeout
 
     def disconnect(self):
         """Disconnect from the serial port.
         """
-        logger.info(f'Closing serial connection to port {self.port}...')
+        logger.info(f"Closing serial connection to port {self.port}...")
         self.close()
 
     def pulse_dtr(self, pulse_length: float = 0.5) -> None:
@@ -371,7 +371,7 @@ class SerialInterface(serial.Serial):
         pulse_length : float
             The duration (in seconds) for the DTR line signal to be asserted.
         """
-        logger.info(f'Pulsing the DTR line for {pulse_length} s...')
+        logger.info(f"Pulsing the DTR line for {pulse_length} s...")
         self.dtr = 1
         time.sleep(pulse_length)
         self.dtr = 0
@@ -415,8 +415,8 @@ class SerialInterface(serial.Serial):
         Example
         -------
         >>> s = SerialInterface(port)
-        >>> val = s.read_and_unpack('B') # Single byte (val is int)
-        >>> val = s.read_and_unpack('>L') # Big-endian unsigned long (val is also int)
+        >>> val = s.read_and_unpack("B") # Single byte (val is int)
+        >>> val = s.read_and_unpack(">L") # Big-endian unsigned long (val is also int)
         """
         data = self.read(struct.calcsize(fmt))
         try:

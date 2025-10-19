@@ -29,6 +29,6 @@ def timing(func):
     def wrap(*args, **kwargs):
         start_time = time.time()
         result = func(*args, **kwargs)
-        logger.debug(f'Running time for {func.__name__}(): {time.time() - start_time:.6f} s')
+        logger.debug(f"Running time for {func.__name__}(): {time.time() - start_time:.6f} s")
         return result
     return wrap

@@ -66,9 +66,9 @@ class ConfigurationParameter:
     # documentation, see https://stackoverflow.com/questions/31561895
     # Start definition of valid constraints.
     _VALID_CONSTRAINTS = {
-        int: ('choices', 'step', 'min', 'max'),
-        float: ('min', 'max'),
-        str: ('choices',)
+        int: ("choices", "step", "min", "max"),
+        float: ("min", "max"),
+        str: ("choices",)
     }
     # End definition of valid constraints.
 
@@ -84,31 +84,31 @@ class ConfigurationParameter:
         self.fmt = fmt
         for key in tuple(constraints):
             if key not in self._VALID_CONSTRAINTS.get(self.type, ()):
-                raise RuntimeError(f'Invalid spec ({key}) for {self.name} ({self.type})')
+                raise RuntimeError(f"Invalid spec ({key}) for {self.name} ({self.type})")
         self.constraints = constraints
         self.set_value(value)
 
     def _check_range(self, value: Any) -> None:
         """Generic function to check that a given value is within a specified range.
         """
-        if 'min' in self.constraints and value < self.constraints['min']:
-            raise RuntimeError(f'Value {value} is too small for {self}')
-        if 'max' in self.constraints and value > self.constraints['max']:
-            raise RuntimeError(f'Value {value} is too large for {self}')
+        if "min" in self.constraints and value < self.constraints["min"]:
+            raise RuntimeError(f"Value {value} is too small for {self}")
+        if "max" in self.constraints and value > self.constraints["max"]:
+            raise RuntimeError(f"Value {value} is too large for {self}")
 
     def _check_choices(self, value: Any) -> None:
         """Generic function to check that a parameter value is within the
         allowed choices.
         """
-        if 'choices' in self.constraints and value not in self.constraints['choices']:
-            raise RuntimeError(f'Unexpected choice {value} for {self}')
+        if "choices" in self.constraints and value not in self.constraints["choices"]:
+            raise RuntimeError(f"Unexpected choice {value} for {self}")
 
     def _check_step(self, value: int) -> None:
         """Generic function to check the step size for an integer.
         """
-        delta = value - self.constraints.get('min', 0)
-        if 'step' in self.constraints and delta % self.constraints['step'] != 0:
-            raise RuntimeError(f'Invalid value {value} for {self}')
+        delta = value - self.constraints.get("min", 0)
+        if "step" in self.constraints and delta % self.constraints["step"] != 0:
+            raise RuntimeError(f"Invalid value {value} for {self}")
 
     def set_value(self, value: Any) -> None:
         """Set the parameter value.
@@ -117,7 +117,7 @@ class ConfigurationParameter:
         """
         # Make sure that the value we are passing is of the right type.
         if not isinstance(value, self.type):
-            raise RuntimeError(f'Invalid type {value} ({type(value).__name__}) for {self}')
+            raise RuntimeError(f"Invalid type {value} ({type(value).__name__}) for {self}")
         # Make all the necessary checks on the constraints, if necessary.
         if self.constraints:
             if self.type is int:
@@ -135,15 +135,15 @@ class ConfigurationParameter:
         """Return the formatted parameter value (as a string).
         """
         if self.fmt is None:
-            return f'{self.value}'
-        return f'{self.value:{self.fmt}}'
+            return f"{self.value}"
+        return f"{self.value:{self.fmt}}"
 
     def pretty_print(self) -> str:
         """Return a pretty-printed string representation of the parameter.
         """
-        text = f'{self.name:.<30} {self.formatted_value()}'
+        text = f"{self.name:.<30} {self.formatted_value()}"
         if self.units:
-            text += f' {self.units}'
+            text += f" {self.units}"
         return text
 
     def __str__(self):
@@ -218,8 +218,8 @@ class ConfigurationSectionBase(dict):
     def __str__(self) -> str:
         """String formatting.
         """
-        data = ''.join(f'{param.pretty_print()}\n' for param in self.values())
-        return f'---------------{self.TITLE:-<25}\n{data}'
+        data = "".join(f"{param.pretty_print()}\n" for param in self.values())
+        return f"---------------{self.TITLE:-<25}\n{data}"
 
 
 class LoggingConfigurationSection(ConfigurationSectionBase):
@@ -227,11 +227,11 @@ class LoggingConfigurationSection(ConfigurationSectionBase):
     """Configuration section for the logging.
     """
 
-    TITLE = 'Logging'
-    _LOGGING_LEVELS = ('TRACE', 'DEBUG', 'INFO', 'SUCCESS', 'WARNING', 'ERROR', 'CRITICAL')
+    TITLE = "Logging"
+    _LOGGING_LEVELS = ("TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL")
     _PARAMETER_SPECS = (
-        ('terminal_level', str, 'DEBUG', 'Terminal logging level', dict(choices=_LOGGING_LEVELS)),
-        ('file_level', str, 'DEBUG', 'File logging level', dict(choices=_LOGGING_LEVELS))
+        ("terminal_level", str, "DEBUG", "Terminal logging level", dict(choices=_LOGGING_LEVELS)),
+        ("file_level", str, "DEBUG", "File logging level", dict(choices=_LOGGING_LEVELS))
     )
 
 
@@ -240,10 +240,10 @@ class BufferingConfigurationSection(ConfigurationSectionBase):
     """Configuration section for the packet buffering.
     """
 
-    TITLE = 'Buffering'
+    TITLE = "Buffering"
     _PARAMETER_SPECS = (
-        ('flush_size', int, 100, 'Flush size', dict(min=1)),
-        ('flush_timeout', float, 10., 'Flush timeout', 's', '.3f', dict(min=1.))
+        ("flush_size", int, 100, "Flush size", dict(min=1)),
+        ("flush_timeout", float, 10., "Flush timeout", "s", ".3f", dict(min=1.))
     )
 
 
@@ -252,11 +252,11 @@ class MulticastConfigurationSection(ConfigurationSectionBase):
     """Configuration section for the packet multicasting.
     """
 
-    TITLE = 'Multicast'
+    TITLE = "Multicast"
     _PARAMETER_SPECS = (
-        ('enabled', bool, False, 'Enable multicast'),
-        ('ip_address', str, '127.0.0.1', 'IP address'),
-        ('port', int, 20004, 'Port', dict(min=1024, max=65535))
+        ("enabled", bool, False, "Enable multicast"),
+        ("ip_address", str, "127.0.0.1", "IP address"),
+        ("port", int, 20004, "Port", dict(min=1024, max=65535))
     )
 
 
@@ -294,7 +294,7 @@ class Configuration(dict):
         The contract is that the update always proceeds to the end, and all the
         fields that can be legitimately updated get indeed updated.
         """
-        logger.info(f'Updating configuration from {file_path}...')
+        logger.info(f"Updating configuration from {file_path}...")
         with open(file_path, encoding=BALDAQUIN_ENCODING) as input_file:
             data = json.load(input_file)
         errors = False
@@ -312,10 +312,10 @@ class Configuration(dict):
                     logger.warning(exc)
                     errors = True
         if errors:
-            timestamp = datetime.datetime.now().strftime('%Y%m%d-%H%M%S.%f')
-            file_name = f'{Path(file_path).name}.backup.{timestamp}'
+            timestamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S.%f")
+            file_name = f"{Path(file_path).name}.backup.{timestamp}"
             dest = BALDAQUIN_DATA / file_name
-            logger.warning(f'Error(s) during update, copying original file to {dest}...')
+            logger.warning(f"Error(s) during update, copying original file to {dest}...")
 
     def as_dict(self) -> dict:
         """Return a view on the configuration in the form of a dictionary that
@@ -331,15 +331,15 @@ class Configuration(dict):
     def save(self, file_path: str) -> None:
         """Dump the configuration dictionary to a JSON file.
         """
-        logger.info(f'Writing configuration dictionary to {file_path}...')
-        with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
+        logger.info(f"Writing configuration dictionary to {file_path}...")
+        with open(file_path, "w", encoding=BALDAQUIN_ENCODING) as output_file:
             output_file.write(self.to_json())
 
     def __str__(self):
         """String formatting.
         """
-        text = ''.join(f'{section}' for section in self.values())
-        return text.strip('\n')
+        text = "".join(f"{section}" for section in self.values())
+        return text.strip("\n")
 
 
 class UserApplicationConfiguration(Configuration):
@@ -347,7 +347,7 @@ class UserApplicationConfiguration(Configuration):
     """Base class for a generic user application configuration.
     """
 
-    _USER_APPLICATION_SECTION_TITLE = 'User Application'
+    _USER_APPLICATION_SECTION_TITLE = "User Application"
     _PARAMETER_SPECS = ()
 
     def __init__(self) -> None:

@@ -42,8 +42,8 @@ class WriteMode(Enum):
     Note this has to match the open modes in the Python open() builtin.
     """
 
-    BINARY = 'b'
-    TEXT = 't'
+    BINARY = "b"
+    TEXT = "t"
 
 
 class Sink:
@@ -73,20 +73,20 @@ class Sink:
         # If the output file already exists, then something has gone wrong---we
         # never overwrite data.
         if file_path.exists():
-            raise FileExistsError(f'Output file {file_path} already exists')
+            raise FileExistsError(f"Output file {file_path} already exists")
         self.file_path = file_path
         self.formatter = formatter
         self._mode = mode
         self._output_file = None
         # Note we always open the output file in append mode.
-        self._open_kwargs = dict(mode=f'a{self._mode.value}')
+        self._open_kwargs = dict(mode=f"a{self._mode.value}")
         if self._mode == WriteMode.TEXT:
             self._open_kwargs.update(encoding=BALDAQUIN_ENCODING)
         # At this point we do create the file and, if needed, we write the
         # header into it. (And we are ready to flush.)
         with self.open() as output_file:
             if header is not None:
-                logger.debug('Writing file header...')
+                logger.debug("Writing file header...")
                 output_file.write(header)
 
     @contextmanager
@@ -97,18 +97,18 @@ class Sink:
         the underlying (open) output file.
         """
         # pylint: disable=unspecified-encoding, bad-open-mode
-        logger.debug(f'Opening output file {self.file_path} {self._open_kwargs}...')
+        logger.debug(f"Opening output file {self.file_path} {self._open_kwargs}...")
         output_file = open(self.file_path, **self._open_kwargs) # noqa SIM115
         yield output_file
         output_file.close()
-        logger.debug(f'Ouput file {self.file_path} closed.')
+        logger.debug(f"Ouput file {self.file_path} closed.")
 
     def __str__(self) -> str:
         """String formatting.
         """
         if self.formatter is None:
-            return f'Sink -> {self.file_path} ({self._mode})'
-        return f'Sink -> {self.file_path} ({self._mode}, {self.formatter.__qualname__})'
+            return f"Sink -> {self.file_path} ({self._mode})"
+        return f"Sink -> {self.file_path} ({self._mode}, {self.formatter.__qualname__})"
 
 
 class AbstractBuffer(ABC):
@@ -141,8 +141,8 @@ class AbstractBuffer(ABC):
     def configure(self, flush_size: int, flush_timeout: float) -> None:
         """Configure the buffer parameters.
         """
-        logger.info(f'Configuring {self.__class__.__name__} with flush_size={flush_size}, '
-                    f'flush_timeout={flush_timeout} s...')
+        logger.info(f"Configuring {self.__class__.__name__} with flush_size={flush_size}, "
+                    f"flush_timeout={flush_timeout} s...")
         self._flush_size = flush_size
         self._flush_timeout = flush_timeout
 
@@ -155,7 +155,7 @@ class AbstractBuffer(ABC):
         derived classes.
         """
         if not isinstance(packet, AbstractPacket):
-            raise TypeError(f'{packet} is not an AbstractPacket instance')
+            raise TypeError(f"{packet} is not an AbstractPacket instance")
         self._do_put(packet)
 
     @abstractmethod
@@ -213,7 +213,7 @@ class AbstractBuffer(ABC):
         """Set the primary sink for the buffer.
         """
         sink = Sink(file_path, WriteMode.BINARY, None, None)
-        logger.info(f'Connecting buffer to primary {sink}...')
+        logger.info(f"Connecting buffer to primary {sink}...")
         self._primary_sink = sink
         return sink
 
@@ -225,7 +225,7 @@ class AbstractBuffer(ABC):
         explanation of the arguments.
         """
         sink = Sink(file_path, mode, formatter, header)
-        logger.info(f'Connecting buffer to custom {sink}...')
+        logger.info(f"Connecting buffer to custom {sink}...")
         self._custom_sinks.append(sink)
         return sink
 
@@ -234,7 +234,7 @@ class AbstractBuffer(ABC):
         """
         self._primary_sink = None
         self._custom_sinks = []
-        logger.info('All buffer sinks disconnected.')
+        logger.info("All buffer sinks disconnected.")
 
     def _pop_and_write_raw(self, num_packets: int, output_file: io.IOBase) -> int:
         """Pop the first ``num_packets`` packets from the buffer and write the
@@ -256,7 +256,7 @@ class AbstractBuffer(ABC):
         num_bytes_written = 0
         for _ in range(num_packets):
             num_bytes_written += output_file.write(self.pop().data)
-        logger.debug(f'{num_bytes_written} bytes written to disk.')
+        logger.debug(f"{num_bytes_written} bytes written to disk.")
         return num_bytes_written
 
     def _write(self, num_packets: int, output_file: io.IOBase, formatter: Callable) -> int:
@@ -282,7 +282,7 @@ class AbstractBuffer(ABC):
         num_bytes_written = 0
         for i in range(num_packets):
             num_bytes_written += output_file.write(formatter(self[i]))
-        logger.debug(f'{num_bytes_written} bytes written to disk.')
+        logger.debug(f"{num_bytes_written} bytes written to disk.")
         return num_bytes_written
 
     @timing
@@ -295,7 +295,7 @@ class AbstractBuffer(ABC):
            wait for the next call.
         """
         if self._primary_sink is None:
-            raise RuntimeError('No primary sink connected to the buffer, cannot flush')
+            raise RuntimeError("No primary sink connected to the buffer, cannot flush")
         # Cache the number of packets to be read---this is implemented this way
         # as we might be adding new packets while flushing the buffer.
         num_packets = self.size()
@@ -306,7 +306,7 @@ class AbstractBuffer(ABC):
         if num_packets == 0:
             return (num_packets, num_bytes_written)
         # And, finally, the actual flush.
-        logger.info(f'{num_packets} packets ready to be written out...')
+        logger.info(f"{num_packets} packets ready to be written out...")
         # First write to all the custom sinks, as this does not empty the buffer...
         for sink in self._custom_sinks:
             with sink.open() as output_file:
@@ -315,8 +315,8 @@ class AbstractBuffer(ABC):
         with self._primary_sink.open() as output_file:
             num_raw_bytes_written = self._pop_and_write_raw(num_packets, output_file)
             num_bytes_written += num_raw_bytes_written
-        logger.info(f'{num_bytes_written} bytes ({num_raw_bytes_written} raw bytes) '
-                    'written to disk.')
+        logger.info(f"{num_bytes_written} bytes ({num_raw_bytes_written} raw bytes) "
+                    "written to disk.")
         # Note at this point we are keeping track of both the total number of
         # bytes written to disk *and* the number of bytes written in the form of
         # raw binary packets, and we can decide which one we want to use downstream,

@@ -37,7 +37,7 @@ class SlidingStripChart:
 
     # pylint: disable=invalid-name
 
-    def __init__(self, max_length: int = None, label: str = '', xoffset: float = 0.,
+    def __init__(self, max_length: int = None, label: str = "", xoffset: float = 0.,
                  xlabel: str = None, ylabel: str = None, datetime: bool = False) -> None:
         """Constructor.
         """
@@ -45,7 +45,7 @@ class SlidingStripChart:
         self.xoffset = xoffset
         self.xlabel = xlabel
         if self.xlabel is None and datetime:
-            self.xlabel = 'UTC'
+            self.xlabel = "UTC"
         self.ylabel = ylabel
         self.datetime = datetime
         self.x = collections.deque(maxlen=max_length)
@@ -68,6 +68,6 @@ class SlidingStripChart:
         """
         if axes is None:
             axes = plt.gca()
-        x = np.array(self.x).astype('datetime64[s]') if self.datetime else self.x
+        x = np.array(self.x).astype("datetime64[s]") if self.datetime else self.x
         axes.plot(x, self.y, label=self.label, **kwargs)
         setup_axes(axes, xlabel=self.xlabel, ylabel=self.ylabel, grids=True)

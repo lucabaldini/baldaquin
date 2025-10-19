@@ -28,8 +28,8 @@ from . import __version__
 from .logging_ import logger
 from .timeline import Timeline
 
-DEFAULT_TEXT_PREFIX = '#'
-DEFAULT_TEXT_SEPARATOR = ','
+DEFAULT_TEXT_PREFIX = "#"
+DEFAULT_TEXT_SEPARATOR = ","
 
 
 class Format(Enum):
@@ -38,23 +38,23 @@ class Format(Enum):
     https://docs.python.org/3/library/struct.html#format-characters
     """
 
-    PAD_BTYE = 'x'
-    CHAR = 'c'
-    SIGNED_CHAR = 'b'
-    UNSIGNED_CHAR = 'B'
-    BOOL = '?'
-    SHORT = 'h'
-    UNSIGNED_SHORT = 'H'
-    INT = 'i'
-    UNSIGNED_INT = 'I'
-    LONG = 'l'
-    UNSIGNED_LONG = 'L'
-    LONG_LONG = 'q'
-    UNSIGNED_LONG_LONG = 'Q'
-    SSIZE_T = 'n'
-    SIZE_T = 'N'
-    FLOAT = 'f'
-    DOUBLE = 'd'
+    PAD_BTYE = "x"
+    CHAR = "c"
+    SIGNED_CHAR = "b"
+    UNSIGNED_CHAR = "B"
+    BOOL = "?"
+    SHORT = "h"
+    UNSIGNED_SHORT = "H"
+    INT = "i"
+    UNSIGNED_INT = "I"
+    LONG = "l"
+    UNSIGNED_LONG = "L"
+    LONG_LONG = "q"
+    UNSIGNED_LONG_LONG = "Q"
+    SSIZE_T = "n"
+    SIZE_T = "N"
+    FLOAT = "f"
+    DOUBLE = "d"
 
 
 class Layout(Enum):
@@ -63,12 +63,12 @@ class Layout(Enum):
     https://docs.python.org/3/library/struct.html#byte-order-size-and-alignment
     """
 
-    NATIVE_SIZE = '@'
-    NATIVE = '='
-    LITTLE_ENDIAN = '<'
-    BIG_ENDIAN = '>'
-    NETWORK = '!'
-    DEFAULT = '@'
+    NATIVE_SIZE = "@"
+    NATIVE = "="
+    LITTLE_ENDIAN = "<"
+    BIG_ENDIAN = ">"
+    NETWORK = "!"
+    DEFAULT = "@"
 
 
 class Edge(IntEnum):
@@ -141,7 +141,7 @@ class AbstractPacket(ABC):
         """
         vals = (getattr(self, attr) for attr in attrs)
         if fmts is None:
-            fmts = ('%s' for _ in attrs)
+            fmts = ("%s" for _ in attrs)
         return tuple(fmt % val for val, fmt in zip(vals, fmts))
 
     def _text(self, attrs: tuple[str], fmts: tuple[str], separator: str) -> str:
@@ -161,7 +161,7 @@ class AbstractPacket(ABC):
             The separator between different fields.
         """
         vals = self._format_attributes(attrs, fmts)
-        return f'{separator.join(vals)}\n'
+        return f"{separator.join(vals)}\n"
 
     def _repr(self, attrs: tuple[str], fmts: tuple[str] = None) -> str:
         """Helper function to provide sensible string formatting for the packets.
@@ -178,8 +178,8 @@ class AbstractPacket(ABC):
             If present determines the formatting of the given attributes.
         """
         vals = self._format_attributes(attrs, fmts)
-        info = ', '.join([f'{attr}={val}' for attr, val in zip(attrs, vals)])
-        return f'{self.__class__.__name__}({info})'
+        info = ", ".join([f"{attr}={val}" for attr, val in zip(attrs, vals)])
+        return f"{self.__class__.__name__}({info})"
 
     @classmethod
     def text_header(cls, prefix: str = DEFAULT_TEXT_PREFIX, creator: str = None) -> str:
@@ -195,10 +195,10 @@ class AbstractPacket(ABC):
         creator : str, optional
             An optional string indicating the application that created the file.
         """
-        header = f'{prefix}Created on {Timeline().latch()}\n' \
-                 f'{prefix}baldaquin version: {__version__}\n'
+        header = f"{prefix}Created on {Timeline().latch()}\n" \
+                 f"{prefix}baldaquin version: {__version__}\n"
         if creator is not None:
-            header = f'{header}{prefix}Creator: {creator}\n'
+            header = f"{header}{prefix}Creator: {creator}\n"
         return header
 
     def to_text(self, separator: str = DEFAULT_TEXT_SEPARATOR) -> str:
@@ -217,7 +217,7 @@ class FieldMismatchError(RuntimeError):
         """Constructor.
         """
         super().__init__(f'{cls.__name__} mismatch for field "{field}" '
-                         f'(expected {hex(expected)}, found {hex(actual)})')
+                         f"(expected {hex(expected)}, found {hex(actual)})")
 
 
 def _class_annotations(cls) -> dict:
@@ -252,15 +252,15 @@ def _check_format_characters(cls: type) -> None:
     """
     for character in _class_annotations(cls).values():
         if not isinstance(character, Format):
-            raise ValueError(f'Format character {character} is not a Format value')
+            raise ValueError(f"Format character {character} is not a Format value")
 
 
 def _check_layout_character(cls: type) -> None:
     """Check that the class layout character is valid.
     """
-    cls.layout = getattr(cls, 'layout', Layout.DEFAULT)
+    cls.layout = getattr(cls, "layout", Layout.DEFAULT)
     if not isinstance(cls.layout, Layout):
-        raise ValueError(f'Layout character {cls.layout} is not a Layout value')
+        raise ValueError(f"Layout character {cls.layout} is not a Layout value")
 
 
 def packetclass(cls: type) -> type:
@@ -275,14 +275,14 @@ def packetclass(cls: type) -> type:
     cls._format = f'{cls.layout.value}{"".join(char.value for char in annotations.values())}'
     cls.size = struct.calcsize(cls._format)
     # And here is a list of attributes we want to be frozen.
-    cls.__frozenattrs__ = ('_fields', '_format', 'size', '_data') + cls._fields
+    cls.__frozenattrs__ = ("_fields", "_format", "size", "_data") + cls._fields
 
     def _init(self, *args, data: bytes = None):
         # Make sure we have the correct number of arguments---they should match
         # the class annotations.
         if len(args) != len(cls._fields):
-            raise TypeError(f'{cls.__name__}.__init__() expected {len(cls._fields)} '
-                            f'arguments {cls._fields}, got {len(args)}')
+            raise TypeError(f"{cls.__name__}.__init__() expected {len(cls._fields)} "
+                            f"arguments {cls._fields}, got {len(args)}")
         # Loop over the annotations and create all the instance variables.
         for field, value in zip(cls._fields, args):
             # If a given annotation has a value attched to it, make sure we are
@@ -293,7 +293,7 @@ def packetclass(cls: type) -> type:
             object.__setattr__(self, field, value)
         if data is None:
             data = self.pack()
-        object.__setattr__(self, '_data', data)
+        object.__setattr__(self, "_data", data)
         # Make sure the post-initialization is correctly performed.
         self.__post_init__()
 
@@ -340,7 +340,7 @@ class FixedSizePacketBase(AbstractPacket):
         """Overloaded method to make class instances frozen.
         """
         if key in self.__class__.__frozenattrs__:
-            raise AttributeError(f'Cannot modify {self.__class__.__name__}.{key}')
+            raise AttributeError(f"Cannot modify {self.__class__.__name__}.{key}")
         object.__setattr__(self, key, value)
 
     def __repr__(self):
@@ -352,7 +352,7 @@ class FixedSizePacketBase(AbstractPacket):
         are encouraged not to reimplement this special method, as it inclues all
         the nitty-gritty details of the packet, which might be useful when debugging.
         """
-        return self._repr(self._fields + ('data', '_format'))
+        return self._repr(self._fields + ("data", "_format"))
 
     def __str__(self):
         """String formatting.
@@ -366,13 +366,13 @@ class FixedSizePacketBase(AbstractPacket):
     def text_header(cls, prefix: str = DEFAULT_TEXT_PREFIX, creator: str = None) -> str:
         """Overloaded method.
         """
-        return f'{AbstractPacket.text_header(prefix, creator)}' \
+        return f"{AbstractPacket.text_header(prefix, creator)}" \
                f'{prefix}{", ".join(cls._fields)}\n'
 
     def to_text(self, separator: str = DEFAULT_TEXT_SEPARATOR) -> str:
         """Overloaded method.
         """
-        return f'{separator.join([str(item) for item in self])}\n'
+        return f"{separator.join([str(item) for item in self])}\n"
 
 
 class PacketFile:
@@ -390,12 +390,12 @@ class PacketFile:
     def open(self, file_path: str):
         """Open the file.
         """
-        logger.debug(f'Opening input packet file {file_path}...')
-        with open(file_path, 'rb') as input_file:
+        logger.debug(f"Opening input packet file {file_path}...")
+        with open(file_path, "rb") as input_file:
             self._input_file = input_file
             yield self
             self._input_file = None
-        logger.debug(f'Input file {file_path} closed.')
+        logger.debug(f"Input file {file_path} closed.")
 
     def __iter__(self) -> PacketFile:
         """Return the iterator object (self).
