@@ -48,20 +48,3 @@ def _git_suffix() -> str:
 
 __version__ = f"{__base_version__}{_git_suffix()}"
 
-
-def start_message() -> None:
-    """Print the start message.
-    """
-    msg = f"""
-    This is baldaquin version {__version__}.
-
-    Copyright (C) 2022--2025, the baldaquin team.
-
-    baldaquin comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it under certain
-    conditions. See the LICENSE file for details.
-
-    Visit https://github.com/lucabaldini/baldaquin for more information.
-    """
-    print(msg)
-

@@ -23,12 +23,29 @@ import importlib
 import importlib.util
 import sys
 
-from baldaquin import arduino_, serial_
+from baldaquin import __version__, arduino_, serial_
 from baldaquin.env import BALDAQUIN_DATA, BALDAQUIN_SOURCE
 from baldaquin.logging_ import logger
 
 # List of defaults projects shipped with the package.
 _DEFAULT_PROJECTS = ('plasduino', 'silly')
+
+
+def start_message() -> None:
+    """Print the start message.
+    """
+    msg = f"""
+    This is baldaquin version {__version__}.
+
+    Copyright (C) 2022--2025, the baldaquin team.
+
+    baldaquin comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it under certain
+    conditions. See the LICENSE file for details.
+
+    Visit https://github.com/lucabaldini/baldaquin for more information.
+    """
+    print(msg)
 
 
 class _Formatter(argparse.RawDescriptionHelpFormatter, argparse.ArgumentDefaultsHelpFormatter):
@@ -152,6 +169,7 @@ class MainArgumentParser(argparse.ArgumentParser):
 def main() -> None:
     """Main entry point.
     """
+    start_message()
     MainArgumentParser().run_command()
 
 
