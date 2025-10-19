@@ -29,7 +29,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from . import DEFAULT_CHARACTER_ENCODING
+from .env import BALDAQUIN_ENCODING
 from .logging_ import logger
 from .pkt import AbstractPacket
 from .profile import timing
@@ -81,7 +81,7 @@ class Sink:
         # Note we always open the output file in append mode.
         self._open_kwargs = dict(mode=f'a{self._mode.value}')
         if self._mode == WriteMode.TEXT:
-            self._open_kwargs.update(encoding=DEFAULT_CHARACTER_ENCODING)
+            self._open_kwargs.update(encoding=BALDAQUIN_ENCODING)
         # At this point we do create the file and, if needed, we write the
         # header into it. (And we are ready to flush.)
         with self.open() as output_file:

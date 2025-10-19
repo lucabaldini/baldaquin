@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import os
 import pathlib
 import subprocess
 
@@ -50,7 +49,6 @@ def _git_suffix() -> str:
 __version__ = f"{__base_version__}{_git_suffix()}"
 
 
-
 def start_message() -> None:
     """Print the start message.
     """
@@ -68,117 +66,8 @@ def start_message() -> None:
     print(msg)
 
 
-
-# Basic package structure.
-BALDAQUIN_ROOT = pathlib.Path(__file__).parent
-BALDAQUIN_BASE = BALDAQUIN_ROOT.parent.parent
-BALDAQUIN_GRAPHICS = BALDAQUIN_ROOT / 'graphics'
-BALDAQUIN_ICONS = BALDAQUIN_GRAPHICS / 'icons'
-BALDAQUIN_SKINS = BALDAQUIN_GRAPHICS / 'skins'
-BALDAQUIN_DOCS = BALDAQUIN_BASE / 'docs'
-BALDAQUIN_DOCS_STATIC = BALDAQUIN_DOCS / '_static'
-
-
-# Version information.
-BALDAQUIN_VERSION_FILE_PATH = BALDAQUIN_ROOT / '_version.py'
-
-
-# pyproject.toml file.
-BALDAQUIN_TOML_FILE_PATH = BALDAQUIN_BASE / 'pyproject.toml'
-
-
-# Release notes file.
-BALDAQUIN_RELEASE_NOTES_PATH = BALDAQUIN_DOCS / 'release_notes.rst'
-
-
-# Default character encoding.
-DEFAULT_CHARACTER_ENCODING = 'utf-8'
-
-
 def execute_shell_command(args):
     """Execute a shell command.
     """
     #logger.info(f'About to execute "{" ".join(args)}"...')
     return subprocess.run(args, check=True)
-
-
-def _create_folder(folder_path: pathlib.Path) -> None:
-    """Create a given folder if it does not exist.
-
-    This is a small utility function to ensure that the relevant directories
-    exist when needed at runtime.
-
-    Arguments
-    ---------
-    folder_path : Path instance
-        The path to the target folder.
-    """
-    if not folder_path.exists():
-        #logger.info(f'Creating folder {folder_path}...')
-        pathlib.Path.mkdir(folder_path, parents=True)
-
-
-# The path to the base folder for the output data defaults to ~/baldaquindata,
-# but can be changed via the $BALDAQUIN_DATA environmental variable.
-# pylint: disable=invalid-name
-try:
-    BALDAQUIN_DATA = pathlib.Path(os.environ['BALDAQUIN_DATA'])
-except KeyError:
-    BALDAQUIN_DATA = pathlib.Path.home() / 'baldaquindata'
-_create_folder(BALDAQUIN_DATA)
-
-
-# We're doing a similar thing for our scratch space.
-try:
-    BALDAQUIN_SCRATCH = pathlib.Path(os.environ['BALDAQUIN_SCRATCH'])
-except KeyError:
-    BALDAQUIN_SCRATCH = BALDAQUIN_DATA / 'scratch'
-_create_folder(BALDAQUIN_SCRATCH)
-
-
-# On the other hand all the configuration files live in (subdirectories of) ~/.baldaquin
-BALDAQUIN_CONFIG = pathlib.Path.home() / '.baldaquin'
-_create_folder(BALDAQUIN_CONFIG)
-
-
-def config_folder_path(project_name: str) -> pathlib.Path:
-    """Return the path to the configuration folder for a given project.
-
-    Arguments
-    ---------
-    project_name : str
-        The name of the project.
-    """
-    return BALDAQUIN_CONFIG / project_name
-
-
-def data_folder_path(project_name: str) -> pathlib.Path:
-    """Return the path to the data folder for a given project.
-
-    Arguments
-    ---------
-    project_name : str
-        The name of the project.
-    """
-    return BALDAQUIN_DATA / project_name
-
-
-def setup_project(project_name: str) -> tuple[pathlib.Path, pathlib.Path]:
-    """Setup the folder structure for a given project.
-
-    This is essentially creating a folder for the configuration files and
-    a folder for the data files, if they do not exist already, and returns
-    the path to the two (in this order---first config and then data).
-
-    Arguments
-    ---------
-    project_name : str
-        The name of the project.
-    """
-    config_folder = config_folder_path(project_name)
-    app_config_folder = config_folder / 'apps'
-    data_folder = data_folder_path(project_name)
-    folder_list = (config_folder, app_config_folder, data_folder)
-    for folder_path in folder_list:
-        _create_folder(folder_path)
-    return folder_list

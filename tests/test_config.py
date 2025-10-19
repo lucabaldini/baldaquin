@@ -20,7 +20,8 @@ import json
 
 import pytest
 
-from baldaquin import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING, config
+from baldaquin import config
+from baldaquin.env import BALDAQUIN_DATA, BALDAQUIN_ENCODING
 
 
 def _test_base_match(type_name, value, **constraints):
@@ -112,7 +113,7 @@ def test_application_configuration():
 def _write_configuration_dict(file_path: str, data: dict) -> None:
     """Utility function to write a configuration dictionary to disk.
     """
-    with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+    with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
         output_file.write(json.dumps(data, indent=4))
 
 

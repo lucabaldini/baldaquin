@@ -18,10 +18,10 @@
 
 from pathlib import Path
 
-from baldaquin import BALDAQUIN_ROOT
+from baldaquin.env import BALDAQUIN_SOURCE
 from baldaquin.plasduino import PROJECT_NAME
 
-PLASDUINO_SKETCH_ROOT = BALDAQUIN_ROOT / PROJECT_NAME / 'sketches'
+PLASDUINO_SKETCH_ROOT = BALDAQUIN_SOURCE / PROJECT_NAME / 'sketches'
 
 # Dictionary holding the correspondence between the (sketch_id, sketch_version)
 # tuple and the name of the actual sketch to be uploaded on the board.

@@ -18,7 +18,7 @@
 
 import pytest
 
-from baldaquin import BALDAQUIN_SCRATCH
+from baldaquin.env import BALDAQUIN_SCRATCH
 from baldaquin.pkt import (
     AbstractPacket,
     FieldMismatchError,

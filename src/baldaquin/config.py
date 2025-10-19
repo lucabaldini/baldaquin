@@ -21,7 +21,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from . import BALDAQUIN_DATA, DEFAULT_CHARACTER_ENCODING
+from .env import BALDAQUIN_DATA, BALDAQUIN_ENCODING
 from .logging_ import logger
 
 
@@ -295,7 +295,7 @@ class Configuration(dict):
         fields that can be legitimately updated get indeed updated.
         """
         logger.info(f'Updating configuration from {file_path}...')
-        with open(file_path, encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+        with open(file_path, encoding=BALDAQUIN_ENCODING) as input_file:
             data = json.load(input_file)
         errors = False
         for title, section_data in data.items():
@@ -332,7 +332,7 @@ class Configuration(dict):
         """Dump the configuration dictionary to a JSON file.
         """
         logger.info(f'Writing configuration dictionary to {file_path}...')
-        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+        with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
             output_file.write(self.to_json())
 
     def __str__(self):

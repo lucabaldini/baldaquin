@@ -18,7 +18,7 @@
 
 from pathlib import Path
 
-from baldaquin import setup_project
+from baldaquin.env import setup_project
 
 PROJECT_NAME = 'xnucleo'
 

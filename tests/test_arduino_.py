@@ -20,7 +20,8 @@ import contextlib
 
 import pytest
 
-from baldaquin import BALDAQUIN_SCRATCH, arduino_
+from baldaquin import arduino_
+from baldaquin.env import BALDAQUIN_SCRATCH
 from baldaquin.serial_ import DeviceId
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),

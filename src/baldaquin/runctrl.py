@@ -22,15 +22,11 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from . import (
-    DEFAULT_CHARACTER_ENCODING,
-    __version__,
-    config_folder_path,
-    data_folder_path,
-)
+from . import __version__
 from .__qt__ import QtCore
 from .app import UserApplicationBase
 from .config import UserApplicationConfiguration
+from .env import BALDAQUIN_ENCODING, config_folder_path, data_folder_path
 from .event import PacketStatistics
 from .logging_ import logger, setup_logger, start_file_logging
 from .timeline import Timeline, Timestamp
@@ -297,7 +293,7 @@ class RunReport:
         """Save the report to file.
         """
         logger.info(f'Writing run report to {file_path}...')
-        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+        with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
             output_file.write(self.dumps())
 
     @classmethod
@@ -305,7 +301,7 @@ class RunReport:
         """Load the report from file.
         """
         logger.info(f'Loading run report from {file_path}...')
-        with open(file_path, encoding=DEFAULT_CHARACTER_ENCODING) as input_file:
+        with open(file_path, encoding=BALDAQUIN_ENCODING) as input_file:
             return cls.from_dict(**json.load(input_file))
 
 

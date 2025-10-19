@@ -23,8 +23,9 @@ import importlib
 import importlib.util
 import sys
 
-from . import BALDAQUIN_DATA, BALDAQUIN_ROOT, arduino_, serial_
-from .logging_ import logger
+from baldaquin import arduino_, serial_
+from baldaquin.env import BALDAQUIN_DATA, BALDAQUIN_SOURCE
+from baldaquin.logging_ import logger
 
 # List of defaults projects shipped with the package.
 _DEFAULT_PROJECTS = ('plasduino', 'silly')
@@ -108,7 +109,7 @@ class MainArgumentParser(argparse.ArgumentParser):
         """
         apps = []
         for project in _DEFAULT_PROJECTS:
-            folder_path = BALDAQUIN_ROOT / project / 'apps'
+            folder_path = BALDAQUIN_SOURCE / project / 'apps'
             apps += [_path.stem for _path in folder_path.iterdir() if _path.suffix == '.py']
         apps.sort()
         return apps
@@ -126,7 +127,7 @@ class MainArgumentParser(argparse.ArgumentParser):
         # Loop over the project folders and search for a Python module matching the
         # target application name.
         for project in _DEFAULT_PROJECTS:
-            folder_path = BALDAQUIN_ROOT / project / 'apps'
+            folder_path = BALDAQUIN_SOURCE / project / 'apps'
             file_path = folder_path / f'{app_name}.py'
             if file_path.exists():
                 logger.debug(f'Adding {file_path} to sys.path...')

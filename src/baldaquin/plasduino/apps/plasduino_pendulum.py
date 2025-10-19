@@ -22,8 +22,9 @@ import inspect
 from dataclasses import dataclass
 from pathlib import Path
 
-from baldaquin import DEFAULT_CHARACTER_ENCODING, plasduino
+from baldaquin import plasduino
 from baldaquin.buf import WriteMode
+from baldaquin.env import BALDAQUIN_ENCODING
 from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
 from baldaquin.logging_ import logger
 from baldaquin.pkt import AbstractPacket, Edge, PacketFile
@@ -174,7 +175,7 @@ class Pendulum(PlasduinoDigitalUserApplicationBase):
         oscillations = self.postprocess_data(data)
         file_path = Path(f'{run_control.output_file_path_base()}_data_proc.txt')
         logger.info(f'Writing output file {file_path}...')
-        with open(file_path, 'w', encoding=DEFAULT_CHARACTER_ENCODING) as output_file:
+        with open(file_path, 'w', encoding=BALDAQUIN_ENCODING) as output_file:
             output_file.write(Oscillation.text_header(creator=self.NAME))
             for oscillation in oscillations:
                 output_file.write(oscillation.to_text())

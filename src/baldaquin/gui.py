@@ -28,10 +28,10 @@ from typing import Any
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from . import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from .__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from .app import UserApplicationBase
 from .config import ConfigurationParameter, UserApplicationConfiguration
+from .env import BALDAQUIN_ICONS, BALDAQUIN_SKINS
 from .pkt import PacketStatistics
 from .runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
 

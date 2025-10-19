@@ -22,7 +22,7 @@ import sys
 import numpy as np
 import pytest
 
-from baldaquin import BALDAQUIN_ROOT
+from baldaquin.env import BALDAQUIN_SOURCE
 from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
@@ -44,7 +44,7 @@ def test_pendulum_process(test_data_path):
     This was done to debug issue https://github.com/lucabaldini/baldaquin/issues/50
     """
     # pylint: disable=protected-access
-    sys.path.append(str(BALDAQUIN_ROOT / 'plasduino' / 'apps'))
+    sys.path.append(str(BALDAQUIN_SOURCE / 'plasduino' / 'apps'))
     sys.dont_write_bytecode = True
     pendulum = importlib.import_module('plasduino_pendulum')
     sys.dont_write_bytecode = False
