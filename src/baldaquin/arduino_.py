@@ -23,7 +23,6 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 
-from . import execute_shell_command
 from .event import EventHandlerBase
 from .logging_ import logger
 from .pkt import AbstractPacket
@@ -34,6 +33,13 @@ from .serial_ import DeviceId, PortInfo, SerialInterface, list_com_ports
 # information.
 _BOARD_DESIGNATOR_DICT = {}
 _DEVICE_ID_DICT = {}
+
+
+def execute_shell_command(args):
+    """Execute a shell command.
+    """
+    logger.info(f'About to execute "{" ".join(args)}"...')
+    return subprocess.run(args, check=True)
 
 
 @dataclass

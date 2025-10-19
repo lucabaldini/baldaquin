@@ -65,9 +65,3 @@ def start_message() -> None:
     """
     print(msg)
 
-
-def execute_shell_command(args):
-    """Execute a shell command.
-    """
-    #logger.info(f'About to execute "{" ".join(args)}"...')
-    return subprocess.run(args, check=True)
