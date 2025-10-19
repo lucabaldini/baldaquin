@@ -17,7 +17,6 @@
 """
 
 import importlib
-import pathlib
 import sys
 
 import numpy as np
@@ -28,9 +27,7 @@ from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
-TEST_DATA_FOLDER = pathlib.Path(__file__).parent / 'data'
 PENDULUM_RUN = '396'
-PENDULUM_DATA_FOLDER = TEST_DATA_FOLDER / f'0101_000{PENDULUM_RUN}'
 
 
 def test_protocol():
@@ -41,7 +38,7 @@ def test_protocol():
 
 
 @pytest.mark.skip
-def test_pendulum_process():
+def test_pendulum_process(test_data_path):
     """Test the pendulum post-processing code.
 
     This was done to debug issue https://github.com/lucabaldini/baldaquin/issues/50
@@ -51,7 +48,7 @@ def test_pendulum_process():
     sys.dont_write_bytecode = True
     pendulum = importlib.import_module('plasduino_pendulum')
     sys.dont_write_bytecode = False
-    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
+    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data.dat')
     with PacketFile(DigitalTransition).open(file_path) as input_file:
         data = input_file.read_all()
 
@@ -105,10 +102,10 @@ def period_model(theta, T0):
     return T0 * (1. + 1. / 16. * theta**2 + 11. / 3072. * theta**4. + 173. / 737280. * theta**6.)
 
 
-def test_pendulum_sequence():
+def test_pendulum_sequence(test_data_path):
     """Draw the signal sequence.
     """
-    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data.dat'
+    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data.dat')
     with PacketFile(DigitalTransition).open(file_path) as input_file:
         data = input_file.read_all()
     sequence = data[-11:-1]
@@ -127,7 +124,7 @@ def test_pendulum_sequence():
     setup_gca(ymax=1.1, xlabel='Time [ms]', ylabel='Status (high = occulted)')
 
 
-def test_pendulum_plot():
+def test_pendulum_plot(test_data_path):
     """Test a data file taken with the pendulum.
     """
     # pylint: disable=invalid-name
@@ -139,7 +136,7 @@ def test_pendulum_plot():
     T0 = 2. * np.pi * np.sqrt(pendulum_length / g)
     # optical_gate_width = 0.001
 
-    file_path = PENDULUM_DATA_FOLDER / f'0101_000{PENDULUM_RUN}_data_proc.txt'
+    file_path = test_data_path(f'0101_000{PENDULUM_RUN}', f'0101_000{PENDULUM_RUN}_data_proc.txt')
     time_, period, transit_time = np.loadtxt(file_path, delimiter=',', unpack=True)
     velocity = transit_velocity(transit_time, pendulum_length, gate_distance, flag_width)
 
@@ -174,10 +171,3 @@ def test_pendulum_plot():
     plt.figure('Energy loss')
     plt.plot(time_[1:], energy_loss * 100., 'o')
     setup_gca(xlabel='Period [s]', ylabel='Fractional energy loss [%]', grids=True)
-
-
-if __name__ == '__main__':
-    test_pendulum_plot()
-    # test_pendulum_sequence()
-    # test_pendulum_custom_postprocess()
-    plt.show()

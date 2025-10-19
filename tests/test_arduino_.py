@@ -17,7 +17,6 @@
 """
 
 import contextlib
-import pathlib
 
 import pytest
 
@@ -26,8 +25,6 @@ from baldaquin.serial_ import DeviceId
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
             (0x2341, 0x0243), (0x2341, 0x006A))
-
-TEST_DATA_FOLDER = pathlib.Path(__file__).parent / 'data'
 
 
 def test_concatenate_device_ids():
@@ -58,24 +55,24 @@ def test_autodetect():
     arduino_.autodetect_arduino_board(arduino_.UNO)
 
 
-def test_upload():
+def test_upload(test_data_path):
     """Test the sketch upload.
 
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed, nor a board attached to upload to.
     """
-    file_path = TEST_DATA_FOLDER / 'blink' / 'blink_uno.hex'
+    file_path = test_data_path('blink', 'blink_uno.hex')
     with contextlib.suppress(RuntimeError):
         arduino_.upload_sketch(file_path, 'uno')
 
 
-def test_compile():
+def test_compile(test_data_path):
     """Test the sketch compilation.
 
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = TEST_DATA_FOLDER / 'blink' / 'blink.ino'
+    file_path = test_data_path('blink', 'blink.ino')
     with contextlib.suppress(RuntimeError):
         arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
 
