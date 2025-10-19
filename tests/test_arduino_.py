@@ -16,13 +16,17 @@
 """Test suite for arduino_.py
 """
 
+import pathlib
+
 import pytest
 
-from baldaquin import BALDAQUIN_SCRATCH, BALDAQUIN_TEST_DATA, arduino_, logger
+from baldaquin import BALDAQUIN_SCRATCH, arduino_, logger
 from baldaquin.serial_ import DeviceId
 
 _UNO_IDS = ((0x2341, 0x0043), (0x2341, 0x0001), (0x2A03, 0x0043),
             (0x2341, 0x0243), (0x2341, 0x006A))
+
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / 'data'
 
 
 def test_supported_boards():
@@ -72,7 +76,7 @@ def test_upload():
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink_uno.hex'
+    file_path = TEST_DATA_FOLDER / 'blink' / 'blink_uno.hex'
     try:
         arduino_.upload_sketch(file_path, 'uno')
     except RuntimeError as info:
@@ -85,7 +89,7 @@ def test_compile():
     Note this is within a try/except block because we cannot assume we have
     arduino-cli installed.
     """
-    file_path = BALDAQUIN_TEST_DATA / 'blink' / 'blink.ino'
+    file_path = TEST_DATA_FOLDER / 'blink' / 'blink.ino'
     try:
         arduino_.compile_sketch(file_path, 'uno', BALDAQUIN_SCRATCH, verbose=False)
     except RuntimeError as info:

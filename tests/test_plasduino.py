@@ -17,18 +17,20 @@
 """
 
 import importlib
+import pathlib
 import sys
 
 import numpy as np
 import pytest
 
-from baldaquin import BALDAQUIN_ROOT, BALDAQUIN_TEST_DATA, logger
+from baldaquin import BALDAQUIN_ROOT, logger
 from baldaquin.pkt import PacketFile
 from baldaquin.plasduino.protocol import AnalogReadout, DigitalTransition
 from baldaquin.plt_ import plt, setup_gca
 
+TEST_DATA_FOLDER = pathlib.Path(__file__).parent / 'data'
 PENDULUM_RUN = '396'
-PENDULUM_DATA_FOLDER = BALDAQUIN_TEST_DATA / f'0101_000{PENDULUM_RUN}'
+PENDULUM_DATA_FOLDER = TEST_DATA_FOLDER / f'0101_000{PENDULUM_RUN}'
 
 
 def test_protocol():
