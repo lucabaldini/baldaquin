@@ -22,7 +22,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from aptapy.strip import StripChart
+from aptapy.strip import EpochStripChart
 
 from baldaquin import xnucleo
 from baldaquin.__qt__ import QtWidgets
@@ -34,7 +34,6 @@ from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
 from baldaquin.logging_ import logger
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
-from baldaquin.strip import StripChart
 
 
 @dataclass
@@ -213,16 +212,16 @@ class Monitor(UserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
-        kwargs = dict(datetime=True, ylabel="Temperature [deg C]")
-        self.temperature1_strip_chart = StripChart(label="Temperature 1", **kwargs)
-        self.temperature2_strip_chart = StripChart(label="Temperature 1", **kwargs)
-        kwargs = dict(datetime=True, ylabel="Humidity [%]")
-        self.humidity_strip_chart = StripChart(**kwargs)
-        kwargs = dict(datetime=True, ylabel="Pressure [mbar]")
-        self.pressure_strip_chart = StripChart(**kwargs)
-        kwargs = dict(datetime=True, ylabel="Value [ADC counts]")
-        self.adc1_strip_chart = StripChart(label="Channel 1", **kwargs)
-        self.adc2_strip_chart = StripChart(label="Channel 2", **kwargs)
+        kwargs = dict(ylabel="Temperature [deg C]")
+        self.temperature1_strip_chart = EpochStripChart(label="Temperature 1", **kwargs)
+        self.temperature2_strip_chart = EpochStripChart(label="Temperature 2", **kwargs)
+        kwargs = dict(ylabel="Humidity [%]")
+        self.humidity_strip_chart = EpochStripChart(**kwargs)
+        kwargs = dict(ylabel="Pressure [mbar]")
+        self.pressure_strip_chart = EpochStripChart(**kwargs)
+        kwargs = dict(ylabel="Value [ADC counts]")
+        self.adc1_strip_chart = EpochStripChart(label="Channel 1", **kwargs)
+        self.adc2_strip_chart = EpochStripChart(label="Channel 2", **kwargs)
         self._strip_charts = (self.temperature1_strip_chart, self.temperature2_strip_chart,
                               self.humidity_strip_chart, self.pressure_strip_chart,
                               self.adc1_strip_chart, self.adc2_strip_chart)
@@ -259,12 +258,12 @@ class Monitor(UserApplicationBase):
         """
         readout = MonitorReadout.unpack(packet_data)
         seconds = readout.seconds
-        self.temperature1_strip_chart.add_point(seconds, readout.temperature1)
-        self.temperature2_strip_chart.add_point(seconds, readout.temperature2)
-        self.humidity_strip_chart.add_point(seconds, readout.humidity)
-        self.pressure_strip_chart.add_point(seconds, readout.pressure)
-        self.adc1_strip_chart.add_point(seconds, readout.adc1)
-        self.adc2_strip_chart.add_point(seconds, readout.adc2)
+        self.temperature1_strip_chart.append(seconds, readout.temperature1)
+        self.temperature2_strip_chart.append(seconds, readout.temperature2)
+        self.humidity_strip_chart.append(seconds, readout.humidity)
+        self.pressure_strip_chart.append(seconds, readout.pressure)
+        self.adc1_strip_chart.append(seconds, readout.adc1)
+        self.adc2_strip_chart.append(seconds, readout.adc2)
         return readout
 
 
