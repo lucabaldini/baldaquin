@@ -87,8 +87,9 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
     def configure(self) -> None:
         """Overloaded method.
         """
+        max_length = self.configuration.application_section().value("strip_chart_max_length")
         for chart in self.strip_chart_dict.values():
-            chart.reset(self.configuration.application_section().value("strip_chart_max_length"))
+            chart.set_max_length(max_length)
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.

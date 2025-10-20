@@ -232,7 +232,7 @@ class Monitor(UserApplicationBase):
         config = self.configuration.application_section()
         self.event_handler.set_sampling_interval(config.value("sampling_interval"))
         for chart in self._strip_charts:
-            chart.reset(config.value("strip_chart_max_length"))
+            chart.set_max_length(config.value("strip_chart_max_length"))
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).
