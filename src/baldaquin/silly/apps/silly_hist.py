@@ -17,11 +17,11 @@
 """
 
 import numpy as np
+from aptapy.hist import Histogram1d
 
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
-from baldaquin.hist import Histogram1d
 from baldaquin.pkt import AbstractPacket
 from baldaquin.silly.common import (
     SillyConfiguration,

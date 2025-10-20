@@ -22,6 +22,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from aptapy.strip import StripChart
+
 from baldaquin import xnucleo
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
@@ -32,7 +34,7 @@ from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
 from baldaquin.logging_ import logger
 from baldaquin.pkt import AbstractPacket
 from baldaquin.runctrl import RunControlBase
-from baldaquin.strip import SlidingStripChart
+from baldaquin.strip import StripChart
 
 
 @dataclass
@@ -212,15 +214,15 @@ class Monitor(UserApplicationBase):
         """
         super().__init__()
         kwargs = dict(datetime=True, ylabel="Temperature [deg C]")
-        self.temperature1_strip_chart = SlidingStripChart(label="Temperature 1", **kwargs)
-        self.temperature2_strip_chart = SlidingStripChart(label="Temperature 1", **kwargs)
+        self.temperature1_strip_chart = StripChart(label="Temperature 1", **kwargs)
+        self.temperature2_strip_chart = StripChart(label="Temperature 1", **kwargs)
         kwargs = dict(datetime=True, ylabel="Humidity [%]")
-        self.humidity_strip_chart = SlidingStripChart(**kwargs)
+        self.humidity_strip_chart = StripChart(**kwargs)
         kwargs = dict(datetime=True, ylabel="Pressure [mbar]")
-        self.pressure_strip_chart = SlidingStripChart(**kwargs)
+        self.pressure_strip_chart = StripChart(**kwargs)
         kwargs = dict(datetime=True, ylabel="Value [ADC counts]")
-        self.adc1_strip_chart = SlidingStripChart(label="Channel 1", **kwargs)
-        self.adc2_strip_chart = SlidingStripChart(label="Channel 2", **kwargs)
+        self.adc1_strip_chart = StripChart(label="Channel 1", **kwargs)
+        self.adc2_strip_chart = StripChart(label="Channel 2", **kwargs)
         self._strip_charts = (self.temperature1_strip_chart, self.temperature2_strip_chart,
                               self.humidity_strip_chart, self.pressure_strip_chart,
                               self.adc1_strip_chart, self.adc2_strip_chart)

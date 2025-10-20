@@ -24,7 +24,6 @@ List of modules
    config
    egu
    event
-   hist
    pkt
    runctrl
    serial_
