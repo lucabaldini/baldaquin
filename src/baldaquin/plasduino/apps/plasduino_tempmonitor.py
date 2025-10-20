@@ -125,7 +125,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         readout = TemperatureReadout.unpack(packet_data)
         x, y = readout.seconds, readout.temperature
-        self.strip_chart_dict[readout.pin_number].append(x, y)
+        self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
 
 

@@ -102,7 +102,7 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         """Overloaded method.
         """
         readout = PositionReadout.unpack(packet_data)
-        self.strip_chart_dict[readout.pin_number].append(readout.seconds, readout.adc_value)
+        self.strip_chart_dict[readout.pin_number].put(readout.seconds, readout.adc_value)
         return readout
 
 
