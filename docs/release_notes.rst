@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* Small fix for the package logo on PyPI.
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/79
+    - https://github.com/lucabaldini/baldaquin/issues/78
+
 
 Version 0.8.1 (2025-10-21)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
