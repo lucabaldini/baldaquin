@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.8.2 (2025-10-21)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Small fix for the package logo on PyPI.
 * Pull requests merged and issues closed:
 
