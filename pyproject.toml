@@ -23,6 +23,7 @@ authors = [
   { name = "Luca Baldini", email = "luca.baldini@unipi.it" }
   ]
 dependencies = [
+    "aptapy >= 0.8.0",
     "cycler",
     "loguru",
     "matplotlib",

@@ -1,14 +1,14 @@
-<h1 align="center">
-<img src="https://raw.githubusercontent.com/lucabaldini/baldaquin/refs/heads/main/docs/_static/baldaquin_logo_small_light.png" width="120">
-</h1><br>
+<img src="docs/_static/baldaquin_logo_small_light.png" width="175">
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
-![Tag](https://img.shields.io/github/v/tag/lucabaldini/baldaquin)
+[![PyPI](https://img.shields.io/pypi/v/baldaquin.svg)](https://pypi.org/project/baldaquin/)
+![Python versions](https://img.shields.io/badge/python-3.7--3.13-blue)
+![License](https://img.shields.io/github/license/lucabaldini/baldaquin.svg)
 [![CI](https://github.com/lucabaldini/baldaquin/actions/workflows/ci.yml/badge.svg)](https://github.com/lucabaldini/baldaquin/actions/workflows/ci.yml)
 [![Docs](https://github.com/lucabaldini/baldaquin/actions/workflows/docs.yml/badge.svg)](https://github.com/lucabaldini/baldaquin/actions/workflows/docs.yml)
+![GitHub last commit](https://img.shields.io/github/last-commit/lucabaldini/baldaquin)
 
-baldaquin (or the BALd DAQ User INterface) is an attempt at a general-purpose, modular and reusable
-data acquisition framework based on modern technologies. (And, before you get too excited, baldaquin
-is just a stub, and chances are that it might never actually turn into something useful.)
+[![Ceasefire Now](https://badge.techforpalestine.org/default)](https://techforpalestine.org/learn-more)
 
-Stay tuned!
+baldaquin (or the BALd DAQ User INterface) is an attempt at a general-purpose, modular
+and reusable data acquisition framework.
+[Read more](https://lucabaldini.github.io/baldaquin/).

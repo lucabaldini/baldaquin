@@ -1,4 +1,4 @@
-# Copyright (C) 2022--2024 the baldaquin team.
+# Copyright (C) 2025 the baldaquin team.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Silly application with Histogram display.
+"""Silly application with strip charts.
 """
 
 import numpy as np
-from aptapy.hist import Histogram1d
+from aptapy.strip import StripChart
 
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
@@ -38,42 +38,43 @@ class MainWindow(SillyMainWindow):
         """Constructor.
         """
         super().__init__()
-        self.pha_tab = self.add_plot_canvas_tab("PHA distribution")
+        self.strip_tab = self.add_plot_canvas_tab("Strip charts")
 
     def setup_user_application(self, user_application):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        self.pha_tab.register(user_application.pha_hist)
+        self.strip_tab.register(user_application.strip_chart)
 
 
-class SillyHist(SillyUserApplicationBase):
+class SillyStrip(SillyUserApplicationBase):
 
-    """Simplest possible user application for testing purposes.
+    """Simple user application for testing purposes.
     """
 
-    NAME = "Silly histogram display"
+    NAME = "Silly strip chart display"
     CONFIGURATION_CLASS = SillyConfiguration
-    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / "silly_hist.cfg"
+    CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / "silly_strip.cfg"
 
     def __init__(self):
         """Overloaded constructor.
         """
         super().__init__()
-        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel="PHA [ADC counts]")
+        self.strip_chart = StripChart(max_length=100, label="Time series",
+                                      xlabel="Trigger ID", ylabel="PHA")
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
         """
         packet = SillyPacket.unpack(packet_data)
-        self.pha_hist.fill(packet.pha)
+        self.strip_chart.put(packet.trigger_id, packet.pha)
         return packet
 
 
 def main() -> None:
     """Main entry point.
     """
-    bootstrap_window(MainWindow, SillyRunControl(), SillyHist())
+    bootstrap_window(MainWindow, SillyRunControl(), SillyStrip())
 
 
 if __name__ == "__main__":

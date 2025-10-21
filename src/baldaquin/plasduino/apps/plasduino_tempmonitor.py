@@ -111,7 +111,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         max_length = self.configuration.application_section().value("strip_chart_max_length")
         for chart in self.strip_chart_dict.values():
-            chart.reset(max_length)
+            chart.set_max_length(max_length)
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
@@ -125,7 +125,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         readout = TemperatureReadout.unpack(packet_data)
         x, y = readout.seconds, readout.temperature
-        self.strip_chart_dict[readout.pin_number].add_point(x, y)
+        self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
 
 

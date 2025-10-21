@@ -22,6 +22,8 @@ import struct
 import time
 from typing import Any
 
+from aptapy.strip import StripChart
+
 from baldaquin import arduino_, plasduino
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
@@ -37,7 +39,6 @@ from baldaquin.plasduino.protocol import (
 from baldaquin.plasduino.sketches import sketch_file_path
 from baldaquin.runctrl import RunControlBase
 from baldaquin.serial_ import SerialInterface
-from baldaquin.strip import SlidingStripChart
 
 # List of supported boards, i.e., only the arduino uno at the moment.
 _SUPPORTED_BOARDS = (arduino_.UNO, )
@@ -401,7 +402,7 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
         """Create all the strip charts for displaying real-time data.
         """
         kwargs = dict(xlabel="Time [s]", ylabel=ylabel)
-        return {pin: SlidingStripChart(label=f"Pin {pin}", **kwargs) for pin in pins}
+        return {pin: StripChart(label=f"Pin {pin}", **kwargs) for pin in pins}
 
     def setup(self) -> None:
         """Overloaded method (RESET -> STOPPED).

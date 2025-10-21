@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+from numbers import Number
+
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
@@ -154,6 +156,11 @@ class SplineConversion(ConversionBase):
     def _conversion_function(self, raw):
         """Overloaded method.
         """
+        # If we are passing a single number, we cast the value to float in order to
+        # avoid getting a 0-dim array as output from the spline evaluation, which
+        # would potentially be a nuisance to handle downstream.
+        if isinstance(raw, Number):
+            return float(self._spline(raw))
         return self._spline(raw)
 
 
