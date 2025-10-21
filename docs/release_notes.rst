@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* Package automatically built and published to PyPI on git tag push.
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/77
+    - https://github.com/lucabaldini/baldaquin/issues/75
+
 
 Version 0.8.0 (2025-10-21)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
