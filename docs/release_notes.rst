@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.8.0 (2025-10-21)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Migrate histogram and strip chart functionality from internal baldaquin modules
   to the external aptapy library.
 * New silly_strip example application added to demonstrate the strip chart functionality.
