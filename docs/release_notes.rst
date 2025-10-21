@@ -3,10 +3,17 @@
 Release notes
 =============
 
+* Migrate histogram and strip chart functionality from internal baldaquin modules
+  to the external aptapy library.
+* New silly_strip example application added to demonstrate the strip chart functionality.
+* Merging pull requests
+      * https://github.com/lucabaldini/baldaquin/pull/74
+* Issue(s) closed
+      * https://github.com/lucabaldini/baldaquin/issues/70
+
 
 Version 0.7.0 (2025-10-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 * Adopted src/ layout with baldaquin package moved to src/baldaquin/
 * Introduced dynamic versioning with git integration
@@ -17,7 +24,7 @@ Version 0.7.0 (2025-10-19)
 * Major clean up and linting.
 * Merging pull requests
       * https://github.com/lucabaldini/baldaquin/pull/73
- Issue(s) closed
+* Issue(s) closed
       * https://github.com/lucabaldini/baldaquin/issues/69
 
 
