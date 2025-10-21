@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.8.1 (2025-10-21)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Package automatically built and published to PyPI on git tag push.
 * Pull requests merged and issues closed:
 
