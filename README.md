@@ -1,4 +1,4 @@
-<img src="docs/_static/baldaquin_logo_small_light.png" width="175">
+<img src="https://raw.githubusercontent.com/lucabaldini/baldaquin/main/docs/_static/baldaquin_logo_small_light.png" alt="baldaquin logo" width="175">
 
 [![PyPI](https://img.shields.io/pypi/v/baldaquin.svg)](https://pypi.org/project/baldaquin/)
 ![Python versions](https://img.shields.io/badge/python-3.7--3.13-blue)
