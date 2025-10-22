@@ -134,6 +134,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         if self._cursor is not None:
             self._cursor.deactivate()
             self._cursor = None
+        # And create the sink for the output text file.
         file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
                                            TemperatureReadout.text_header(creator=self.NAME))
