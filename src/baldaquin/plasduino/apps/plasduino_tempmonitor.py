@@ -18,6 +18,8 @@
 
 from pathlib import Path
 
+from aptapy.plotting import VerticalCursor
+
 from baldaquin import plasduino
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
@@ -54,6 +56,7 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
+        user_application.axes = self.strip_chart_tab.axes
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
 
 
@@ -127,6 +130,23 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         x, y = readout.seconds, readout.temperature
         self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
+
+    def activate_cursor(self):
+        """Activate the interactive vertical cursor on the strip charts.
+        """
+        # Need to re-read the entire thing from disk?
+        self.axes.clear()
+        self._cursor = VerticalCursor(self.axes)
+        for chart in self.strip_chart_dict.values():
+            chart.plot(self.axes)
+            self._cursor.add_marker(chart.spline())
+        self._cursor.activate()
+
+    def stop_run(self):
+        """Overloaded method.
+        """
+        super().stop_run()
+        self.activate_cursor()
 
 
 def main() -> None:
