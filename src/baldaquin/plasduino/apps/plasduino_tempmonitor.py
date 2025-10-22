@@ -146,7 +146,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         logger.debug("Clearing strip charts...")
         # First thing first, set to None the maximum length for all the strip charts
-        # to allow unlimited deque size. (Note this creates two new deques undet the
+        # to allow unlimited deque size. (Note this creates two new deques under the
         # hood, so we don't need to clear the strip charts explicitly. Also note
         # that the proper maximum length will be re-applied in the configure() slot,
         # based on the value from the GUI.)
