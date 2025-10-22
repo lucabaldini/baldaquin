@@ -886,7 +886,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.tab_widget.setTabIcon(pos, load_icon(icon_name))
         return page
 
-    def add_plot_canvas_tab(self, label: str, update_interval: int = 750,
+    def add_plot_canvas_tab(self, label: str, update_interval: int = 500,
                             icon_name: str = None, **kwargs):
         """Add a page to the tab widget holding a matplotlib plot.
 
