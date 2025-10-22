@@ -25,7 +25,8 @@ from baldaquin.__qt__ import QtWidgets
 from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
 from baldaquin.gui import MainWindow, SimpleControlBar, bootstrap_window
-from baldaquin.pkt import AbstractPacket, packetclass
+from baldaquin.logging_ import logger
+from baldaquin.pkt import AbstractPacket, PacketFile, packetclass
 from baldaquin.plasduino import PLASDUINO_APP_CONFIG, PLASDUINO_SENSORS
 from baldaquin.plasduino.common import (
     PlasduinoAnalogConfiguration,
@@ -108,6 +109,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         super().__init__()
         self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel="Temperature [deg C]")
+        self._cursor = None
 
     def configure(self) -> None:
         """Overloaded method.
@@ -115,13 +117,6 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         max_length = self.configuration.application_section().value("strip_chart_max_length")
         for chart in self.strip_chart_dict.values():
             chart.set_max_length(max_length)
-
-    def pre_start(self, run_control: RunControlBase) -> None:
-        """Overloaded method.
-        """
-        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
-        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
-                                           TemperatureReadout.text_header(creator=self.NAME))
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Overloaded method.
@@ -131,22 +126,47 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
 
-    def activate_cursor(self):
-        """Activate the interactive vertical cursor on the strip charts.
+    def pre_start(self, run_control: RunControlBase) -> None:
+        """Overloaded method.
         """
-        # Need to re-read the entire thing from disk?
+        # If we are starting a run after the completion of a previous one, deactivate
+        # the previous interactive cursor and delete the corresponding reference.
+        if self._cursor is not None:
+            self._cursor.deactivate()
+            self._cursor = None
+        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
+        self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
+                                           TemperatureReadout.text_header(creator=self.NAME))
+
+    def post_stop(self, run_control: RunControlBase) -> None:
+        """Overloaded method.
+
+        This is where we re-read all the data from disk to populate the complete
+        strip charts, and then enable the vertical cursor.
+        """
+        logger.debug("Clearing strip charts...")
+        # First thing first, set to None the maximum length for all the strip charts
+        # to allow unlimited deque size. (Note this creates two new deques undet the
+        # hood, so we don't need to clear the strip charts explicitly. Also note
+        # that the proper maximum length will be re-applied in the configure() slot,
+        # based on the value from the GUI.)
+        for chart in self.strip_chart_dict.values():
+            chart.set_max_length(None)
+        # Read all the data from disk and rebuild the entire strip charts.
+        logger.debug("Re-reading all run data from disk...")
+        with PacketFile(TemperatureReadout).open(run_control.data_file_path()) as input_file:
+            for readout in input_file:
+                x, y = readout.seconds, readout.temperature
+                self.strip_chart_dict[readout.pin_number].put(x, y)
+        # Plot the strip charts and activate the vertical cursor.
+        logger.debug("Activating vertical cursor on strip charts...")
         self.axes.clear()
         self._cursor = VerticalCursor(self.axes)
         for chart in self.strip_chart_dict.values():
             chart.plot(self.axes)
             self._cursor.add_marker(chart.spline())
+        self.axes.figure.canvas.draw()
         self._cursor.activate()
-
-    def stop_run(self):
-        """Overloaded method.
-        """
-        super().stop_run()
-        self.activate_cursor()
 
 
 def main() -> None:
