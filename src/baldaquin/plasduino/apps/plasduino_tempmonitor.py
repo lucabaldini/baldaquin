@@ -57,7 +57,7 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        # TODO: this line is ugly, and we should find a better way to provide the user
+        # This line is ugly, and we should find a better way to provide the user
         # application with access to the axes objects in the plotting widgets.
         user_application.axes = self.strip_chart_tab.axes
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
@@ -111,6 +111,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         super().__init__()
         self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel="Temperature [deg C]")
+        self.axes = None
         self._cursor = None
 
     def configure(self) -> None:

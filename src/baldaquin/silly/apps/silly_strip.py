@@ -16,7 +16,6 @@
 """Silly application with strip charts.
 """
 
-import numpy as np
 from aptapy.plotting import VerticalCursor
 from aptapy.strip import StripChart
 
@@ -46,7 +45,7 @@ class MainWindow(SillyMainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        # TODO: this line is ugly, and we should find a better way to provide the user
+        # This line is ugly, and we should find a better way to provide the user
         # application with access to the axes objects in the plotting widgets.
         user_application.axes = self.strip_tab.axes
         self.strip_tab.register(user_application.strip_chart)
@@ -67,6 +66,7 @@ class SillyStrip(SillyUserApplicationBase):
         super().__init__()
         self.strip_chart = StripChart(max_length=100, label="Random data",
                                       xlabel="Trigger ID", ylabel="PHA")
+        self.axes = None
         self._cursor = None
 
     def configure(self) -> None:
