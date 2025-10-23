@@ -57,6 +57,8 @@ class AppMainWindow(MainWindow):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
+        # TODO: this line is ugly, and we should find a better way to provide the user
+        # application with access to the axes objects in the plotting widgets.
         user_application.axes = self.strip_chart_tab.axes
         self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
 
