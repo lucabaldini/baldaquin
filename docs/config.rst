@@ -32,13 +32,13 @@ generally useful. Basically, all you have to do is to inherit from the abstract
 base class :class:`ConfigurationSectionBase <baldaquin.config.ConfigurationSectionBase>`
 and override the ``TITLE`` and ``_PARAMETER_SPECS`` top-level class members.
 
-.. literalinclude:: ../baldaquin/config.py
+.. literalinclude:: ../src/baldaquin/config.py
    :pyobject: MulticastConfigurationSection
 
-.. literalinclude:: ../baldaquin/config.py
+.. literalinclude:: ../src/baldaquin/config.py
    :pyobject: BufferingConfigurationSection
 
-.. literalinclude:: ../baldaquin/config.py
+.. literalinclude:: ../src/baldaquin/config.py
    :pyobject: LoggingConfigurationSection
 
 The ``TITLE`` thing is pretty much self-explaining; ``PARAMETER_SPECS`` is
@@ -64,7 +64,7 @@ The supported constraints are listed in the ``_VALID_CONSTRAINTS`` class variabl
 of the :class:`ConfigurationParameter <baldaquin.config.ConfigurationParameter>`
 class, and they read:
 
-.. literalinclude:: ../baldaquin/config.py
+.. literalinclude:: ../src/baldaquin/config.py
    :start-after: # Start definition of valid constraints.
    :end-before: # End definition of valid constraints.
 
