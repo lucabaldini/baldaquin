@@ -37,15 +37,28 @@ nox.options.reuse_existing_virtualenvs = True
 def cleanup(session: nox.Session) -> None:
     """Cleanup temporary files.
     """
-    # Remove all the __pycache__ folders.
-    for folder_path in (_ROOT_DIR, _SRC_DIR, _TESTS_DIR):
-        _path = folder_path / "__pycache__"
-        if _path.exists():
-            shutil.rmtree(_path)
+    # Remove Python cache and build artifacts.
+    session.log("Cleaning up __pycache__ and build artifacts...")
+    patterns = ("__pycache__", "*.pyc", "*.pyo", "*.pyd")
+    _path = _ROOT_DIR / "__pycache__"
+    if _path.is_dir():
+        session.log(f"Removing folder {_path}...")
+        shutil.rmtree(_path)
+    for pattern in patterns:
+        for folder_path in (_SRC_DIR, _TESTS_DIR):
+            for _path in folder_path.rglob(pattern):
+                if _path.is_dir():
+                    session.log(f"Removing folder {_path}...")
+                    shutil.rmtree(_path)
+                elif _path.is_file():
+                    session.log(f"Removing file {_path}...")
+                    _path.unlink()
     # Cleanup the docs.
+    session.log("Cleaning up docs...")
     for folder_name in ("_build", "auto_examples"):
         _path = _DOCS_DIR / folder_name
         if _path.exists():
+            session.log(f"Removing folder {_path}...")
             shutil.rmtree(_path)
 
 
