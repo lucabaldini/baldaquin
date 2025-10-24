@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.9.0 (2025-10-24)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Integration of VerticalCursor from aptapy plotting utilities for interactive data
   exploration. (Now attached to the ``baldaquin_tempmonitor`` and ``silly_strip`` apps).
 * Default refresh interval for PlotCanvasWidget objects changed to 500 ms.
