@@ -33,9 +33,8 @@ The ``pyproject.toml`` file is the ultimate reference in terms of what you need
 to run ``plasduino``---here is the relevant excerpt.
 
 .. literalinclude:: ../pyproject.toml
-    :language: toml
-    :start-at: [project]
-    :end-at: requires-python
+   :start-after: # start-deps
+   :end-before: # end-deps
 
 
 Python
@@ -86,3 +85,27 @@ relevant parts of the documentation when that is the case). This might include:
   tool;
 * `avrdude <https://github.com/avrdudes/avrdude>`_: an utility to program
   micro-controllers.
+
+
+Editable installation
+---------------------
+
+If you plan on contributing to the development of baldaquin, or just want to
+explore the codebase, you may want to install it in "editable" mode. To do so,
+first clone the repository from GitHub:
+
+.. code-block:: console
+
+   git clone git@github.com:lucabaldini/baldaquin.git
+
+and then do a pip editable install from within the repository directory:
+
+.. code-block:: console
+
+   cd baldaquin
+   pip install -e .[dev,docs]
+
+(Invoking ``pip`` with the ``-e`` command-line switch will place a special link
+in the proper folder pointing back to your local version of the source files---instead
+of copying the source tree---so that you will always see the last version of the
+code as you modify it, e.g., in the local copy of your git repository.)
