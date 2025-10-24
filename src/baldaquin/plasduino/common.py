@@ -25,8 +25,8 @@ from typing import Any
 from aptapy.plotting import VerticalCursor
 from aptapy.strip import StripChart
 
-from baldaquin.__qt__ import QtWidgets
 from baldaquin import arduino_, plasduino
+from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
