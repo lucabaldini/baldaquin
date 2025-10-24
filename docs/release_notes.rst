@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/80
+    - https://github.com/lucabaldini/baldaquin/issues/76
+    - https://github.com/lucabaldini/baldaquin/issues/72
+
 
 Version 0.8.2 (2025-10-21)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

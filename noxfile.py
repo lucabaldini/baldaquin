@@ -24,6 +24,7 @@ _DOCS_DIR = _ROOT_DIR / "docs"
 
 # Folders containing source code that potentially needs linting.
 _LINT_DIRS = ("src", "tests", "tools")
+_CACHE_DIRS = (".nox", ".ruff_cache", ".pylint_cache", ".pytest_cache")
 
 # Reuse existing virtualenvs by default.
 nox.options.reuse_existing_virtualenvs = True
@@ -36,12 +37,10 @@ def clean(session: nox.Session) -> None:
     session.log("Cleaning up build artifacts and caches...")
     # Directories or patterns to remove
     patterns = ("__pycache__", )
-    # Directories to skip (not to enter or delete)
-    skip_dirs = {".nox", ".ruff_cache", ".pylint_cache"}
     # Loop through the patterns and remove matching files/directories...
     for pattern in patterns:
         for _path in _ROOT_DIR.rglob(pattern):
-            if any(skip in _path.parts for skip in skip_dirs):
+            if any(folder_name in _path.parts for folder_name in _CACHE_DIRS):
                 continue
             if _path.is_dir():
                 session.log(f"Removing folder {_path}...")
@@ -63,7 +62,7 @@ def cleanall(session: nox.Session) -> None:
     """Cleanup literally anything that is not in the repo.
     """
     session.notify("clean")
-    for folder_name in (".nox", ".ruff_cache", ".pylint_cache", ".pytest_cache"):
+    for folder_name in _CACHE_DIRS:
         _path = _ROOT_DIR / folder_name
         if _path.exists():
             session.log(f"Removing folder {_path}...")
