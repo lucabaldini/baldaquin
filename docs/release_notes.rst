@@ -3,6 +3,13 @@
 Release notes
 =============
 
+* Integration of VerticalCursor from aptapy plotting utilities for interactive
+  data exploration
+* Default refresh interval for PlotCanvasWidget objects changed to 500 ms.
+* noxfile refactored and cleaned up.
+* Added dependencies on nox and sphinxcontrib-programoutput.
+* aptapy dependence bumped to version 0.9.2.
+* Documentation updated.
 * Pull requests merged and issues closed:
 
     - https://github.com/lucabaldini/baldaquin/pull/80
