@@ -1,5 +1,5 @@
-:mod:`baldaquin.buf` --- Event buffering
-========================================
+:mod:`~baldaquin.buf` --- Event buffering
+=========================================
 
 The module provides all the necessary facilities to buffer the binary data coming
 from the hardware and make sure they get written to disk in the intended way.

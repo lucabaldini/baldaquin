@@ -1,5 +1,5 @@
-:mod:`baldaquin.silly` --- Mock objects
-=======================================
+:mod:`~baldaquin.silly` --- Mock objects
+========================================
 
 
 Module documentation

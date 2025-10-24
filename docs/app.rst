@@ -1,7 +1,7 @@
 .. _app:
 
-:mod:`baldaquin.app` --- User applications
-==========================================
+:mod:`~baldaquin.app` --- User applications
+===========================================
 
 
 Module documentation

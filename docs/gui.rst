@@ -1,7 +1,7 @@
 .. _gui:
 
-:mod:`baldaquin.gui` --- Basic GUI elements
-===========================================
+:mod:`~baldaquin.gui` --- Basic GUI elements
+============================================
 
 This module provides all the basic building blocks for the advanced GUI
 widgets.

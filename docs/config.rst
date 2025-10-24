@@ -1,7 +1,7 @@
 .. _config:
 
-:mod:`baldaquin.config` --- Configuration
-=========================================
+:mod:`~baldaquin.config` --- Configuration
+==========================================
 
 The module provides facilities to create, modify, read and write configuration
 objects. The basic ideas behind the mechanism implemented here is that:

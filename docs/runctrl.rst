@@ -1,7 +1,7 @@
 .. _runctrl:
 
-:mod:`baldaquin.runctrl` --- Run control
-========================================
+:mod:`~baldaquin.runctrl` --- Run control
+=========================================
 
 This module provides all the basic facilities to control the data acquisition at
 an abstract level.
