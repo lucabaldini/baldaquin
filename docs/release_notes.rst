@@ -3,8 +3,8 @@
 Release notes
 =============
 
-* Integration of VerticalCursor from aptapy plotting utilities for interactive
-  data exploration
+* Integration of VerticalCursor from aptapy plotting utilities for interactive data
+  exploration. (Now attached to the ``baldaquin_tempmonitor`` and ``silly_strip`` apps).
 * Default refresh interval for PlotCanvasWidget objects changed to 500 ms.
 * noxfile refactored and cleaned up.
 * Added dependencies on nox and sphinxcontrib-programoutput.
