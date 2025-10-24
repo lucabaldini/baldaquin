@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.9.1 (2025-10-24)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Extracted common PlasduinoMainWindow and analog application setup into base
   classes in common.py
 * Refactored plasduino_tempmonitor and plasduino_pendulumview to inherit shared
