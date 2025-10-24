@@ -22,12 +22,15 @@ import struct
 import time
 from typing import Any
 
+from aptapy.plotting import VerticalCursor
 from aptapy.strip import StripChart
 
 from baldaquin import arduino_, plasduino
+from baldaquin.__qt__ import QtWidgets
 from baldaquin.app import UserApplicationBase
 from baldaquin.config import UserApplicationConfiguration
 from baldaquin.event import EventHandlerBase
+from baldaquin.gui import MainWindow, SimpleControlBar
 from baldaquin.logging_ import logger
 from baldaquin.plasduino.protocol import (
     AnalogReadout,
@@ -394,8 +397,19 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
     """
 
     _PINS = None
+    _LABEL = ""
     _SAMPLING_INTERVAL = None
     _ADDITIONAL_PENDING_WAIT = 200
+
+    def __init__(self) -> None:
+        """Overloaded Constructor.
+        """
+        super().__init__()
+        if self._PINS is None:
+            raise NotImplementedError(f"{self.__class__.__name__} must define _PINS.")
+        self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel=self._LABEL)
+        self.axes = None
+        self._cursor = None
 
     @staticmethod
     def create_strip_charts(pins: list[int], ylabel: str = "ADC counts"):
@@ -411,6 +425,13 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
         self.event_handler.serial_interface.setup_analog_sampling_sketch(self._PINS,
                                                                          self._SAMPLING_INTERVAL)
 
+    def configure(self) -> None:
+        """Overloaded method.
+        """
+        max_length = self.configuration.application_section().value("strip_chart_max_length")
+        for chart in self.strip_chart_dict.values():
+            chart.set_max_length(max_length)
+
     def stop_run(self) -> None:
         """Overloaded method (RUNNING -> STOPPED).
         """
@@ -418,6 +439,25 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
         self.event_handler.serial_interface.write_stop_run()
         self.event_handler.wait_pending_packets(self._SAMPLING_INTERVAL +
                                                 self._ADDITIONAL_PENDING_WAIT)
+
+    def activate_cursors(self) -> None:
+        """Activate vertical cursors on all the strip charts.
+        """
+        logger.debug("Activating vertical cursor on strip charts...")
+        self.axes.clear()
+        self._cursor = VerticalCursor(self.axes)
+        for chart in self.strip_chart_dict.values():
+            chart.plot(self.axes)
+            self._cursor.add_marker(chart.spline())
+        self.axes.figure.canvas.draw()
+        self._cursor.activate()
+
+    def deactivate_cursors(self) -> None:
+        """Deactivate vertical cursors on all the strip charts.
+        """
+        if self._cursor is not None:
+            self._cursor.deactivate()
+            self._cursor = None
 
 
 class PlasduinoDigitalUserApplicationBase(PlasduinoUserApplicationBase):
@@ -439,3 +479,30 @@ class PlasduinoDigitalUserApplicationBase(PlasduinoUserApplicationBase):
         super().stop_run()
         self.event_handler.serial_interface.write_stop_run()
         self.event_handler.serial_interface.read_run_end_marker()
+
+
+class PlasduinoMainWindow(MainWindow):
+
+    """Application graphical user interface.
+    """
+
+    _PROJECT_NAME = plasduino.PROJECT_NAME
+    _CONTROL_BAR_CLASS = SimpleControlBar
+    _UPDATE_INTERVAL = 500
+
+    def __init__(self, parent: QtWidgets.QWidget = None) -> None:
+        """Constructor.
+        """
+        super().__init__()
+        self.strip_chart_tab = self.add_plot_canvas_tab("Strip charts",
+                                                        update_interval=self._UPDATE_INTERVAL)
+        self.tab_widget.setCurrentWidget(self.strip_chart_tab)
+
+    def setup_user_application(self, user_application):
+        """Overloaded method.
+        """
+        super().setup_user_application(user_application)
+        # This line is ugly, and we should find a better way to provide the user
+        # application with access to the axes objects in the plotting widgets.
+        user_application.axes = self.strip_chart_tab.axes
+        self.strip_chart_tab.register(*user_application.strip_chart_dict.values())
