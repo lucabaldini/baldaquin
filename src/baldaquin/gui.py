@@ -13,7 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-
 """Custom widgets for the user interface.
 """
 
@@ -326,6 +325,14 @@ class EventHandlerCard(CardWidget):
         EventHandlerCardField.AVERAGE_EVENT_RATE: dict(units="Hz", fmt=".3f")
         }
 
+    def __init__(self, add_bottom_stretch: bool = True) -> None:
+        """Overloaded constructor.
+        """
+        super().__init__(add_bottom_stretch)
+        key = EventHandlerCardField.FILE_PATH.value
+        widget = self._widget_dict[key].title_widget
+        widget.linkActivated.connect(MainWindow.open_url)
+
     def set_file_path(self, file_path: Path) -> None:
         """Specialize method to set the path to the output file.
 
@@ -337,7 +344,6 @@ class EventHandlerCard(CardWidget):
         widget = self._widget_dict[key].title_widget
         text = f'{key} (<a href="{file_path.parent}">link to folder</a>)'
         widget.setText(text)
-        widget.linkActivated.connect(MainWindow.open_url)
 
 
 class ParameterCheckBox(DataWidgetBase):
