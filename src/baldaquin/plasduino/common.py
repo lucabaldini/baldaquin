@@ -397,7 +397,7 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
     """
 
     _PINS = None
-    _LABEL = None
+    _LABEL = ""
     _SAMPLING_INTERVAL = None
     _ADDITIONAL_PENDING_WAIT = 200
 
@@ -405,6 +405,8 @@ class PlasduinoAnalogUserApplicationBase(PlasduinoUserApplicationBase):
         """Overloaded Constructor.
         """
         super().__init__()
+        if self._PINS is None:
+            raise NotImplementedError(f"{self.__class__.__name__} must define _PINS.")
         self.strip_chart_dict = self.create_strip_charts(self._PINS, ylabel=self._LABEL)
         self.axes = None
         self._cursor = None
