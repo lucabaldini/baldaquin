@@ -16,13 +16,14 @@
 """Silly application with strip charts.
 """
 
-import numpy as np
+from aptapy.plotting import VerticalCursor
 from aptapy.strip import StripChart
 
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
 from baldaquin.pkt import AbstractPacket
+from baldaquin.runctrl import RunControlBase
 from baldaquin.silly.common import (
     SillyConfiguration,
     SillyMainWindow,
@@ -39,11 +40,15 @@ class MainWindow(SillyMainWindow):
         """
         super().__init__()
         self.strip_tab = self.add_plot_canvas_tab("Strip charts")
+        self.tab_widget.setCurrentWidget(self.strip_tab)
 
     def setup_user_application(self, user_application):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
+        # This line is ugly, and we should find a better way to provide the user
+        # application with access to the axes objects in the plotting widgets.
+        user_application.axes = self.strip_tab.axes
         self.strip_tab.register(user_application.strip_chart)
 
 
@@ -60,8 +65,15 @@ class SillyStrip(SillyUserApplicationBase):
         """Overloaded constructor.
         """
         super().__init__()
-        self.strip_chart = StripChart(max_length=100, label="Time series",
+        self.strip_chart = StripChart(max_length=100, label="Random data",
                                       xlabel="Trigger ID", ylabel="PHA")
+        self.axes = None
+        self._cursor = None
+
+    def configure(self) -> None:
+        """Overloaded method.
+        """
+        self.strip_chart.clear()
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
@@ -69,6 +81,30 @@ class SillyStrip(SillyUserApplicationBase):
         packet = SillyPacket.unpack(packet_data)
         self.strip_chart.put(packet.trigger_id, packet.pha)
         return packet
+
+    def pre_start(self, run_control: RunControlBase) -> None:
+        """Overloaded method.
+        """
+        if self._cursor is not None:
+            self._cursor.deactivate()
+            self._cursor = None
+
+    def post_stop(self, run_control: RunControlBase) -> None:
+        """Overloaded method.
+
+        Note the underlying strip charts are unlimited, and there is no need to re-read
+        data from disk. We just need to re-draw the strip chart and enable the cursor.
+
+        Also, it would be nice to understand exactly why we need to clear the axis and
+        re-plot the strip chart for the cursor to pick the right color. In my mind
+        the last_line_color() should do this behind the scenes, but clearly it does not.
+        """
+        self.axes.clear()
+        self._cursor = VerticalCursor(self.axes)
+        self.strip_chart.plot(self.axes)
+        self._cursor.add_marker(self.strip_chart.spline())
+        self.axes.figure.canvas.draw()
+        self._cursor.activate()
 
 
 def main() -> None:

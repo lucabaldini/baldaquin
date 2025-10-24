@@ -38,13 +38,14 @@ class MainWindow(SillyMainWindow):
         """Constructor.
         """
         super().__init__()
-        self.pha_tab = self.add_plot_canvas_tab("PHA distribution")
+        self.hist_tab = self.add_plot_canvas_tab("PHA distribution")
+        self.tab_widget.setCurrentWidget(self.hist_tab)
 
     def setup_user_application(self, user_application):
         """Overloaded method.
         """
         super().setup_user_application(user_application)
-        self.pha_tab.register(user_application.pha_hist)
+        self.hist_tab.register(user_application.pha_hist)
 
 
 class SillyHist(SillyUserApplicationBase):

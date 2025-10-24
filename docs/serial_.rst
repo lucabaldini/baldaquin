@@ -1,5 +1,5 @@
-:mod:`baldaquin.serial_` --- Serial interface
-=============================================
+:mod:`~baldaquin.serial_` --- Serial interface
+==============================================
 
 The module provides basically an abstraction layer over the
 `pyserial <https://pyserial.readthedocs.io/en/latest/index.html>`_

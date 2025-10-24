@@ -1,5 +1,5 @@
-:mod:`baldaquin.profile` --- Profiling
-======================================
+:mod:`~baldaquin.profile` --- Profiling
+=======================================
 
 
 Module documentation

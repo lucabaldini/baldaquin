@@ -258,12 +258,12 @@ class Monitor(UserApplicationBase):
         """
         readout = MonitorReadout.unpack(packet_data)
         seconds = readout.seconds
-        self.temperature1_strip_chart.append(seconds, readout.temperature1)
-        self.temperature2_strip_chart.append(seconds, readout.temperature2)
-        self.humidity_strip_chart.append(seconds, readout.humidity)
-        self.pressure_strip_chart.append(seconds, readout.pressure)
-        self.adc1_strip_chart.append(seconds, readout.adc1)
-        self.adc2_strip_chart.append(seconds, readout.adc2)
+        self.temperature1_strip_chart.put(seconds, readout.temperature1)
+        self.temperature2_strip_chart.put(seconds, readout.temperature2)
+        self.humidity_strip_chart.put(seconds, readout.humidity)
+        self.pressure_strip_chart.put(seconds, readout.pressure)
+        self.adc1_strip_chart.put(seconds, readout.adc1)
+        self.adc2_strip_chart.put(seconds, readout.adc2)
         return readout
 
 

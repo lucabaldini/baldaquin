@@ -22,8 +22,10 @@ classifiers = [
 authors = [
   { name = "Luca Baldini", email = "luca.baldini@unipi.it" }
   ]
+
+# start-deps (do not remove this, as it is used in a sphinx literalinclude)
 dependencies = [
-    "aptapy >= 0.8.0",
+    "aptapy >= 0.9.2",
     "cycler",
     "loguru",
     "matplotlib",
@@ -39,12 +41,15 @@ dev = [
     "pytest",
     "ruff",
     "pylint",
+    "nox",
   ]
 docs = [
     "sphinx",
     "sphinxawesome-theme",
     "sphinx-gallery",
+    "sphinxcontrib-programoutput",
   ]
+# end-deps
 
 [project.urls]
 Homepage = "https://github.com/lucabaldini/baldaquin"

@@ -1,5 +1,5 @@
-:mod:`baldaquin.arduino_` --- Arduino interface
-===============================================
+:mod:`~baldaquin.arduino_` --- Arduino interface
+================================================
 
 This module provides minimal support for interacting with the Arduino ecosystem,
 the basic idea is that we start with Arduino UNO and we add on more boards as we

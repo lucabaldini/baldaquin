@@ -3,6 +3,21 @@
 Release notes
 =============
 
+* Integration of VerticalCursor from aptapy plotting utilities for interactive data
+  exploration. (Now attached to the ``baldaquin_tempmonitor`` and ``silly_strip`` apps).
+* Default refresh interval for PlotCanvasWidget objects changed to 500 ms.
+* noxfile refactored and cleaned up.
+* Added dependencies on nox and sphinxcontrib-programoutput.
+* aptapy dependence bumped to version 0.9.2.
+* Documentation updated.
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/80
+    - https://github.com/lucabaldini/baldaquin/issues/76
+    - https://github.com/lucabaldini/baldaquin/issues/72
+    - https://github.com/lucabaldini/baldaquin/issues/71
+    - https://github.com/lucabaldini/baldaquin/issues/68
+
 
 Version 0.8.2 (2025-10-21)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

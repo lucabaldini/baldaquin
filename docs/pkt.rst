@@ -1,7 +1,7 @@
 .. _pkt:
 
-:mod:`baldaquin.pkt` --- Binary packets
-=======================================
+:mod:`~baldaquin.pkt` --- Binary packets
+========================================
 
 
 This module contains all the facilities to deal with binary packet data---by `packet`

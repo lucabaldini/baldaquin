@@ -1,7 +1,7 @@
 .. _egu:
 
-:mod:`baldaquin.egu` --- Engineering units
-==========================================
+:mod:`~baldaquin.egu` --- Engineering units
+===========================================
 
 
 Module documentation

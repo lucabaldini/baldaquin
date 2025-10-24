@@ -1,7 +1,7 @@
 .. _timeline:
 
-:mod:`baldaquin.timeline` --- Time keeping
-==========================================
+:mod:`~baldaquin.timeline` --- Time keeping
+===========================================
 
 The module provides the two basic data structures used by baldaquin to keep track
 of the time on the computer hosting the data acquisition: the

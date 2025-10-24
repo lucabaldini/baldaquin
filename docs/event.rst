@@ -1,7 +1,7 @@
 .. _event:
 
-:mod:`baldaquin.event` --- Event handler
-========================================
+:mod:`~baldaquin.event` --- Event handler
+=========================================
 
 The module provides the necessary facilities for asynchronous event handling.
 :class:`EventHandlerBase <baldaquin.event.EventHandlerBase>` is an abstract
