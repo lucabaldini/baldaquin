@@ -18,6 +18,7 @@
 
 import numpy as np
 from aptapy.hist import Histogram1d
+from aptapy.modeling import Gaussian
 
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
@@ -46,6 +47,8 @@ class MainWindow(SillyMainWindow):
         """
         super().setup_user_application(user_application)
         self.hist_tab.register(user_application.pha_hist)
+        user_application.axes = self.hist_tab.axes
+        self.hist_tab._update = user_application.update_plots
 
 
 class SillyHist(SillyUserApplicationBase):
@@ -62,6 +65,7 @@ class SillyHist(SillyUserApplicationBase):
         """
         super().__init__()
         self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel="PHA [ADC counts]")
+        self.pha_model = Gaussian()
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
@@ -69,6 +73,23 @@ class SillyHist(SillyUserApplicationBase):
         packet = SillyPacket.unpack(packet_data)
         self.pha_hist.fill(packet.pha)
         return packet
+
+    def update_plots(self) -> None:
+        """Overloaded method.
+        """
+        self.axes.clear()
+        self.pha_hist.plot(self.axes)
+        try:
+            self.pha_model.fit_histogram(self.pha_hist)
+            # This piece should be implemented in aptapy, passing the axis to plot.
+            x = np.linspace(*self.pha_model._plotting_range(), 200)
+            y = self.pha_model(x)
+            self.axes.plot(x, y, label=format(self.pha_model, "L"))
+        except RuntimeError:
+            pass
+        self.axes.set_autoscale_on(True)
+        self.axes.legend(loc="upper left")
+        self.axes.figure.canvas.draw()
 
 
 def main() -> None:
