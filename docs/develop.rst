@@ -46,21 +46,8 @@ Development
 Creating a release
 ------------------
 
-We have a small tool helping with the release process
+The package includes a simple release script, located in the ``tools/`` directory,
+which automates the version bump, changelog update, git tagging, and publishing
+to PyPI. To use it, simply run:
 
-.. code-block:: shell
-
-    lbaldini@nblbaldini:~/work/baldaquin$ python tools/release.py --help
-    usage: release.py [-h] {major,minor,micro}
-
-    Release a new version of the package.
-
-    positional arguments:
-    {major,minor,micro}  The version bump mode.
-
-    options:
-    -h, --help           show this help message and exit
-
-At this time this is pretty rudimentary, and what it does is simply incrementing
-a given field of the version identifier, updating the relevant files, pushing to
-git and creating a tag.
+.. program-output:: python ../tools/release.py --help
