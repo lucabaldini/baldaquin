@@ -3,6 +3,15 @@
 Release notes
 =============
 
+* Extracted common PlasduinoMainWindow and analog application setup into base
+  classes in common.py
+* Refactored plasduino_tempmonitor and plasduino_pendulumview to inherit shared
+  functionality
+* Added cursor activation/deactivation methods to the base analog application class
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/81
+
 
 Version 0.9.0 (2025-10-24)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
