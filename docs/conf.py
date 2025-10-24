@@ -29,9 +29,10 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    'sphinx.ext.napoleon',
-    'sphinx.ext.imgmath',
-    'sphinx.ext.extlinks'
+    "sphinx.ext.napoleon",
+    "sphinx.ext.imgmath",
+    "sphinx.ext.extlinks",
+    "sphinxcontrib.programoutput",
 ]
 autodoc_default_options = {
     "members": True,
