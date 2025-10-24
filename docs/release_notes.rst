@@ -15,6 +15,7 @@ Release notes
     - https://github.com/lucabaldini/baldaquin/pull/80
     - https://github.com/lucabaldini/baldaquin/issues/76
     - https://github.com/lucabaldini/baldaquin/issues/72
+    - https://github.com/lucabaldini/baldaquin/issues/68
 
 
 Version 0.8.2 (2025-10-21)
