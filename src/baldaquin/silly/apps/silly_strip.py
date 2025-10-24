@@ -40,6 +40,7 @@ class MainWindow(SillyMainWindow):
         """
         super().__init__()
         self.strip_tab = self.add_plot_canvas_tab("Strip charts")
+        self.tab_widget.setCurrentWidget(self.strip_tab)
 
     def setup_user_application(self, user_application):
         """Overloaded method.
