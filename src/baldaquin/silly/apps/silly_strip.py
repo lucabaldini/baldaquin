@@ -22,7 +22,8 @@ from aptapy.strip import StripChart
 from baldaquin import silly
 from baldaquin.__qt__ import QtWidgets
 from baldaquin.gui import bootstrap_window
-from baldaquin.pkt import AbstractPacket
+from baldaquin.logging_ import logger
+from baldaquin.pkt import AbstractPacket, PacketFile
 from baldaquin.runctrl import RunControlBase
 from baldaquin.silly.common import (
     SillyConfiguration,
@@ -52,28 +53,41 @@ class MainWindow(SillyMainWindow):
         self.strip_tab.register(user_application.strip_chart)
 
 
+class SillyStripConfiguration(SillyConfiguration):
+
+    """Configuration class for the silly strip chart application.
+
+    We basically extend the silly configuration with a parameter describing the
+    maximum length of the strip chart.
+    """
+
+    _PARAMETER_SPECS = SillyConfiguration._PARAMETER_SPECS + \
+        (("strip_chart_max_length", int, 100, "Strip chart maximum length",
+          dict(min=10, max=1000000)),)
+
+
 class SillyStrip(SillyUserApplicationBase):
 
     """Simple user application for testing purposes.
     """
 
     NAME = "Silly strip chart display"
-    CONFIGURATION_CLASS = SillyConfiguration
+    CONFIGURATION_CLASS = SillyStripConfiguration
     CONFIGURATION_FILE_PATH = silly.SILLY_APP_CONFIG / "silly_strip.cfg"
 
     def __init__(self):
         """Overloaded constructor.
         """
         super().__init__()
-        self.strip_chart = StripChart(max_length=100, label="Random data",
-                                      xlabel="Trigger ID", ylabel="PHA")
+        self.strip_chart = StripChart(label="Random data", xlabel="Trigger ID", ylabel="PHA")
         self.axes = None
         self._cursor = None
 
     def configure(self) -> None:
         """Overloaded method.
         """
-        self.strip_chart.clear()
+        max_length = self.configuration.application_section().value("strip_chart_max_length")
+        self.strip_chart.set_max_length(max_length)
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
@@ -92,13 +106,23 @@ class SillyStrip(SillyUserApplicationBase):
     def post_stop(self, run_control: RunControlBase) -> None:
         """Overloaded method.
 
-        Note the underlying strip charts are unlimited, and there is no need to re-read
-        data from disk. We just need to re-draw the strip chart and enable the cursor.
-
         Also, it would be nice to understand exactly why we need to clear the axis and
         re-plot the strip chart for the cursor to pick the right color. In my mind
         the last_line_color() should do this behind the scenes, but clearly it does not.
         """
+        logger.debug("Clearing strip charts...")
+        # First thing first, set to None the maximum length for all the strip charts
+        # to allow unlimited deque size. (Note this creates two new deques under the
+        # hood, so we don't need to clear the strip charts explicitly. Also note
+        # that the proper maximum length will be re-applied in the configure() slot,
+        # based on the value from the GUI.)
+        self.strip_chart.set_max_length(None)
+        # Read all the data from disk and rebuild the entire strip charts.
+        logger.debug("Re-reading all run data from disk...")
+        with PacketFile(SillyPacket).open(run_control.data_file_path()) as input_file:
+            for packet in input_file:
+                self.strip_chart.put(packet.trigger_id, packet.pha)
+        # Plot the strip charts and activate the vertical cursor.
         self.axes.clear()
         self._cursor = VerticalCursor(self.axes)
         self.strip_chart.plot(self.axes)
