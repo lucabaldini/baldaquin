@@ -3,6 +3,14 @@
 Release notes
 =============
 
+* Maximum strip chart length configurable from the main window in the silly_strip
+  application.
+* Fix for issue #83 (strip chart not updating correctly at the stop run).
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/84
+    - https://github.com/lucabaldini/baldaquin/issues/83
+
 
 Version 0.9.1 (2025-10-24)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
