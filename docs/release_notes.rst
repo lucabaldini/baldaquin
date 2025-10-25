@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.9.2 (2025-10-25)
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Maximum strip chart length configurable from the main window in the silly_strip
   application.
 * Fix for issue #83 (strip chart not updating correctly at the stop run).
