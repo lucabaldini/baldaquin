@@ -38,6 +38,7 @@ class MainWindow(SillyMainWindow):
         """Constructor.
         """
         super().__init__()
+        self.hide_reset_button()
         self.hist_tab = self.add_plot_canvas_tab("PHA distribution")
         self.tab_widget.setCurrentWidget(self.hist_tab)
 

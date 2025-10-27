@@ -827,6 +827,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.run_control = None
         self._config_class = None
 
+    def hide_reset_button(self) -> None:
+        """Hide the reset button in the control bar.
+        """
+        self.control_bar.reset_button.setVisible(False)
+
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
         """Overloaded method to avoid closing the main GUI with the run control
         still running, see https://github.com/lucabaldini/baldaquin/issues/28.

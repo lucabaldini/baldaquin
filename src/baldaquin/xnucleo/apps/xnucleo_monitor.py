@@ -117,6 +117,7 @@ class MonitorWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
+        self.hide_reset_button()
         self.temperature_tab = self.add_plot_canvas_tab("Temperature")
         self.humidity_tab = self.add_plot_canvas_tab("Humidity")
         self.pressure_tab = self.add_plot_canvas_tab("Pressure")
