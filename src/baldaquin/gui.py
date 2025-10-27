@@ -31,6 +31,7 @@ from .__qt__ import QtCore, QtGui, QtWidgets, exec_qapp
 from .app import UserApplicationBase
 from .config import ConfigurationParameter, UserApplicationConfiguration
 from .env import BALDAQUIN_ICONS, BALDAQUIN_SKINS
+from .logging_ import logger
 from .pkt import PacketStatistics
 from .runctrl import FiniteStateMachineLogic, FsmState, RunControlBase
 
@@ -331,7 +332,19 @@ class EventHandlerCard(CardWidget):
         super().__init__(add_bottom_stretch)
         key = EventHandlerCardField.FILE_PATH.value
         widget = self._widget_dict[key].title_widget
-        widget.linkActivated.connect(MainWindow.open_url)
+        widget.linkActivated.connect(self.url_clicked)
+
+    def url_clicked(self, url: QtCore.QUrl) -> None:
+        """Slot called when a url in the file path title widget is clicked.
+        """
+        key = EventHandlerCardField.FILE_PATH.value
+        widget = self._widget_dict[key].value_widget
+        if url == "copy://text":
+            file_path = widget.text()
+            QtWidgets.QApplication.clipboard().setText(file_path)
+            logger.info(f"Data file path {file_path} copied to clipboard.")
+        else:
+            MainWindow.open_url(url)
 
     def set_file_path(self, file_path: Path) -> None:
         """Specialize method to set the path to the output file.
@@ -342,7 +355,8 @@ class EventHandlerCard(CardWidget):
         self.set(EventHandlerCardField.FILE_PATH, file_path)
         key = EventHandlerCardField.FILE_PATH.value
         widget = self._widget_dict[key].title_widget
-        text = f'{key} (<a href="{file_path.parent}">link to folder</a>)'
+        text = f'{key} (<a href="{file_path.parent}">open parent folder</a>, ' \
+               f'<a href="copy://text">copy full path to clipboard</a>)'
         widget.setText(text)
 
 
