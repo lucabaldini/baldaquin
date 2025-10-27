@@ -11,7 +11,6 @@ Release notes
     - https://github.com/lucabaldini/baldaquin/pull/91
     - https://github.com/lucabaldini/baldaquin/issues/89
     - https://github.com/lucabaldini/baldaquin/issues/88
-    - https://github.com/lucabaldini/baldaquin/issues/89
     - https://github.com/lucabaldini/baldaquin/issues/87
     - https://github.com/lucabaldini/baldaquin/issues/85
 
