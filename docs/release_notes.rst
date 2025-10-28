@@ -3,9 +3,12 @@
 Release notes
 =============
 
-* Dependency on aptapy bumped to version 0.10.2 (this fixes issues #85 and #87).
+* Dependency on aptapy bumped to version 0.11.0 (this fixes issues #85 and #87).
 * Reset button hidden for simple applications.
 * Added an hyperlink to copy the data file path to clipboard in the main window.
+* Added a command-line switch to baldaquin start-app to select the undelrying
+  matplotlib stylesheet.
+* Updated documentation.
 * Pull requests merged and issues closed:
 
     - https://github.com/lucabaldini/baldaquin/pull/91
