@@ -62,7 +62,8 @@ class SillyHist(SillyUserApplicationBase):
         """Overloaded constructor.
         """
         super().__init__()
-        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel="PHA [ADC counts]")
+        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100),
+                                    label="Random data", xlabel="PHA [ADC counts]")
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.
