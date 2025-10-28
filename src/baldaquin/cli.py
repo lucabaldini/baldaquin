@@ -23,6 +23,8 @@ import importlib
 import importlib.util
 import sys
 
+import aptapy.plotting
+
 from baldaquin import __version__, arduino_, serial_
 from baldaquin.env import BALDAQUIN_DATA, BALDAQUIN_SOURCE
 from baldaquin.logging_ import logger
@@ -83,6 +85,8 @@ class MainArgumentParser(argparse.ArgumentParser):
             help="start a baldaquin application",
             formatter_class=self._FORMATTER_CLASS)
         start_app.add_argument("app_name", choices=self.list_apps())
+        start_app.add_argument("--mplstyle", default="aptapy",
+                               help="the matplotlib stylesheet to apply")
         start_app.set_defaults(func=self.start_app)
 
         # Simply list the COM ports.
@@ -132,7 +136,7 @@ class MainArgumentParser(argparse.ArgumentParser):
         return apps
 
     @staticmethod
-    def start_app(app_name: str) -> None:
+    def start_app(app_name: str, **kwargs) -> None:
         """Start a given application.
 
         Arguments
@@ -140,6 +144,10 @@ class MainArgumentParser(argparse.ArgumentParser):
         app_name : str
             The application name.
         """
+        try:
+            aptapy.plotting.apply_stylesheet(kwargs.get("mplstyle"))
+        except Exception as exc:
+            logger.warning(f"Could not apply the requested stylesheet: {exc}")
         logger.info("Starting application...")
         # Loop over the project folders and search for a Python module matching the
         # target application name.

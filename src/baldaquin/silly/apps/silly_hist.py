@@ -38,6 +38,7 @@ class MainWindow(SillyMainWindow):
         """Constructor.
         """
         super().__init__()
+        self.hide_reset_button()
         self.hist_tab = self.add_plot_canvas_tab("PHA distribution")
         self.tab_widget.setCurrentWidget(self.hist_tab)
 
@@ -61,7 +62,8 @@ class SillyHist(SillyUserApplicationBase):
         """Overloaded constructor.
         """
         super().__init__()
-        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100), xlabel="PHA [ADC counts]")
+        self.pha_hist = Histogram1d(np.linspace(800., 1200., 100),
+                                    label="Random data", xlabel="PHA [ADC counts]")
 
     def process_packet(self, packet_data: bytes) -> AbstractPacket:
         """Dumb data processing routine---print out the actual event.

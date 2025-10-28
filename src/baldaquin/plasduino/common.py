@@ -494,6 +494,7 @@ class PlasduinoMainWindow(MainWindow):
         """Constructor.
         """
         super().__init__()
+        self.hide_reset_button()
         self.strip_chart_tab = self.add_plot_canvas_tab("Strip charts",
                                                         update_interval=self._UPDATE_INTERVAL)
         self.tab_widget.setCurrentWidget(self.strip_chart_tab)
