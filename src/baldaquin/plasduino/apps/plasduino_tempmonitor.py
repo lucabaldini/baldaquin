@@ -99,17 +99,21 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         """
         logger.info(f"Post-processing file {file_path}...")
         output_file_path = file_path.with_name(file_path.stem + "_proc.txt")
+        header = AbstractPacket.text_header(prefix="# ", creator=self.NAME)
+        fields = []
+        for pin in self._PINS:
+            fields += [f"Time{pin}", f"Temp{pin}"]
+        header = f"{header}# {delimiter.join(fields)}\n"
         with PacketFile(TemperatureReadout).open(file_path) as input_file, \
              open(output_file_path, "w", encoding=BALDAQUIN_ENCODING) as output_file:
+            row = []
+            output_file.write(header)
             for readout in input_file:
-                text = f"{readout.seconds:.3f}{delimiter}{readout.temperature:.2f}"
-                if readout.pin_number == self._PINS[0]:
-                    output_file.write(text)
-                else:
-                    output_file.write(f"{delimiter}{text}")
+                row += [f"{readout.seconds:.3f}", f"{ readout.temperature:.2f}"]
                 if readout.pin_number == self._PINS[-1]:
-                    output_file.write("\n")
-        logger.info(f"Post-processed data written to {output_file_path}.")
+                    output_file.write(f"{delimiter.join(row)}\n")
+                    row = []
+        logger.info(f"Post-processed data written to {output_file_path}")
 
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
