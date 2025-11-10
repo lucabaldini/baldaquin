@@ -101,7 +101,7 @@ class Sink:
         output_file = open(self.file_path, **self._open_kwargs) # noqa SIM115
         yield output_file
         output_file.close()
-        logger.debug(f"Ouput file {self.file_path} closed.")
+        logger.debug(f"Output file {self.file_path} closed.")
 
     def __str__(self) -> str:
         """String formatting.
