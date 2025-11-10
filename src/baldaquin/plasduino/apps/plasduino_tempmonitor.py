@@ -100,9 +100,11 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         # the previous interactive cursor and delete the corresponding reference.
         self.deactivate_cursors()
         # And create the sink for the output text file.
-        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
+        file_path = Path(f"{run_control.output_file_path_base()}_data.csv")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
                                            TemperatureReadout.text_header(creator=self.NAME))
+
+        print(self.event_handler._buffer._custom_sinks)
 
     def post_stop(self, run_control: RunControlBase) -> None:
         """Overloaded method.
