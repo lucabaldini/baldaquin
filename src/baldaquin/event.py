@@ -92,7 +92,7 @@ class EventHandlerBase(QtCore.QObject, QtCore.QRunnable):
         """
         self._buffer.add_custom_sink(file_path, mode, formatter, header)
 
-    def disonnect_sinks(self) -> None:
+    def disconnect_sinks(self) -> None:
         """Disconnect all sinks from the underlying packet buffer.
         """
         self._buffer.disconnect_sinks()
