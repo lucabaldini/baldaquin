@@ -99,7 +99,7 @@ class PendulumView(PlasduinoAnalogUserApplicationBase):
         # the previous interactive cursor and delete the corresponding reference.
         self.deactivate_cursors()
         # And create the sink for the output text file.
-        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
+        file_path = Path(f"{run_control.output_file_path_base()}_data.csv")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, PositionReadout.to_text,
                                            PositionReadout.text_header(creator=self.NAME))
 
