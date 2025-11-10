@@ -133,7 +133,6 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         strip charts, and then enable the vertical cursor.
         """
         self.post_process_file(run_control.data_file_path())
-
         logger.debug("Clearing strip charts...")
         # First thing first, set to None the maximum length for all the strip charts
         # to allow unlimited deque size. (Note this creates two new deques under the
