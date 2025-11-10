@@ -9,9 +9,11 @@ Release notes
   all data sinks are properly released when stopping a run.
 * Implemented post-processing of binary data files to generate formatted text output
   for ``plasduino_tempmonitor`` and ``plasduino_pendulumview`` applications.
+* Logging typo fixed.
 * Pull requests merged and issues closed:
 
     - https://github.com/lucabaldini/baldaquin/pull/95
+    - https://github.com/lucabaldini/baldaquin/issues/94
     - https://github.com/lucabaldini/baldaquin/issues/93
 
 
