@@ -660,6 +660,7 @@ class RunControlBase(FiniteStateMachineBase):
         if self._log_file_handler_id is not None:
             logger.remove(self._log_file_handler_id)
         self._log_file_handler_id = None
+        self._user_application.event_handler.disconnect_sinks()
         self.write_run_report()
         self.update_stats()
 

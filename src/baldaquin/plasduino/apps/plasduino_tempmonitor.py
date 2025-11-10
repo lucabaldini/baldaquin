@@ -20,6 +20,7 @@ from pathlib import Path
 
 from baldaquin.buf import WriteMode
 from baldaquin.egu import ThermistorConversion
+from baldaquin.env import BALDAQUIN_ENCODING
 from baldaquin.gui import bootstrap_window
 from baldaquin.logging_ import logger
 from baldaquin.pkt import AbstractPacket, PacketFile, packetclass
@@ -93,6 +94,27 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
 
+    def post_process_file(self, file_path: Path, delimiter: str = "   ") -> None:
+        """Post-process a binary data file to produce a text output file.
+        """
+        logger.info(f"Post-processing file {file_path}...")
+        output_file_path = file_path.with_name(file_path.stem + "_proc.txt")
+        header = AbstractPacket.text_header(prefix="# ", creator=self.NAME)
+        fields = []
+        for pin in self._PINS:
+            fields += [f"Time{pin}", f"Temp{pin}"]
+        header = f"{header}# {delimiter.join(fields)}\n"
+        with PacketFile(TemperatureReadout).open(file_path) as input_file, \
+             open(output_file_path, "w", encoding=BALDAQUIN_ENCODING) as output_file:
+            row = []
+            output_file.write(header)
+            for readout in input_file:
+                row += [f"{readout.seconds:.3f}", f"{ readout.temperature:.2f}"]
+                if readout.pin_number == self._PINS[-1]:
+                    output_file.write(f"{delimiter.join(row)}\n")
+                    row = []
+        logger.info(f"Post-processed data written to {output_file_path}")
+
     def pre_start(self, run_control: RunControlBase) -> None:
         """Overloaded method.
         """
@@ -100,7 +122,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         # the previous interactive cursor and delete the corresponding reference.
         self.deactivate_cursors()
         # And create the sink for the output text file.
-        file_path = Path(f"{run_control.output_file_path_base()}_data.txt")
+        file_path = Path(f"{run_control.output_file_path_base()}_data.csv")
         self.event_handler.add_custom_sink(file_path, WriteMode.TEXT, TemperatureReadout.to_text,
                                            TemperatureReadout.text_header(creator=self.NAME))
 
@@ -110,6 +132,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         This is where we re-read all the data from disk to populate the complete
         strip charts, and then enable the vertical cursor.
         """
+        self.post_process_file(run_control.data_file_path())
         logger.debug("Clearing strip charts...")
         # First thing first, set to None the maximum length for all the strip charts
         # to allow unlimited deque size. (Note this creates two new deques under the
@@ -119,7 +142,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         for chart in self.strip_chart_dict.values():
             chart.set_max_length(None)
         # Read all the data from disk and rebuild the entire strip charts.
-        logger.debug("Re-reading all run data from disk...")
+        logger.debug("Re-building strip charts from disk...")
         with PacketFile(TemperatureReadout).open(run_control.data_file_path()) as input_file:
             for readout in input_file:
                 x, y = readout.seconds, readout.temperature
