@@ -229,7 +229,7 @@ class AbstractBuffer(ABC):
         self._custom_sinks.append(sink)
         return sink
 
-    def disconnect(self) -> None:
+    def disconnect_sinks(self) -> None:
         """Disconnect all sinks.
         """
         self._primary_sink = None
