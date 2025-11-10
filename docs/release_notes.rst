@@ -3,6 +3,17 @@
 Release notes
 =============
 
+* Renamed ``disconnect()`` to ``disconnect_sinks()`` in  AbstractBuffer for better
+  API clarity and consistency.
+* Added explicit sink disconnection in the run control lifecycle to ensure that
+  all data sinks are properly released when stopping a run.
+* Implemented post-processing of binary data files to generate formatted text output
+  for ``plasduino_tempmonitor`` and ``plasduino_pendulumview`` applications.
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/95
+    - https://github.com/lucabaldini/baldaquin/issues/93
+
 
 Version 0.10.0 (2025-10-28)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
