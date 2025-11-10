@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.10.1 (2025-11-10)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * Renamed ``disconnect()`` to ``disconnect_sinks()`` in  AbstractBuffer for better
   API clarity and consistency.
 * Added explicit sink disconnection in the run control lifecycle to ensure that
