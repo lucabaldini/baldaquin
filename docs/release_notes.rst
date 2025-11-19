@@ -3,6 +3,10 @@
 Release notes
 =============
 
+
+Version 0.10.2 (2025-11-19)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 * plasduino post-processing methods made classmethods to allow invocation
   without instantiating the application class.
 * Pull requests merged and issues closed:
