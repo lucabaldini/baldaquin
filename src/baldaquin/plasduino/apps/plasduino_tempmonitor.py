@@ -94,14 +94,15 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
         self.strip_chart_dict[readout.pin_number].put(x, y)
         return readout
 
-    def post_process_file(self, file_path: Path, delimiter: str = "   ") -> None:
+    @classmethod
+    def post_process_file(cls, file_path: Path, delimiter: str = "   ") -> None:
         """Post-process a binary data file to produce a text output file.
         """
         logger.info(f"Post-processing file {file_path}...")
         output_file_path = file_path.with_name(file_path.stem + "_proc.txt")
-        header = AbstractPacket.text_header(prefix="# ", creator=self.NAME)
+        header = AbstractPacket.text_header(prefix="# ", creator=cls.NAME)
         fields = []
-        for pin in self._PINS:
+        for pin in cls._PINS:
             fields += [f"Time{pin}", f"Temp{pin}"]
         header = f"{header}# {delimiter.join(fields)}\n"
         with PacketFile(TemperatureReadout).open(file_path) as input_file, \
@@ -110,7 +111,7 @@ class TemperatureMonitor(PlasduinoAnalogUserApplicationBase):
             output_file.write(header)
             for readout in input_file:
                 row += [f"{readout.seconds:.3f}", f"{ readout.temperature:.2f}"]
-                if readout.pin_number == self._PINS[-1]:
+                if readout.pin_number == cls._PINS[-1]:
                     output_file.write(f"{delimiter.join(row)}\n")
                     row = []
         logger.info(f"Post-processed data written to {output_file_path}")
