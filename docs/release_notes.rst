@@ -3,6 +3,12 @@
 Release notes
 =============
 
+* plasduino post-processing methods made classmethods to allow invocation
+  without instantiating the application class.
+* Pull requests merged and issues closed:
+
+    - https://github.com/lucabaldini/baldaquin/pull/97
+
 
 Version 0.10.1 (2025-11-10)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
